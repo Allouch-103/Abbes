@@ -45,12 +45,12 @@ void servos_init() {
     pca[0].setPWMFreq(SERVO_FREQ_HZ);
     delay(10);
 
-    Serial.println("[PCA9685] Initializing board 1 (0x41)...");
+    /*Serial.println("[PCA9685] Initializing board 1 (0x41)...");
     pca[1].begin();
     pca[1].setPWMFreq(SERVO_FREQ_HZ);
     delay(10);
 
-    Serial.println("[PCA9685] Both boards ready");
+    Serial.println("[PCA9685] Both boards ready");*/
 }
 
 void servos_move_to_rest_blocking() {

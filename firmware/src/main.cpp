@@ -44,8 +44,8 @@ void setup() {
 
     // ── I2C bus ───────────────────────────────────────────
     Wire.begin(PIN_SDA, PIN_SCL);
-    Wire.setClock(400000);
-    Serial.println("[I2C] Bus initialized (SDA=21, SCL=22, 400kHz)");
+    Wire.setClock(100000);
+    Serial.println("[I2C] Bus initialized (SDA=21, SCL=22, 100kHz)");
 
     // ── Servos ────────────────────────────────────────────
     servos_init();
