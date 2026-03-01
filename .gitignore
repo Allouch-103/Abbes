@@ -1,0 +1,31 @@
+# PlatformIO
+firmware/.pio/
+firmware/.vscode/
+firmware/lib/
+firmware/test/
+
+# ROS2 build artifacts
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+ros2_ws/src/humanoid_robot/humanoid_robot.egg-info/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
