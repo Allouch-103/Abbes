@@ -1,0 +1,24 @@
+# ============================================================
+# imu_params.yaml — Complementary filter configuration
+# Node: imu_filter
+# ============================================================
+#
+# TUNING alpha:
+#   Higher (0.98-0.99): trusts gyro more → smoother but slower
+#                       to correct gyro drift. Good for fast motion.
+#   Lower  (0.90-0.95): trusts accel more → noisier but faster
+#                       to correct. Good for slow/static motion.
+#
+#   For a walking robot: 0.98 is the standard starting point.
+#   If you see drift accumulating over 10+ seconds: lower alpha.
+#   If output is too noisy: raise alpha.
+#
+# LIVE TUNING:
+#   ros2 param set /imu_filter alpha 0.96
+
+imu_filter:
+  ros__parameters:
+
+    # Complementary filter coefficient
+    # angle = alpha × (angle + gyro×dt) + (1-alpha) × accel_angle
+    alpha: 0.98

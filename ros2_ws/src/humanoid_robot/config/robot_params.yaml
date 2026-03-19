@@ -1,0 +1,16 @@
+/**:                          
+  ros__parameters:
+
+    # ── Robot dimensions (meters) ──────────────────────────
+    # Derived from Winter 2009, H = 0.5m
+    thigh_length_m:   0.1225  # 0.245 × H
+    shank_length_m:   0.1230  # 0.246 × H
+    foot_height_m:    0.0500  # ankle joint to ground
+    hip_width_m:      0.0800  # lateral distance between hip joints
+    com_height_m:     0.1900  # CoM height during walking (z_c for LIPM)
+                               # = thigh + shank × cos(avg_knee_angle)
+                               # tune this after measuring your robot
+
+    # ── Number of joints ───────────────────────────────────
+    num_joints: 18
+
