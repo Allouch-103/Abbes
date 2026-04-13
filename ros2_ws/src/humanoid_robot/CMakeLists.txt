@@ -35,10 +35,22 @@ ament_target_dependencies(balance_controller
   rcl_interfaces
 )
 
+# ── Inverse kinematics node ───────────────────────────────
+add_executable(inverse_kinematics
+  src/inverse_kinematics.cpp
+)
+ament_target_dependencies(inverse_kinematics
+  rclcpp
+  std_msgs
+  geometry_msgs
+  rcl_interfaces
+)
+
 # ── Install binaries ──────────────────────────────────────
 install(TARGETS
   imu_filter
   balance_controller
+  inverse_kinematics
   DESTINATION lib/${PROJECT_NAME}
 )
 

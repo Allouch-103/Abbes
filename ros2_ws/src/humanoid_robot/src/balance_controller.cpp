@@ -262,7 +262,7 @@ public:
         // ── QoS — BEST_EFFORT matches ESP32 publisher ────
         // If we use RELIABLE here and ESP32 uses BEST_EFFORT,
         // ROS2 DDS won't match them and we receive nothing.
-        rclcpp::QoS sensor_qos(10);
+        rclcpp::QoS sensor_qos(1);
         sensor_qos.best_effort();
 
         // ── Subscribers ───────────────────────────────────
