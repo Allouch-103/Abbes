@@ -64,19 +64,6 @@ install(DIRECTORY launch/
   DESTINATION share/${PROJECT_NAME}/launch
 )
 
-# ── Install URDF files ────────────────────────────────────
-install(DIRECTORY urdf/
-  DESTINATION share/${PROJECT_NAME}/urdf
-)
- 
-# ── Install mesh files ────────────────────────────────────
-install(DIRECTORY meshes/
-  DESTINATION share/${PROJECT_NAME}/meshes
-)
- 
-# ── Install RViz config ───────────────────────────────────
-install(DIRECTORY rviz/
-  DESTINATION share/${PROJECT_NAME}/rviz
-)
+
 
 ament_package()
