@@ -1,0 +1,479 @@
+<?xml version="1.0"?>
+<robot name="humanoid_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ============================================================
+       humanoid.urdf.xacro — 18-DOF Humanoid Robot (50cm)
+       
+       Geometry source: Winter (2009), H = 500mm
+         Thigh  L1 = 122.5mm = 0.1225m
+         Shank  L2 = 123.0mm = 0.1230m
+         Foot height    = 50.0mm  = 0.0500m
+         Hip width      = 80.0mm  = 0.0800m (40mm each side from center)
+         Torso height   = ~120mm  = 0.1200m (estimated)
+         Shoulder width = ~100mm  = 0.1000m (50mm each side from center)
+       
+       PLACEHOLDER VISUALS:
+         Boxes and cylinders are used until SolidWorks STL meshes
+         are available. To swap in real meshes, replace each
+         <geometry><box .../></geometry> block with:
+         <geometry><mesh filename="package://humanoid_robot/meshes/LINK_NAME.STL"/></geometry>
+       
+       JOINT AXES (verify physically — flip sign if servo goes wrong way):
+         Pitch joints (sagittal plane, forward/back) → axis="0 1 0" (Y)
+         Roll  joints (frontal  plane, left/right)   → axis="1 0 0" (X)
+         Yaw   joints (transverse plane, rotation)   → axis="0 0 1" (Z)
+       
+       COORDINATE FRAME (ROS REP-103):
+         X = forward
+         Y = left
+         Z = up
+       ============================================================ -->
+
+  <!-- ── Include materials ─────────────────────────────── -->
+  <xacro:include filename="$(find humanoid_robot)/urdf/materials.xacro"/>
+
+  <!-- ============================================================
+       PROPERTIES — all geometry in one place
+       Change here → changes everywhere
+       ============================================================ -->
+
+  <!-- Link lengths (meters) -->
+  <xacro:property name="thigh_len"    value="0.1225"/>
+  <xacro:property name="shank_len"    value="0.1230"/>
+  <xacro:property name="foot_height"  value="0.0500"/>
+  <xacro:property name="foot_len"     value="0.0900"/>  <!-- foot length front-back -->
+  <xacro:property name="foot_width"   value="0.0500"/>  <!-- foot width left-right -->
+  <xacro:property name="torso_height" value="0.1200"/>
+  <xacro:property name="torso_width"  value="0.1000"/>
+  <xacro:property name="torso_depth"  value="0.0600"/>
+
+  <!-- Hip geometry -->
+  <xacro:property name="hip_offset_y"  value="0.0400"/>  <!-- 40mm from center to hip joint -->
+  <xacro:property name="hip_bracket_w" value="0.0200"/>
+
+  <!-- Arm geometry -->
+  <xacro:property name="upper_arm_len" value="0.0800"/>
+  <xacro:property name="forearm_len"   value="0.0700"/>
+  <xacro:property name="shoulder_offset_y" value="0.0500"/>
+  <xacro:property name="shoulder_offset_z" value="0.0500"/>  <!-- up from torso top -->
+
+  <!-- Head geometry -->
+  <xacro:property name="head_height" value="0.0600"/>
+  <xacro:property name="head_width"  value="0.0500"/>
+  <xacro:property name="neck_height" value="0.0200"/>
+
+  <!-- Link visual thickness (for box representations) -->
+  <xacro:property name="link_thickness" value="0.0300"/>
+
+  <!--
+    FIX: foot_clearance raises the entire robot 1mm off the grid.
+    Without this, foot bottom face = z=0 = grid → z-fighting flicker.
+    This is NOT a physical inaccuracy — it's a rendering workaround.
+    Remove when real meshes are used (mesh origin handles ground contact).
+  -->
+  <xacro:property name="foot_clearance" value="0.001"/>
+
+  <!-- Servo / joint mass estimates (kg) -->
+  <xacro:property name="torso_mass"   value="0.400"/>
+  <xacro:property name="thigh_mass"   value="0.120"/>
+  <xacro:property name="shank_mass"   value="0.100"/>
+  <xacro:property name="foot_mass"    value="0.060"/>
+  <xacro:property name="upper_arm_m"  value="0.080"/>
+  <xacro:property name="forearm_m"    value="0.060"/>
+  <xacro:property name="head_mass"    value="0.100"/>
+  <xacro:property name="bracket_mass" value="0.030"/>
+
+  <!-- ============================================================
+       XACRO MACROS
+       ============================================================ -->
+
+  <!-- Inertia macro for a solid box (kg, meters) -->
+  <xacro:macro name="box_inertia" params="m x y z">
+    <inertial>
+      <mass value="${m}"/>
+      <inertia
+        ixx="${m*(y*y+z*z)/12}" ixy="0" ixz="0"
+        iyy="${m*(x*x+z*z)/12}" iyz="0"
+        izz="${m*(x*x+y*y)/12}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- Inertia macro for a solid cylinder (kg, meters) -->
+  <xacro:macro name="cylinder_inertia" params="m r l">
+    <inertial>
+      <mass value="${m}"/>
+      <inertia
+        ixx="${m*(3*r*r+l*l)/12}" ixy="0" ixz="0"
+        iyy="${m*(3*r*r+l*l)/12}" iyz="0"
+        izz="${m*r*r/2}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- ── LEG MACRO ──────────────────────────────────────────
+       Creates one full leg (5 DOF):
+         hip_roll → hip_pitch → knee_pitch → ankle_pitch → ankle_roll
+       
+       Parameters:
+         prefix  : "r" or "l"
+         reflect : 1 (right) or -1 (left) — flips Y axis
+  -->
+  <xacro:macro name="leg" params="prefix reflect">
+
+    <!-- ── HIP ROLL joint ─────────────────────────────── -->
+    <!-- Connects torso to hip bracket; rotation in frontal plane (X axis) -->
+    <joint name="${prefix}_hip_roll" type="revolute">
+      <parent link="torso"/>
+      <child  link="${prefix}_hip_bracket"/>
+      <!-- Origin: at hip joint location, offset left/right from torso center -->
+      <origin xyz="0 ${reflect * hip_offset_y} ${-torso_height/2}" rpy="0 0 0"/>
+      <axis xyz="1 0 0"/>
+      <!-- Limits in radians: centered around 0, based on the original 0° to 170° span -->
+      <limit lower="${-85.0*pi/180}" upper="${85.0*pi/180}" effort="10" velocity="3.0"/>
+      <dynamics damping="0.1" friction="0.1"/>
+    </joint>
+
+    <link name="${prefix}_hip_bracket">
+      <xacro:box_inertia m="${bracket_mass}"
+        x="${hip_bracket_w}" y="${hip_bracket_w}" z="${hip_bracket_w}"/>
+      <visual>
+        <geometry><box size="${hip_bracket_w} ${hip_bracket_w} ${hip_bracket_w}"/></geometry>
+        <material name="${'blue' if prefix == 'r' else 'green'}"/>
+      </visual>
+      <collision>
+        <geometry><box size="${hip_bracket_w} ${hip_bracket_w} ${hip_bracket_w}"/></geometry>
+      </collision>
+    </link>
+
+    <!-- ── HIP PITCH joint ────────────────────────────── -->
+    <!-- Rotation in sagittal plane (Y axis); moves thigh forward/back -->
+    <joint name="${prefix}_hip_pitch" type="revolute">
+      <parent link="${prefix}_hip_bracket"/>
+      <child  link="${prefix}_thigh"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="${-85.0*pi/180}" upper="${85.0*pi/180}" effort="10" velocity="3.0"/>
+      <dynamics damping="0.1" friction="0.1"/>
+    </joint>
+
+    <!-- Thigh link — box representing L1 = 122.5mm -->
+    <link name="${prefix}_thigh">
+      <xacro:box_inertia m="${thigh_mass}"
+        x="${link_thickness}" y="${link_thickness}" z="${thigh_len}"/>
+      <visual>
+        <!-- Offset so top of box is at joint origin (thigh hangs downward) -->
+        <origin xyz="0 0 ${-thigh_len/2}" rpy="0 0 0"/>
+        <geometry><box size="${link_thickness} ${link_thickness} ${thigh_len}"/></geometry>
+        <material name="${'blue' if prefix == 'r' else 'green'}"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${-thigh_len/2}" rpy="0 0 0"/>
+        <geometry><box size="${link_thickness} ${link_thickness} ${thigh_len}"/></geometry>
+      </collision>
+    </link>
+
+    <!-- ── KNEE PITCH joint ───────────────────────────── -->
+    <!-- At bottom of thigh, rotates shank forward/back -->
+    <joint name="${prefix}_knee_pitch" type="revolute">
+      <parent link="${prefix}_thigh"/>
+      <child  link="${prefix}_shank"/>
+      <origin xyz="0 0 ${-thigh_len}" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="0.0" upper="${170.0*pi/180}" effort="10" velocity="3.0"/>
+      <dynamics damping="0.1" friction="0.1"/>
+    </joint>
+
+    <!-- Shank link — box representing L2 = 123.0mm -->
+    <link name="${prefix}_shank">
+      <xacro:box_inertia m="${shank_mass}"
+        x="${link_thickness}" y="${link_thickness}" z="${shank_len}"/>
+      <visual>
+        <origin xyz="0 0 ${-shank_len/2}" rpy="0 0 0"/>
+        <geometry><box size="${link_thickness} ${link_thickness} ${shank_len}"/></geometry>
+        <material name="${'blue' if prefix == 'r' else 'green'}"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${-shank_len/2}" rpy="0 0 0"/>
+        <geometry><box size="${link_thickness} ${link_thickness} ${shank_len}"/></geometry>
+      </collision>
+    </link>
+
+    <!-- ── ANKLE PITCH joint ──────────────────────────── -->
+    <!-- At bottom of shank; tilts foot forward/back -->
+    <joint name="${prefix}_ankle_pitch" type="revolute">
+      <parent link="${prefix}_shank"/>
+      <child  link="${prefix}_ankle_bracket"/>
+      <origin xyz="0 0 ${-shank_len}" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <!--
+        GEOMETRIC limits: 0 = foot flat/neutral.
+        The servo hardware minimum (10° PWM) is enforced in firmware
+        via SERVO_PWM_MIN — the URDF does not need to replicate it.
+        Lower < 0 allows the ankle to tilt the foot backward (toe up).
+        Upper allows toe-down tilt for stair/ramp stepping.
+        joint_state_publisher_gui will now start at 0 = foot horizontal.
+      -->
+      <limit lower="${-30.0*pi/180}" upper="${80.0*pi/180}" effort="10" velocity="3.0"/>
+      <dynamics damping="0.1" friction="0.1"/>
+    </joint>
+
+    <link name="${prefix}_ankle_bracket">
+      <xacro:box_inertia m="${bracket_mass}"
+        x="${hip_bracket_w}" y="${hip_bracket_w}" z="${hip_bracket_w}"/>
+      <visual>
+        <geometry><box size="${hip_bracket_w} ${hip_bracket_w} ${hip_bracket_w}"/></geometry>
+        <material name="orange"/>
+      </visual>
+      <collision>
+        <geometry><box size="${hip_bracket_w} ${hip_bracket_w} ${hip_bracket_w}"/></geometry>
+      </collision>
+    </link>
+
+    <!-- ── ANKLE ROLL joint ───────────────────────────── -->
+    <!-- Tilts foot left/right; mirror sign between legs -->
+    <joint name="${prefix}_ankle_roll" type="revolute">
+      <parent link="${prefix}_ankle_bracket"/>
+      <child  link="${prefix}_foot"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <axis xyz="1 0 0"/>
+      <!--
+        GEOMETRIC limits: 0 = foot flat, no roll.
+        Servo hardware minimum (20° PWM) is enforced in firmware.
+        Symmetric range allows inward and outward roll equally.
+        joint_state_publisher_gui will now start at 0 = foot flat.
+      -->
+      <limit lower="${-65.0*pi/180}" upper="${65.0*pi/180}" effort="10" velocity="3.0"/>
+      <dynamics damping="0.1" friction="0.1"/>
+    </joint>
+
+    <!-- Foot link — flat box representing the foot plate -->
+    <link name="${prefix}_foot">
+      <xacro:box_inertia m="${foot_mass}"
+        x="${foot_len}" y="${foot_width}" z="${foot_height}"/>
+      <visual>
+        <!--
+          FIX 1: X=0 → foot centered under the ankle joint (no forward bias).
+          FIX 2: Z=-foot_height/2 → foot top face sits at ankle joint origin,
+                 foot bottom face at ankle_z - foot_height.
+                 ankle_z is exactly foot_height above ground (see base_to_torso),
+                 so bottom face = ground level (handled by foot_clearance below).
+        -->
+        <origin xyz="0 0 ${-foot_height/2}" rpy="0 0 0"/>
+        <geometry><box size="${foot_len} ${foot_width} ${foot_height}"/></geometry>
+        <material name="dark_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${-foot_height/2}" rpy="0 0 0"/>
+        <geometry><box size="${foot_len} ${foot_width} ${foot_height}"/></geometry>
+      </collision>
+    </link>
+
+  </xacro:macro>  <!-- end leg macro -->
+
+
+  <!-- ── ARM MACRO ──────────────────────────────────────────
+       Creates one arm (3 DOF):
+         shoulder_pitch → shoulder_roll → elbow_roll
+       
+       Parameters:
+         prefix  : "r" or "l"
+         reflect : 1 (right) or -1 (left)
+  -->
+  <xacro:macro name="arm" params="prefix reflect">
+
+    <!-- ── SHOULDER PITCH joint ───────────────────────── -->
+    <joint name="${prefix}_shoulder_pitch" type="revolute">
+      <parent link="torso"/>
+      <child  link="${prefix}_upper_arm"/>
+      <origin xyz="0 ${reflect * (torso_width/2 + shoulder_offset_y)} ${shoulder_offset_z}" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="0.0" upper="${180.0*pi/180}" effort="5" velocity="3.0"/>
+      <dynamics damping="0.05" friction="0.05"/>
+    </joint>
+
+    <link name="${prefix}_upper_arm">
+      <xacro:box_inertia m="${upper_arm_m}"
+        x="${link_thickness}" y="${link_thickness}" z="${upper_arm_len}"/>
+      <visual>
+        <origin xyz="0 0 ${-upper_arm_len/2}" rpy="0 0 0"/>
+        <geometry><box size="${link_thickness} ${link_thickness} ${upper_arm_len}"/></geometry>
+        <material name="light_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${-upper_arm_len/2}" rpy="0 0 0"/>
+        <geometry><box size="${link_thickness} ${link_thickness} ${upper_arm_len}"/></geometry>
+      </collision>
+    </link>
+
+    <!-- ── SHOULDER ROLL joint ────────────────────────── -->
+    <joint name="${prefix}_shoulder_roll" type="revolute">
+      <parent link="${prefix}_upper_arm"/>
+      <child  link="${prefix}_forearm"/>
+      <origin xyz="0 0 ${-upper_arm_len}" rpy="0 0 0"/>
+      <axis xyz="1 0 0"/>
+      <limit lower="0.0" upper="${180.0*pi/180}" effort="5" velocity="3.0"/>
+      <dynamics damping="0.05" friction="0.05"/>
+    </joint>
+
+    <link name="${prefix}_forearm">
+      <xacro:box_inertia m="${forearm_m}"
+        x="${link_thickness}" y="${link_thickness}" z="${forearm_len}"/>
+      <visual>
+        <origin xyz="0 0 ${-forearm_len/2}" rpy="0 0 0"/>
+        <geometry><box size="${link_thickness} ${link_thickness} ${forearm_len}"/></geometry>
+        <material name="light_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${-forearm_len/2}" rpy="0 0 0"/>
+        <geometry><box size="${link_thickness} ${link_thickness} ${forearm_len}"/></geometry>
+      </collision>
+    </link>
+
+    <!-- ── ELBOW ROLL joint ───────────────────────────── -->
+    <joint name="${prefix}_elbow_roll" type="revolute">
+      <parent link="${prefix}_forearm"/>
+      <child  link="${prefix}_hand"/>
+      <origin xyz="0 0 ${-forearm_len}" rpy="0 0 0"/>
+      <axis xyz="1 0 0"/>
+      <limit lower="0.0" upper="${180.0*pi/180}" effort="5" velocity="3.0"/>
+      <dynamics damping="0.05" friction="0.05"/>
+    </joint>
+
+    <link name="${prefix}_hand">
+      <xacro:box_inertia m="0.030" x="0.02" y="0.02" z="0.04"/>
+      <visual>
+        <geometry><box size="0.02 0.02 0.04"/></geometry>
+        <material name="white"/>
+      </visual>
+      <collision>
+        <geometry><box size="0.02 0.02 0.04"/></geometry>
+      </collision>
+    </link>
+
+  </xacro:macro>  <!-- end arm macro -->
+
+
+  <!-- ============================================================
+       ROBOT LINKS AND JOINTS
+       ============================================================ -->
+
+  <!-- ── WORLD → BASE fixed joint ──────────────────────── -->
+  <!-- 
+    This places the robot in the world.
+    base_link origin is at the CENTER of the robot's feet contact
+    plane (i.e., ground level, between the two feet).
+    The torso center is ~halfway up the leg chain above that.
+    
+    Total leg height = thigh + shank + foot = 0.1225 + 0.1230 + 0.05 = 0.2955m
+    Torso center offset above ground = thigh + shank + foot + torso/2
+  -->
+  <link name="world"/>
+
+  <joint name="world_to_base" type="fixed">
+    <parent link="world"/>
+    <child  link="base_link"/>
+    <!--
+      FIX: raise 1mm (foot_clearance) to prevent z-fighting between
+      foot bottom face and the grid (both were at exactly z=0).
+    -->
+    <origin xyz="0 0 ${foot_clearance}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ── BASE LINK ─────────────────────────────────────── -->
+  <!-- Reference frame at ground level, between feet -->
+  <link name="base_link">
+    <xacro:box_inertia m="0.001" x="0.001" y="0.001" z="0.001"/>
+  </link>
+
+  <!-- base_link → torso -->
+  <joint name="base_to_torso" type="fixed">
+    <parent link="base_link"/>
+    <child  link="torso"/>
+    <!-- Lift torso up: foot_height + shank + thigh + half torso -->
+    <origin xyz="0 0 ${foot_height + shank_len + thigh_len + torso_height/2}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ── TORSO ──────────────────────────────────────────── -->
+  <link name="torso">
+    <xacro:box_inertia m="${torso_mass}"
+      x="${torso_depth}" y="${torso_width}" z="${torso_height}"/>
+    <visual>
+      <geometry><box size="${torso_depth} ${torso_width} ${torso_height}"/></geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <geometry><box size="${torso_depth} ${torso_width} ${torso_height}"/></geometry>
+    </collision>
+  </link>
+
+  <!-- ── HEAD ASSEMBLY ─────────────────────────────────── -->
+  <joint name="neck_fixed" type="fixed">
+    <parent link="torso"/>
+    <child  link="neck"/>
+    <origin xyz="0 0 ${torso_height/2 + neck_height/2}" rpy="0 0 0"/>
+  </joint>
+
+  <link name="neck">
+    <xacro:cylinder_inertia m="0.020" r="0.015" l="${neck_height}"/>
+    <visual>
+      <geometry><cylinder radius="0.015" length="${neck_height}"/></geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <geometry><cylinder radius="0.015" length="${neck_height}"/></geometry>
+    </collision>
+  </link>
+
+  <!-- HEAD YAW -->
+  <joint name="head_yaw" type="revolute">
+    <parent link="neck"/>
+    <child  link="head"/>
+    <origin xyz="0 0 ${neck_height/2 + head_height/2}" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="0.0" upper="${180.0*pi/180}" effort="2" velocity="3.0"/>
+    <dynamics damping="0.05" friction="0.05"/>
+  </joint>
+
+  <link name="head">
+    <xacro:box_inertia m="${head_mass}"
+      x="${head_width}" y="${head_width}" z="${head_height}"/>
+    <visual>
+      <geometry><box size="${head_width} ${head_width} ${head_height}"/></geometry>
+      <material name="light_grey"/>
+    </visual>
+    <collision>
+      <geometry><box size="${head_width} ${head_width} ${head_height}"/></geometry>
+    </collision>
+  </link>
+
+  <!-- CAMERA PITCH -->
+  <joint name="camera_pitch" type="revolute">
+    <parent link="head"/>
+    <child  link="camera_link"/>
+    <origin xyz="${head_width/2} 0 ${head_height*0.2}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="0.0" upper="${180.0*pi/180}" effort="1" velocity="3.0"/>
+    <dynamics damping="0.02" friction="0.02"/>
+  </joint>
+
+  <link name="camera_link">
+    <xacro:box_inertia m="0.020" x="0.02" y="0.04" z="0.02"/>
+    <visual>
+      <geometry><box size="0.02 0.04 0.02"/></geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <geometry><box size="0.02 0.04 0.02"/></geometry>
+    </collision>
+  </link>
+
+  <!-- ── INSTANTIATE LEGS ───────────────────────────────── -->
+  <!-- Right leg: reflect=1  (Y positive = right in robot frame) -->
+  <xacro:leg prefix="r" reflect="-1"/>
+  <!-- Left leg:  reflect=-1 (Y negative = left in robot frame) -->
+  <xacro:leg prefix="l" reflect="1"/>
+
+  <!-- ── INSTANTIATE ARMS ───────────────────────────────── -->
+  <xacro:arm prefix="r" reflect="-1"/>
+  <xacro:arm prefix="l" reflect="1"/>
+
+</robot>
