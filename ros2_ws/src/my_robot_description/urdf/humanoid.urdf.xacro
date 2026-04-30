@@ -127,8 +127,8 @@
       <!-- Origin: at hip joint location, offset left/right from torso center -->
       <origin xyz="0 ${reflect * hip_offset_y} ${-torso_height/2}" rpy="0 0 0"/>
       <axis xyz="1 0 0"/>
-      <!-- Limits in radians: centered around 0, based on the original 0° to 170° span -->
-      <limit lower="${-85.0*pi/180}" upper="${85.0*pi/180}" effort="10" velocity="3.0"/>
+      <!-- Limits in radians: 0° to 170° -->
+      <limit lower="0.0" upper="${170.0*pi/180}" effort="10" velocity="3.0"/>
       <dynamics damping="0.1" friction="0.1"/>
     </joint>
 
@@ -151,7 +151,7 @@
       <child  link="${prefix}_thigh"/>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
-      <limit lower="${-85.0*pi/180}" upper="${85.0*pi/180}" effort="10" velocity="3.0"/>
+      <limit lower="0.0" upper="${170.0*pi/180}" effort="10" velocity="3.0"/>
       <dynamics damping="0.1" friction="0.1"/>
     </joint>
 
@@ -475,5 +475,249 @@
   <!-- ── INSTANTIATE ARMS ───────────────────────────────── -->
   <xacro:arm prefix="r" reflect="-1"/>
   <xacro:arm prefix="l" reflect="1"/>
+
+  <!-- ============================================================
+       ROS2 CONTROL — hardware interface for Gazebo Harmonic
+       
+       gz_ros2_control plugin reads this block and creates:
+         - A JointStateInterface for each joint  (reads  position/velocity)
+         - A PositionJointInterface for each joint (writes position commands)
+       
+       The controllers.yaml file maps these interfaces to actual
+       ROS2 controllers (JointGroupPositionController).
+       ============================================================ -->
+  <ros2_control name="GazeboSystem" type="system">
+
+    <!-- Gazebo Harmonic hardware plugin -->
+    <hardware>
+      <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+    </hardware>
+
+    <!-- RIGHT LEG — 5 joints -->
+    <joint name="r_hip_roll">
+      <command_interface name="position">
+        <param name="min">0.0</param>
+        <param name="max">${170.0*pi/180}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="r_hip_pitch">
+      <command_interface name="position">
+        <param name="min">0.0</param>
+        <param name="max">${170.0*pi/180}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="r_knee_pitch">
+      <command_interface name="position">
+        <param name="min">0.0</param>
+        <param name="max">${170.0*pi/180}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="r_ankle_pitch">
+      <command_interface name="position">
+        <param name="min">${-30.0*pi/180}</param>
+        <param name="max">${80.0*pi/180}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="r_ankle_roll">
+      <command_interface name="position">
+        <param name="min">${-65.0*pi/180}</param>
+        <param name="max">${65.0*pi/180}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <!-- LEFT LEG — 5 joints -->
+    <joint name="l_hip_roll">
+      <command_interface name="position">
+        <param name="min">0.0</param>
+        <param name="max">${170.0*pi/180}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="l_hip_pitch">
+      <command_interface name="position">
+        <param name="min">0.0</param>
+        <param name="max">${170.0*pi/180}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="l_knee_pitch">
+      <command_interface name="position">
+        <param name="min">0.0</param>
+        <param name="max">${170.0*pi/180}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="l_ankle_pitch">
+      <command_interface name="position">
+        <param name="min">${-30.0*pi/180}</param>
+        <param name="max">${80.0*pi/180}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="l_ankle_roll">
+      <command_interface name="position">
+        <param name="min">${-65.0*pi/180}</param>
+        <param name="max">${65.0*pi/180}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <!-- RIGHT ARM — 3 joints -->
+    <joint name="r_shoulder_pitch">
+      <command_interface name="position">
+        <param name="min">0.0</param>
+        <param name="max">${180.0*pi/180}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="r_shoulder_roll">
+      <command_interface name="position">
+        <param name="min">0.0</param>
+        <param name="max">${180.0*pi/180}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="r_elbow_roll">
+      <command_interface name="position">
+        <param name="min">0.0</param>
+        <param name="max">${180.0*pi/180}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <!-- LEFT ARM — 3 joints -->
+    <joint name="l_shoulder_pitch">
+      <command_interface name="position">
+        <param name="min">0.0</param>
+        <param name="max">${180.0*pi/180}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="l_shoulder_roll">
+      <command_interface name="position">
+        <param name="min">0.0</param>
+        <param name="max">${180.0*pi/180}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="l_elbow_roll">
+      <command_interface name="position">
+        <param name="min">0.0</param>
+        <param name="max">${180.0*pi/180}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <!-- HEAD — 2 joints -->
+    <joint name="head_yaw">
+      <command_interface name="position">
+        <param name="min">0.0</param>
+        <param name="max">${180.0*pi/180}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="camera_pitch">
+      <command_interface name="position">
+        <param name="min">0.0</param>
+        <param name="max">${180.0*pi/180}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+  </ros2_control>
+
+  <!-- ============================================================
+       GAZEBO HARMONIC — simulation plugins
+       ============================================================ -->
+  <gazebo>
+    <!-- gz_ros2_control plugin: loads controllers from controllers.yaml
+         and connects them to the ros2_control hardware interfaces above. -->
+    <plugin filename="gz_ros2_control-system"
+            name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <parameters>$(find humanoid_robot)/config/controllers.yaml</parameters>
+      <ros>
+        <remapping>~/robot_description:=/robot_description</remapping>
+      </ros>
+    </plugin>
+  </gazebo>
+
+  <!-- Contact sensors on feet — used later for foot strike detection -->
+  <gazebo reference="r_foot">
+    <sensor name="r_foot_contact" type="contact">
+      <contact><collision>r_foot_fixed_joint_lump__r_foot_collision</collision></contact>
+    </sensor>
+    <mu1>0.8</mu1>   <!-- friction coefficient -->
+    <mu2>0.8</mu2>
+    <kp>1e6</kp>     <!-- contact stiffness -->
+    <kd>100</kd>     <!-- contact damping -->
+  </gazebo>
+
+  <gazebo reference="l_foot">
+    <sensor name="l_foot_contact" type="contact">
+      <contact><collision>l_foot_fixed_joint_lump__l_foot_collision</collision></contact>
+    </sensor>
+    <mu1>0.8</mu1>
+    <mu2>0.8</mu2>
+    <kp>1e6</kp>
+    <kd>100</kd>
+  </gazebo>
+
+  <!-- IMU sensor on torso — matches real MPU6050 location -->
+  <gazebo reference="torso">
+    <sensor name="imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>50</update_rate>
+      <imu>
+        <angular_velocity>
+          <x><noise type="gaussian"><mean>0</mean><stddev>0.009</stddev></noise></x>
+          <y><noise type="gaussian"><mean>0</mean><stddev>0.009</stddev></noise></y>
+          <z><noise type="gaussian"><mean>0</mean><stddev>0.009</stddev></noise></z>
+        </angular_velocity>
+        <linear_acceleration>
+          <x><noise type="gaussian"><mean>0</mean><stddev>0.065</stddev></noise></x>
+          <y><noise type="gaussian"><mean>0</mean><stddev>0.065</stddev></noise></y>
+          <z><noise type="gaussian"><mean>0</mean><stddev>0.065</stddev></noise></z>
+        </linear_acceleration>
+      </imu>
+      <plugin filename="gz-sim-imu-system"
+              name="gz::sim::systems::Imu"/>
+    </sensor>
+  </gazebo>
 
 </robot>

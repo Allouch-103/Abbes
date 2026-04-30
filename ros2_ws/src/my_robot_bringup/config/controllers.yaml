@@ -1,0 +1,86 @@
+# ============================================================
+# controllers.yaml — ros2_control joint controllers
+# Used by: gz_ros2_control plugin in Gazebo Harmonic
+#
+# ARCHITECTURE:
+#   Gazebo physics → gz_ros2_control plugin → these controllers
+#   → /joint_commands topic (same as real robot!)
+#
+# CONTROLLERS:
+#   joint_state_broadcaster : reads all joint states → /joint_states
+#   leg_controller          : position control for 10 leg joints
+#   arm_controller          : position control for 6 arm joints
+#   head_controller         : position control for 2 head joints
+#
+# WHY SEPARATE CONTROLLERS?
+#   Allows sending commands to legs only (during walking tests)
+#   without touching arms. Easier to debug one subsystem at a time.
+#
+# TOPIC MAPPING (what to publish to move joints in sim):
+#   /leg_controller/commands   → Float64MultiArray, 10 values
+#   /arm_controller/commands   → Float64MultiArray, 6 values
+#   /head_controller/commands  → Float64MultiArray, 2 values
+#
+# Joint order WITHIN each controller (must match exactly):
+#   leg:  r_hip_roll, r_hip_pitch, r_knee_pitch, r_ankle_pitch, r_ankle_roll,
+#         l_hip_roll, l_hip_pitch, l_knee_pitch, l_ankle_pitch, l_ankle_roll
+#   arm:  r_shoulder_pitch, r_shoulder_roll, r_elbow_roll,
+#         l_shoulder_pitch, l_shoulder_roll, l_elbow_roll
+#   head: head_yaw, camera_pitch
+# ============================================================
+
+controller_manager:
+  ros__parameters:
+    update_rate: 100  # Hz — matches ESP32 servo update rate
+
+    # ── Declare all controllers ────────────────────────────
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    leg_controller:
+      type: forward_command_controller/ForwardCommandController
+
+    arm_controller:
+      type: forward_command_controller/ForwardCommandController
+
+    head_controller:
+      type: forward_command_controller/ForwardCommandController
+
+
+# ── leg_controller config ─────────────────────────────────
+leg_controller:
+  ros__parameters:
+    joints:
+      - r_hip_roll
+      - r_hip_pitch
+      - r_knee_pitch
+      - r_ankle_pitch
+      - r_ankle_roll
+      - l_hip_roll
+      - l_hip_pitch
+      - l_knee_pitch
+      - l_ankle_pitch
+      - l_ankle_roll
+    interface_name: position
+
+
+# ── arm_controller config ─────────────────────────────────
+arm_controller:
+  ros__parameters:
+    joints:
+      - r_shoulder_pitch
+      - r_shoulder_roll
+      - r_elbow_roll
+      - l_shoulder_pitch
+      - l_shoulder_roll
+      - l_elbow_roll
+    interface_name: position
+
+
+# ── head_controller config ────────────────────────────────
+head_controller:
+  ros__parameters:
+    joints:
+      - head_yaw
+      - camera_pitch
+    interface_name: position

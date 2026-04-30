@@ -1,13 +1,45 @@
 <?xml version="1.0"?>
-<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd"
+            schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>my_robot_bringup</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>
+    Gazebo simulation and hardware bringup for the 18-DOF humanoid robot.
+    Depends on my_robot_description for the URDF.
+  </description>
   <maintainer email="yassine.allouch@insat.ucar.tn">allouch-103</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!--
+    my_robot_description provides the URDF and meshes.
+    We use exec_depend (not depend) because we only need it
+    at runtime (launch time), not at compile time.
+  -->
+  <exec_depend>my_robot_description</exec_depend>
+
+  <!-- ros2_control framework -->
+  <exec_depend>ros2_control</exec_depend>
+  <exec_depend>ros2_controllers</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>forward_command_controller</exec_depend>
+  <exec_depend>joint_state_broadcaster</exec_depend>
+
+  <!--
+    Gazebo Harmonic (gz sim 8) packages:
+      gz_ros2_control : the plugin that connects ros2_control to Gazebo
+      ros_gz_sim      : provides gz_sim.launch.py and spawn_entity node
+      ros_gz_bridge   : bridges Gazebo topics ↔ ROS2 topics (/imu, /clock)
+  -->
+  <exec_depend>gz_ros2_control</exec_depend>
+  <exec_depend>ros_gz_sim</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
+
+  <!-- robot_state_publisher: also needed here for Gazebo launch
+       (publishes /robot_description so Gazebo can spawn the robot) -->
+  <exec_depend>robot_state_publisher</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

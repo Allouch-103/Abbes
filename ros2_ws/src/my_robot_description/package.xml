@@ -1,13 +1,35 @@
 <?xml version="1.0"?>
-<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd"
+            schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>my_robot_description</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>
+    URDF, meshes, and RViz configuration for the 18-DOF humanoid robot.
+    This package only describes the robot — no simulation, no hardware.
+  </description>
   <maintainer email="yassine.allouch@insat.ucar.tn">allouch-103</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- xacro: needed to process .urdf.xacro files at launch time -->
+  <exec_depend>xacro</exec_depend>
+
+  <!-- robot_state_publisher: reads URDF + /joint_states → publishes TF -->
+  <exec_depend>robot_state_publisher</exec_depend>
+
+  <!-- joint_state_publisher_gui: slider GUI for manual joint control in RViz -->
+  <exec_depend>joint_state_publisher_gui</exec_depend>
+
+  <!-- rviz2: 3D visualizer -->
+  <exec_depend>rviz2</exec_depend>
+
+  <!--
+    NOTE: no ros2_control, no gazebo dependencies here.
+    This package works completely standalone — just URDF + RViz.
+    my_robot_bringup depends on this package, not the other way around.
+  -->
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
