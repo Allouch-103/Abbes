@@ -30,7 +30,7 @@
        ============================================================ -->
 
   <!-- ── Include materials ─────────────────────────────── -->
-  <xacro:include filename="$(find humanoid_robot)/urdf/materials.xacro"/>
+  <xacro:include filename="$(find my_robot_description)/urdf/materials.xacro"/>
 
   <!-- ============================================================
        PROPERTIES — all geometry in one place
@@ -366,17 +366,9 @@
     Total leg height = thigh + shank + foot = 0.1225 + 0.1230 + 0.05 = 0.2955m
     Torso center offset above ground = thigh + shank + foot + torso/2
   -->
-  <link name="world"/>
+  <!-- <link name="world"/> -->
 
-  <joint name="world_to_base" type="fixed">
-    <parent link="world"/>
-    <child  link="base_link"/>
-    <!--
-      FIX: raise 1mm (foot_clearance) to prevent z-fighting between
-      foot bottom face and the grid (both were at exactly z=0).
-    -->
-    <origin xyz="0 0 ${foot_clearance}" rpy="0 0 0"/>
-  </joint>
+
 
   <!-- ── BASE LINK ─────────────────────────────────────── -->
   <!-- Reference frame at ground level, between feet -->
@@ -488,189 +480,208 @@
        ============================================================ -->
   <ros2_control name="GazeboSystem" type="system">
 
-    <!-- Gazebo Harmonic hardware plugin -->
     <hardware>
       <plugin>gz_ros2_control/GazeboSimSystem</plugin>
     </hardware>
 
-    <!-- RIGHT LEG — 5 joints -->
+    <!-- ── RIGHT LEG ─────────────────────────────────────────
+         initial_value required on ALL state_interfaces in Jazzy:
+         hardware_interface::stod() crashes on empty/missing params.
+    -->
     <joint name="r_hip_roll">
-      <command_interface name="position">
-        <param name="min">0.0</param>
-        <param name="max">${170.0*pi/180}</param>
-      </command_interface>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
     </joint>
 
     <joint name="r_hip_pitch">
-      <command_interface name="position">
-        <param name="min">0.0</param>
-        <param name="max">${170.0*pi/180}</param>
-      </command_interface>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
     </joint>
 
     <joint name="r_knee_pitch">
-      <command_interface name="position">
-        <param name="min">0.0</param>
-        <param name="max">${170.0*pi/180}</param>
-      </command_interface>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
     </joint>
 
     <joint name="r_ankle_pitch">
-      <command_interface name="position">
-        <param name="min">${-30.0*pi/180}</param>
-        <param name="max">${80.0*pi/180}</param>
-      </command_interface>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
     </joint>
 
     <joint name="r_ankle_roll">
-      <command_interface name="position">
-        <param name="min">${-65.0*pi/180}</param>
-        <param name="max">${65.0*pi/180}</param>
-      </command_interface>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
     </joint>
 
-    <!-- LEFT LEG — 5 joints -->
+    <!-- ── LEFT LEG ──────────────────────────────────────── -->
     <joint name="l_hip_roll">
-      <command_interface name="position">
-        <param name="min">0.0</param>
-        <param name="max">${170.0*pi/180}</param>
-      </command_interface>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
     </joint>
 
     <joint name="l_hip_pitch">
-      <command_interface name="position">
-        <param name="min">0.0</param>
-        <param name="max">${170.0*pi/180}</param>
-      </command_interface>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
     </joint>
 
     <joint name="l_knee_pitch">
-      <command_interface name="position">
-        <param name="min">0.0</param>
-        <param name="max">${170.0*pi/180}</param>
-      </command_interface>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
     </joint>
 
     <joint name="l_ankle_pitch">
-      <command_interface name="position">
-        <param name="min">${-30.0*pi/180}</param>
-        <param name="max">${80.0*pi/180}</param>
-      </command_interface>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
     </joint>
 
     <joint name="l_ankle_roll">
-      <command_interface name="position">
-        <param name="min">${-65.0*pi/180}</param>
-        <param name="max">${65.0*pi/180}</param>
-      </command_interface>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
     </joint>
 
-    <!-- RIGHT ARM — 3 joints -->
+    <!-- ── RIGHT ARM ─────────────────────────────────────── -->
     <joint name="r_shoulder_pitch">
-      <command_interface name="position">
-        <param name="min">0.0</param>
-        <param name="max">${180.0*pi/180}</param>
-      </command_interface>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
     </joint>
 
     <joint name="r_shoulder_roll">
-      <command_interface name="position">
-        <param name="min">0.0</param>
-        <param name="max">${180.0*pi/180}</param>
-      </command_interface>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
     </joint>
 
     <joint name="r_elbow_roll">
-      <command_interface name="position">
-        <param name="min">0.0</param>
-        <param name="max">${180.0*pi/180}</param>
-      </command_interface>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
     </joint>
 
-    <!-- LEFT ARM — 3 joints -->
+    <!-- ── LEFT ARM ──────────────────────────────────────── -->
     <joint name="l_shoulder_pitch">
-      <command_interface name="position">
-        <param name="min">0.0</param>
-        <param name="max">${180.0*pi/180}</param>
-      </command_interface>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
     </joint>
 
     <joint name="l_shoulder_roll">
-      <command_interface name="position">
-        <param name="min">0.0</param>
-        <param name="max">${180.0*pi/180}</param>
-      </command_interface>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
     </joint>
 
     <joint name="l_elbow_roll">
-      <command_interface name="position">
-        <param name="min">0.0</param>
-        <param name="max">${180.0*pi/180}</param>
-      </command_interface>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
     </joint>
 
-    <!-- HEAD — 2 joints -->
+    <!-- ── HEAD ──────────────────────────────────────────── -->
     <joint name="head_yaw">
-      <command_interface name="position">
-        <param name="min">0.0</param>
-        <param name="max">${180.0*pi/180}</param>
-      </command_interface>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
     </joint>
 
     <joint name="camera_pitch">
-      <command_interface name="position">
-        <param name="min">0.0</param>
-        <param name="max">${180.0*pi/180}</param>
-      </command_interface>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
     </joint>
 
   </ros2_control>
-
   <!-- ============================================================
        GAZEBO HARMONIC — simulation plugins
        ============================================================ -->
   <gazebo>
     <!-- gz_ros2_control plugin: loads controllers from controllers.yaml
          and connects them to the ros2_control hardware interfaces above. -->
-    <plugin filename="gz_ros2_control-system"
+    <plugin filename="libgz_ros2_control-system.so"
             name="gz_ros2_control::GazeboSimROS2ControlPlugin">
-      <parameters>$(find humanoid_robot)/config/controllers.yaml</parameters>
+      <parameters>$(find my_robot_bringup)/config/controllers.yaml</parameters>
       <ros>
         <remapping>~/robot_description:=/robot_description</remapping>
       </ros>
@@ -678,16 +689,21 @@
   </gazebo>
 
   <!-- Contact sensors on feet — used later for foot strike detection -->
+  <!-- Commented out r_foot gazebo block. Original sensor and contact
+       parameters preserved below for reference (inner XML comments removed
+       to avoid nested-comment issues). -->
+  <!--
   <gazebo reference="r_foot">
     <sensor name="r_foot_contact" type="contact">
       <contact><collision>r_foot_fixed_joint_lump__r_foot_collision</collision></contact>
     </sensor>
-    <mu1>0.8</mu1>   <!-- friction coefficient -->
+    <mu1>0.8</mu1>   (friction coefficient)
     <mu2>0.8</mu2>
-    <kp>1e6</kp>     <!-- contact stiffness -->
-    <kd>100</kd>     <!-- contact damping -->
+    <kp>1e6</kp>     (contact stiffness)
+    <kd>100</kd>     (contact damping)
   </gazebo>
-
+  -->
+  <!--
   <gazebo reference="l_foot">
     <sensor name="l_foot_contact" type="contact">
       <contact><collision>l_foot_fixed_joint_lump__l_foot_collision</collision></contact>
@@ -697,9 +713,10 @@
     <kp>1e6</kp>
     <kd>100</kd>
   </gazebo>
-
-  <!-- IMU sensor on torso — matches real MPU6050 location -->
-  <gazebo reference="torso">
+  -->
+  
+  <!-- IMU sensor on base_link — matches real MPU6050 location -->
+  <gazebo reference="base_link">
     <sensor name="imu_sensor" type="imu">
       <always_on>true</always_on>
       <update_rate>50</update_rate>

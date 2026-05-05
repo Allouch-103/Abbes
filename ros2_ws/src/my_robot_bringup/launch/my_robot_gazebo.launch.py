@@ -12,11 +12,12 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
-    IncludeLaunchDescription, RegisterEventHandler, TimerAction
+    DeclareLaunchArgument, IncludeLaunchDescription, RegisterEventHandler, TimerAction
 )
+from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import Command
+from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
@@ -31,9 +32,16 @@ def generate_launch_description():
     # ros_gz_sim provides gz_sim.launch.py
     gz_pkg = get_package_share_directory('ros_gz_sim')
 
+    world_file = os.path.join(bringup_pkg, 'worlds', 'empty.sdf') 
+
     # ── File paths ────────────────────────────────────────
     xacro_file       = os.path.join(desc_pkg,    'urdf',   'humanoid.urdf.xacro')
     controllers_file = os.path.join(bringup_pkg, 'config', 'controllers.yaml')
+    rviz_config      = os.path.join(desc_pkg,    'rviz',   'robot.rviz')
+
+    # ── Launch args for visualization ─────────────────────
+    use_rviz = LaunchConfiguration('use_rviz')
+    use_joint_gui = LaunchConfiguration('use_joint_gui')
 
     # ── Robot description (URDF processed by xacro) ───────
     robot_description = ParameterValue(
@@ -60,8 +68,8 @@ def generate_launch_description():
             os.path.join(gz_pkg, 'launch', 'gz_sim.launch.py')
         ),
         launch_arguments={
-            'gz_args': '-r',          # -r = run immediately (not paused)
-            'on_exit_shutdown': 'true',
+            'gz_args': f'-r -v 4 {world_file}'    # -r = run immediately (with GUI client)
+           # 'on_exit_shutdown': 'true',
         }.items()
     )
 
@@ -74,7 +82,7 @@ def generate_launch_description():
         arguments=[
             '-name',  'humanoid_robot',
             '-topic', '/robot_description',
-            '-x', '0', '-y', '0', '-z', '0.32',
+            '-x', '0', '-y', '0', '-z', '0.35',
         ],
         output='screen'
     )
@@ -88,13 +96,14 @@ def generate_launch_description():
         executable='parameter_bridge',
         arguments=[
             '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
-            '/world/default/model/humanoid_robot/link/torso/sensor/imu_sensor/imu'
+            '/world/default/model/humanoid_robot/link/base_link/sensor/imu_sensor/imu'
             '@sensor_msgs/msg/Imu[gz.msgs.IMU',
         ],
         remappings=[(
-            '/world/default/model/humanoid_robot/link/torso/sensor/imu_sensor/imu',
+            '/world/default/model/humanoid_robot/link/base_link/sensor/imu_sensor/imu',
             '/imu'
         )],
+        parameters=[{'use_sim_time': True}],
         output='screen'
     )
 
@@ -107,6 +116,7 @@ def generate_launch_description():
         executable='spawner',
         arguments=['joint_state_broadcaster',
                    '--controller-manager', '/controller_manager'],
+        parameters=[{'use_sim_time': True}],
         output='screen'
     )
 
@@ -115,6 +125,7 @@ def generate_launch_description():
         executable='spawner',
         arguments=['leg_controller',
                    '--controller-manager', '/controller_manager'],
+        parameters=[{'use_sim_time': True}],
         output='screen'
     )
 
@@ -123,6 +134,7 @@ def generate_launch_description():
         executable='spawner',
         arguments=['arm_controller',
                    '--controller-manager', '/controller_manager'],
+        parameters=[{'use_sim_time': True}],
         output='screen'
     )
 
@@ -131,6 +143,18 @@ def generate_launch_description():
         executable='spawner',
         arguments=['head_controller',
                    '--controller-manager', '/controller_manager'],
+        parameters=[{'use_sim_time': True}],
+        output='screen'
+    )
+
+    # ── RViz visualization ─────────────────────────────────────
+    rviz_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        arguments=['-d', rviz_config] if os.path.exists(rviz_config) else [],
+        parameters=[{'use_sim_time': True}],
+        condition=IfCondition(use_rviz),
         output='screen'
     )
 
@@ -164,10 +188,21 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        DeclareLaunchArgument(
+            'use_rviz',
+            default_value='true',
+            description='Launch RViz2 with robot.rviz config'
+        ),
+        DeclareLaunchArgument(
+            'use_joint_gui',
+            default_value='false',
+            description='Launch joint_state_publisher_gui (off by default in Gazebo)'
+        ),
         rsp_node,
         gazebo,
         bridge,
-        TimerAction(period=2.0, actions=[spawn_robot]),
+        rviz_node,
+        TimerAction(period=5.0, actions=[spawn_robot]),
         load_jsb,
         load_leg,
         load_arm,

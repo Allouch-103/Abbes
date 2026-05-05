@@ -81,13 +81,13 @@ Visualization Manager:
       Length: 0.5
       Name: WorldAxes
       Radius: 0.009999999776482582
-      Reference Frame: world
+      Reference Frame: base_link
       Value: true
 
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: world
+    Fixed Frame: base_link
     Frame Rate: 30
   Name: root
   Tools:
