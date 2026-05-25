@@ -1,0 +1,13 @@
+# Walk a given distance in a given direction.
+# Cancellable mid-motion. Reports progress and current tilt.
+
+float32 distance_m              # 0.1 to 3.0
+string  direction               # "forward" or "backward"
+---
+bool    success
+float32 distance_actual_m
+string  message
+---
+float32 progress                # 0.0 to 1.0
+float32 tilt_deg
+float32 distance_traveled_m

@@ -1,0 +1,9 @@
+# Snapshot of the robot's current state.
+
+---
+bool      ok
+float32   tilt_pitch_deg
+float32   tilt_roll_deg
+float32[] joint_positions       # 18 joints, in URDF order
+string    current_action        # "idle", "walking", "waving", ...
+string    message
