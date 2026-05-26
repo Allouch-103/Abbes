@@ -35,7 +35,7 @@ ament_target_dependencies(balance_controller
   rcl_interfaces
 )
 
-# ── Inverse kinematics node ───────────────────────────────
+# ── inverse_kinematics node (original analytical) ─────────
 add_executable(inverse_kinematics
   src/inverse_kinematics.cpp
 )
@@ -45,12 +45,30 @@ ament_target_dependencies(inverse_kinematics
   geometry_msgs
   rcl_interfaces
 )
+target_include_directories(inverse_kinematics PRIVATE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+
+# ── ik_vectors_DLS node (Wampler 1986 DLS method) ────────
+add_executable(ik_vectors_DLS
+  src/ik_vectors_DLS.cpp
+)
+ament_target_dependencies(ik_vectors_DLS
+  rclcpp
+  std_msgs
+  geometry_msgs
+  rcl_interfaces
+)
+target_include_directories(ik_vectors_DLS PRIVATE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
 
 # ── Install binaries ──────────────────────────────────────
 install(TARGETS
   imu_filter
   balance_controller
   inverse_kinematics
+  ik_vectors_DLS
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -64,6 +82,9 @@ install(DIRECTORY launch/
   DESTINATION share/${PROJECT_NAME}/launch
 )
 
-
+# ── Install header files ──────────────────────────────────
+install(DIRECTORY include/
+  DESTINATION include
+)
 
 ament_package()
