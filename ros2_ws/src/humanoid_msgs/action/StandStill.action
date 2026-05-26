@@ -1,0 +1,8 @@
+# Return to the home (neutral standing) pose from any state.
+# Used as a "reset" or initial pose.
+
+---
+bool    success
+string  message
+---
+float32 progress

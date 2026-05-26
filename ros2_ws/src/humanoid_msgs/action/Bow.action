@@ -1,0 +1,7 @@
+# Bow forward by leaning the torso (hip pitch).
+
+---
+bool    success
+string  message
+---
+float32 progress

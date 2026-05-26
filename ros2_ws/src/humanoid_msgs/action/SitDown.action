@@ -1,0 +1,7 @@
+# Lower the robot to a sitting/rest pose by bending knees.
+
+---
+bool    success
+string  message
+---
+float32 progress

@@ -1,0 +1,6 @@
+# Cancel any in-flight action and return to home pose.
+# This is a service (not an action) so it executes immediately.
+
+---
+bool    success
+string  message

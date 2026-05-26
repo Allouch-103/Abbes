@@ -1,0 +1,8 @@
+# Wave one hand. The other arm stays at the home position.
+
+string  which                   # "left" or "right"
+---
+bool    success
+string  message
+---
+float32 progress
