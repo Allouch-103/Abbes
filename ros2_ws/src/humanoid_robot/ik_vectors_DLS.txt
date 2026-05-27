@@ -1,0 +1,48 @@
+based on : manipulator Inverse kinematics solutions based on vector formulations and DLS methods
+
+
+remarques +++ sur le code:
+
+**local_neg_z() retourne le vecteur "vers le bas" dans le frame courant, 
+exprimé en coordonnées monde. C'est la colonne Z de R^T, 
+négativée (parce que la jambe s'étend vers le bas, soit -Z local).
+Les lambdas (comme local_neg_z, world_x, world_y) sont des fonctions anonymes C++
+ capturées par référence ([&]) — elles lisent R directement depuis la scope englobante. C'est du C++11 moderne, 
+ pratique pour des helpers locaux.
+
+**
+
+1. La matrice de cosinus directeurs (DCM) — "comment un frame tourne"
+Le concept : Quand hip_roll tourne de 20°, le frame de la hanche tourne. Tous les axes en aval (genou, cheville) tournent avec lui. La DCM est la matrice 3×3 qui encode cette rotation — elle transforme un vecteur exprimé dans le frame fils vers le frame parent.
+Analogie robot : Si tu tournes ta hanche de 20° vers la droite (hip_roll), ton genou se retrouve décalé. Un vecteur qui pointait "vers le bas" dans le frame hanche pointe maintenant "vers le bas et légèrement sur le côté" dans le frame monde. La DCM fait ce calcul.
+Chaque fois qu'on passe un joint, on multiplie la DCM accumulée. Après 5 joints, R encode toute la chaîne de rotations depuis la hanche jusqu'au pied.
+
+2. La cinématique directe (forward chain) — "où est mon pied ?"
+Le concept : Étant donné les angles de tous les joints, calculer la position du pied dans le frame monde.
+Analogie robot : Tu connais l'angle de ta hanche (20°), du genou (40°), de la cheville (−20°). Où est ton pied dans l'espace ? C'est la cinématique directe. On part de la hanche et on avance joint par joint.
+local_neg_z() retourne le vecteur "vers le bas" dans le frame courant, exprimé en coordonnées monde. C'est la colonne Z de R^T, négativée (parce que la jambe s'étend vers le bas, soit -Z local).
+Les lambdas (comme local_neg_z, world_x, world_y) sont des fonctions anonymes C++ capturées par référence ([&]) — elles lisent R directement depuis la scope englobante. C'est du C++11 moderne, pratique pour des helpers locaux.
+
+3. Les vecteurs de vitesse partielle — "comment chaque joint influence le pied"
+Le concept (Wampler Eq. 16) : Pour chaque joint i, comment une petite rotation dq_i déplace-t-elle le pied R ? La réponse est :
+
+
+4. P = J̃J̃ᵀ — "résumer le Jacobien en 3×3"
+Le concept : Le Jacobien est 3×5 (3 tâches, 5 joints). Pour inverser, on forme P = J̃J̃ᵀ qui est 3×3 — beaucoup plus petit. C'est l'astuce centrale de Wampler.
+Eq. 47 du papier : P_ij = v_i^R · v_j^R — le point i,j de P est le produit scalaire des colonnes i et j du Jacobien.
+Analogie robot : Tu as 5 joints, 3 degrés de tâche (x, y, z du pied). Au lieu d'inverser une matrice 5×5 (qui serait indéfinie pour un système redondant), on projette dans l'espace tâche et on travaille en 3×3.
+On itère sur les 5 colonnes du Jacobien et on accumule v[k] × v[k]^T. C'est J̃ × J̃^T mais calculé sans jamais stocker J̃ explicitement — gain mémoire et vitesse.
+
+5. Le Damped Least Squares — "pourquoi pas juste inverser ?"
+Le problème : Quand la jambe est presque tendue (singularité), le Jacobien devient presque singulier. Son inverse "explose" — le robot essaierait de bouger ses joints à des vitesses infinies.
+Analogie robot : Imagine ton genou presque complètement tendu. Si tu veux que ton pied bouge de 1mm vers le haut, ton genou doit s'infléchir d'un angle minuscule — ça marche bien. Mais si tu veux le bouger dans la direction perpendiculaire à la jambe, tu ne peux presque pas — la jambe est comme un bâton rigide dans cette direction. Le pseudoinverse classique essaierait de compenser en envoyant des commandes énormes à tous les joints. Catastrophique.
+La solution Wampler (Eq. 34) : Minimiser ‖Jq̇ − ê‖² + α²‖q̇‖². Le terme α²‖q̇‖² pénalise les grandes vitesses articulaires. La solution est :
+
+Quand w → 0 (jambe tendue = singularité), alpha grossit automatiquement, amortissant encore plus les commandes.
+
+6. La factorisation de Cholesky — "résoudre Ax = b proprement"
+Le concept : (P + α²I) est une matrice 3×3 symétrique définie positive. Cholesky la décompose en L × L^T où L est triangulaire inférieure. On résout ensuite en deux substitutions.
+Pourquoi pas l'inverse direct ? Pour une 3×3, les deux coûtent pareil. Mais Cholesky est plus stable numériquement, et Wampler le recommande explicitement (il savait que des robots fonctionneraient 24h/24 avec des flottants bruités).
+7. La boucle IK complète
+Tout s'assemble dans solve() :
+n tourne à 100 Hz (timer de 10ms dans le nœud ROS2). Avec max_iter=6, c'est 6 petits pas par frame. Pour des trajectoires lentes (marche), ça converge largement assez.
