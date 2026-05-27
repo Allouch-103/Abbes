@@ -1,0 +1,25 @@
+ The analytical IK has structural limitations.
+  The sagittal and frontal planes are fully decoupled — solve_sagittal() and solve_frontal() run independently
+   and their results are simply summed. 
+   This ignores the 3D geometric coupling that appears during lateral weight transfer combined with forward swing. 
+   For small step sizes (your 2 cm conservative start) this is fine. 
+   At larger steps or during fast weight transfer, the approximation breaks down.
+
+
+jacobian methods; 
+Closed-form solutions only exist for a few simple geometries
+Existing Jacobian-based methods are computationally inefficient
+They break down near kinematic singularities
+
+
+ Damped Least-Squares (p.98, Eq. 34-37)
+Instead of minimising only the task error ‖Jq̇ − ê‖², Wampler proposes minimising the combined cost:
+‖Jq̇ − ê‖² + α²‖q̇‖² (Eq. 34)
+This is the Levenberg-Marquardt formulation. The α² term penalises large joint speeds. The unique minimiser is (Eq. 37):
+q̇ₐ = Jᵀ(JJᵀ + α²I)⁻¹ ê
+This is the DLS formula. Three key properties:
+
+(JJᵀ + α²I) is always invertible — adding α²I to the diagonal guarantees positive definiteness regardless of rank
+It's a 3×3 system — we invert the task-space matrix (3×3 for position), not the joint-space one (5×5). Cheaper when n_joints > n_task
+As α → 0 it approaches the pseudoinverse — so it's a smooth, stable generalisation
+
