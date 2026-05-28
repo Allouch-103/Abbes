@@ -1,14 +1,11 @@
 cmake_minimum_required(VERSION 3.8)
 project(humanoid_robot)
-
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
-
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
-
 # ── Find dependencies ─────────────────────────────────────
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -16,7 +13,6 @@ find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(rcl_interfaces REQUIRED)
-
 # ── imu_filter node ───────────────────────────────────────
 add_executable(imu_filter src/imu_filter.cpp)
 ament_target_dependencies(imu_filter
@@ -24,7 +20,6 @@ ament_target_dependencies(imu_filter
   sensor_msgs
   geometry_msgs
 )
-
 # ── balance_controller node ───────────────────────────────
 add_executable(balance_controller src/balance_controller.cpp)
 ament_target_dependencies(balance_controller
@@ -34,7 +29,6 @@ ament_target_dependencies(balance_controller
   std_msgs
   rcl_interfaces
 )
-
 # ── inverse_kinematics node (original analytical) ─────────
 add_executable(inverse_kinematics
   src/inverse_kinematics.cpp
@@ -48,7 +42,6 @@ ament_target_dependencies(inverse_kinematics
 target_include_directories(inverse_kinematics PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
-
 # ── ik_vectors_DLS node (Wampler 1986 DLS method) ────────
 add_executable(ik_vectors_DLS
   src/ik_vectors_DLS.cpp
@@ -62,29 +55,32 @@ ament_target_dependencies(ik_vectors_DLS
 target_include_directories(ik_vectors_DLS PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
-
+# ── joint_bridge node ─────────────────────────────────────
+add_executable(joint_bridge
+  src/joint_bridge.cpp
+)
+ament_target_dependencies(joint_bridge
+  rclcpp
+  std_msgs
+)
 # ── Install binaries ──────────────────────────────────────
 install(TARGETS
   imu_filter
   balance_controller
   inverse_kinematics
   ik_vectors_DLS
+  joint_bridge
   DESTINATION lib/${PROJECT_NAME}
 )
-
 # ── Install config files ──────────────────────────────────
 install(DIRECTORY config/
   DESTINATION share/${PROJECT_NAME}/config
 )
-
 # ── Install launch files ──────────────────────────────────
 install(DIRECTORY launch/
   DESTINATION share/${PROJECT_NAME}/launch
 )
-
 # ── Install header files ──────────────────────────────────
 install(DIRECTORY include/
   DESTINATION include
 )
-
-ament_package()

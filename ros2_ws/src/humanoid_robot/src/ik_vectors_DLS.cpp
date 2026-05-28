@@ -139,7 +139,7 @@ private:
         const Vec5& q = leg_l_.q;
         a[J::L_HIP_ROLL]    = clamp_joint(J::L_HIP_ROLL,     50.0 - q[0]*R2D);
         a[J::L_HIP_PITCH]   = clamp_joint(J::L_HIP_PITCH,    80.0 + q[1]*R2D);
-        a[J::L_KNEE_PITCH]  = clamp_joint(J::L_KNEE_PITCH,   70.0 - q[2]*R2D);
+        a[J::L_KNEE_PITCH]  = clamp_joint(J::L_KNEE_PITCH,   100.0 - q[2]*R2D);
         a[J::L_ANKLE_PITCH] = clamp_joint(J::L_ANKLE_PITCH,  90.0 + q[3]*R2D);
         a[J::L_ANKLE_ROLL]  = clamp_joint(J::L_ANKLE_ROLL,   90.0 - q[4]*R2D);
     }

@@ -143,8 +143,10 @@ public:
       [this](){ compute_and_publish(); });
 
     // ── Parameter change callback (live tuning without relaunch) ─────────────
+    //That callback is there so the node can react immediately when ROS2 parameters change at runtime.
+    //This enables live tuning of IK parameters while the robot is running.
     param_cb_ = add_on_set_parameters_callback(
-      [this](const std::vector<rclcpp::Parameter>& params)
+      [this](const std::vector<rclcpp::Parameter>& /*params*/)
         -> rcl_interfaces::msg::SetParametersResult {
           load_params();
           rcl_interfaces::msg::SetParametersResult r;
