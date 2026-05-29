@@ -128,7 +128,7 @@
       <origin xyz="0 ${reflect * hip_offset_y} ${-torso_height/2}" rpy="0 0 0"/>
       <axis xyz="1 0 0"/>
       <!-- Limits in radians: 0° to 170° -->
-      <limit lower="0.0" upper="${170.0*pi/180}" effort="10" velocity="3.0"/>
+      <limit lower="${-170.0*pi/180}" upper="${170.0*pi/180}" effort="10" velocity="3.0"/>
       <dynamics damping="0.1" friction="0.1"/>
     </joint>
 
@@ -151,7 +151,7 @@
       <child  link="${prefix}_thigh"/>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
-      <limit lower="0.0" upper="${170.0*pi/180}" effort="10" velocity="3.0"/>
+      <limit lower="${-170.0*pi/180}" upper="${170.0*pi/180}" effort="10" velocity="3.0"/>
       <dynamics damping="0.1" friction="0.1"/>
     </joint>
 
@@ -178,7 +178,7 @@
       <child  link="${prefix}_shank"/>
       <origin xyz="0 0 ${-thigh_len}" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
-      <limit lower="0.0" upper="${170.0*pi/180}" effort="10" velocity="3.0"/>
+      <limit lower="${-170.0*pi/180}" upper="${170.0*pi/180}" effort="10" velocity="3.0"/>
       <dynamics damping="0.1" friction="0.1"/>
     </joint>
 
@@ -283,10 +283,30 @@
     <!-- ── SHOULDER PITCH joint ───────────────────────── -->
     <joint name="${prefix}_shoulder_pitch" type="revolute">
       <parent link="torso"/>
-      <child  link="${prefix}_upper_arm"/>
+      <child  link="${prefix}_shoulder_link"/>
       <origin xyz="0 ${reflect * (torso_width/2 + shoulder_offset_y)} ${shoulder_offset_z}" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
-      <limit lower="0.0" upper="${180.0*pi/180}" effort="5" velocity="3.0"/>
+      <limit lower="${-180.0*pi/180}" upper="${180.0*pi/180}" effort="5" velocity="3.0"/>
+      <dynamics damping="0.05" friction="0.05"/>
+    </joint>
+
+    <!-- Dummy link required by URDF between two co-located revolute joints.
+         Must have non-zero inertia or the physics engine will reject it. -->
+    <link name="${prefix}_shoulder_link">
+      <inertial>
+        <mass value="0.001"/>
+        <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6"/>
+      </inertial>
+    </link>
+
+    <!-- ── SHOULDER ROLL joint ────────────────────────── -->
+    <!-- Co-located with shoulder_pitch: origin is (0 0 0) relative to shoulder_link -->
+    <joint name="${prefix}_shoulder_roll" type="revolute">
+      <parent link="${prefix}_shoulder_link"/>
+      <child  link="${prefix}_upper_arm"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <axis xyz="1 0 0"/>
+      <limit lower="${-180.0*pi/180}" upper="${180.0*pi/180}" effort="5" velocity="3.0"/>
       <dynamics damping="0.05" friction="0.05"/>
     </joint>
 
@@ -304,13 +324,13 @@
       </collision>
     </link>
 
-    <!-- ── SHOULDER ROLL joint ────────────────────────── -->
-    <joint name="${prefix}_shoulder_roll" type="revolute">
+    <!-- ── ELBOW ROLL joint ───────────────────────────── -->
+    <joint name="${prefix}_elbow_roll" type="revolute">
       <parent link="${prefix}_upper_arm"/>
       <child  link="${prefix}_forearm"/>
       <origin xyz="0 0 ${-upper_arm_len}" rpy="0 0 0"/>
       <axis xyz="1 0 0"/>
-      <limit lower="0.0" upper="${180.0*pi/180}" effort="5" velocity="3.0"/>
+      <limit lower="${-180.0*pi/180}" upper="${180.0*pi/180}" effort="5" velocity="3.0"/>
       <dynamics damping="0.05" friction="0.05"/>
     </joint>
 
@@ -328,14 +348,11 @@
       </collision>
     </link>
 
-    <!-- ── ELBOW ROLL joint ───────────────────────────── -->
-    <joint name="${prefix}_elbow_roll" type="revolute">
+    <!-- ── WRIST (fixed) ─────────────────────────────── -->
+    <joint name="${prefix}_wrist_fixed" type="fixed">
       <parent link="${prefix}_forearm"/>
       <child  link="${prefix}_hand"/>
       <origin xyz="0 0 ${-forearm_len}" rpy="0 0 0"/>
-      <axis xyz="1 0 0"/>
-      <limit lower="0.0" upper="${180.0*pi/180}" effort="5" velocity="3.0"/>
-      <dynamics damping="0.05" friction="0.05"/>
     </joint>
 
     <link name="${prefix}_hand">

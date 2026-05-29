@@ -103,8 +103,8 @@ SIT_POSE = _pose_with_overrides(
 # Bow — torso forward (hip pitch -30°), small knee bend for balance,
 # small ankle pitch so the shank stays roughly vertical.
 BOW_POSE = _pose_with_overrides(
-    r_hip_pitch=deg(-30), r_knee_pitch=deg(20), r_ankle_pitch=deg(10),
-    l_hip_pitch=deg(-30), l_knee_pitch=deg(20), l_ankle_pitch=deg(10),
+    r_hip_pitch=deg(-30), r_knee_pitch=deg(20), r_ankle_pitch=deg(-10),
+    l_hip_pitch=deg(-30), l_knee_pitch=deg(20), l_ankle_pitch=deg(-10),
 )
 
 
@@ -112,24 +112,24 @@ BOW_POSE = _pose_with_overrides(
 # Sign convention for the LEFT elbow may be inverted relative to right
 # (mirror-mounted). Verify visually in Gazebo and flip if needed.
 WAVE_RIGHT_UP = _pose_with_overrides(
-    r_shoulder_pitch=deg(110),
-    r_shoulder_roll=deg(0),
-    r_elbow_roll=deg(-60),
+    r_shoulder_pitch=deg(0),
+    r_shoulder_roll=deg(-90),
+    r_elbow_roll=deg(0),
 )
 WAVE_RIGHT_OUT = _pose_with_overrides(
-    r_shoulder_pitch=deg(110),
-    r_shoulder_roll=deg(30),
-    r_elbow_roll=deg(-60),
+    r_shoulder_pitch=deg(0),
+    r_shoulder_roll=deg(-90),
+    r_elbow_roll=deg(-180),
 )
 WAVE_LEFT_UP = _pose_with_overrides(
-    l_shoulder_pitch=deg(110),
-    l_shoulder_roll=deg(0),
-    l_elbow_roll=deg(60),
+    l_shoulder_pitch=deg(0),
+    l_shoulder_roll=deg(90),
+    l_elbow_roll=deg(0),
 )
 WAVE_LEFT_OUT = _pose_with_overrides(
-    l_shoulder_pitch=deg(110),
-    l_shoulder_roll=deg(-30),
-    l_elbow_roll=deg(60),
+    l_shoulder_pitch=deg(0),
+    l_shoulder_roll=deg(90),
+    l_elbow_roll=deg(180),
 )
 
 
@@ -139,10 +139,10 @@ WAVE_LEFT_OUT = _pose_with_overrides(
 # will be unstable. For Gazebo with the robot floating or on a stable
 # base it visually looks like marching in place.
 MARCH_R_UP = _pose_with_overrides(
-    r_hip_pitch=deg(-30), r_knee_pitch=deg(60), r_ankle_pitch=deg(-30),
+    r_hip_pitch=deg(30), r_knee_pitch=deg(30), r_ankle_pitch=deg(30),
 )
 MARCH_L_UP = _pose_with_overrides(
-    l_hip_pitch=deg(-30), l_knee_pitch=deg(60), l_ankle_pitch=deg(-30),
+    l_hip_pitch=deg(30), l_knee_pitch=deg(30), l_ankle_pitch=deg(30),
 )
 
 
