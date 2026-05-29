@@ -57,6 +57,7 @@ from humanoid_msgs.action import Walk, StandStill, SitDown, WaveHand, Bow
 from humanoid_msgs.srv import Stop, GetStatus
 
 from .command_tools import VALID_TOOL_NAMES, ROBOT_TOOLS
+from .safety_validator import SafetyValidator
 
 
 # How long we wait for a server/service to be available before giving up.
@@ -108,6 +109,12 @@ class LLMDispatcherNode(Node):
         # ── Service clients ──────────────────────────────────
         self.stop_client   = self.create_client(Stop,      "/humanoid/stop")
         self.status_client = self.create_client(GetStatus, "/humanoid/get_status")
+
+        # ── Safety validator (AI Step 5) ─────────────────────
+        # Consulted between the model's tool choice and execute_tool().
+        # Stateful (holds the rate-limit clock), so it lives for the
+        # lifetime of the node, not per-dispatch.
+        self.validator = SafetyValidator()
 
         self.get_logger().info("dispatcher clients ready: 5 actions + 2 services")
 
@@ -335,7 +342,16 @@ class LLMDispatcherNode(Node):
             name = call["function"]["name"]
             args = call["function"].get("arguments", {}) or {}
             self.get_logger().info(f"LLM -> {name}({args})")
-            result = self.execute_tool(name, args)   # the Piece 2 seam
+
+            # AI Step 5: gate the chosen tool BEFORE it runs. On deny we
+            # skip execute_tool entirely and report the reason as the tool
+            # result, so the model explains the refusal instead of moving.
+            allowed, reason = self.validator.check(name, args, self.do_get_status)
+            if not allowed:
+                self.get_logger().warn(f"   SAFETY denied {name}: {reason}")
+                result = {"ok": False, "denied_by_safety": True, "message": reason}
+            else:
+                result = self.execute_tool(name, args)   # the Piece 2 seam
             self.get_logger().info(f"   robot result: {result}")
             # Feed the result back with role="tool" so the model sees what
             # its requested action actually produced.

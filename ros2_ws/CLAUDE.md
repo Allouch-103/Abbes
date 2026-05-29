@@ -87,7 +87,7 @@ AI intelligence phase (current focus):
   AI Step 2  ROS2 Command API (actions/services) .............. ✅
   AI Step 3  LLM Kindergarten (Ollama, tool use) .............. ✅
   AI Step 4  Connect LLM → Robot (dispatcher) ................. ✅
-  AI Step 5  Safety Validator ................................. ⏳
+  AI Step 5  Safety Validator ................................. ✅
   AI Step 6  Feedback Loop .................................... ⏳
   AI Step 7  Web UI ........................................... ⏳
   AI Step 8  Voice Input (Whisper) [BONUS] .................... ⏳
@@ -224,9 +224,29 @@ and abandoned. Free-form. Update over time.)
 **Always keep this section current (see section 8 rule).** This is the
 first thing to read at the start of a new session.
 
-**Last updated:** 2026-05-29
+**Last updated:** 2026-05-30
 
 **Just done:**
+- **AI Step 5 ✅ — Safety Validator built + wired + unit-verified.** New pure
+  (no-rclpy) module `humanoid_command_api/safety_validator.py`: a stateful
+  `SafetyValidator.check(name, args, status_provider) -> (allowed, reason)`.
+  Three rules (chosen by user): (1) RATE LIMIT — deny a motion if the last
+  allowed motion was < `min_interval_sec` (1.5s) ago; (2) TILT GATE (walk
+  only) — lazily call `status_provider()` and deny `walk` if |pitch| or
+  |roll| > `tilt_limit_deg` (15°); (3) `stop`/`get_status` are EXEMPT (never
+  blocked, don't touch the rate-limit clock). Fails OPEN on missing IMU
+  (server reports 0.0° tilt with no IMU → walk allowed), matching the
+  server's own non-blocking stance. Injectable `clock` for testable rate
+  limiting. Wired into `llm_dispatcher_node.py`: `self.validator` built in
+  `__init__`; `dispatch()` Phase-3 loop now calls
+  `self.validator.check(name, args, self.do_get_status)` BEFORE
+  `execute_tool` — on deny it skips the action and feeds
+  `{"ok":False,"denied_by_safety":True,"message":reason}` back to the model
+  so the robot explains the refusal. Both files compile; ran a 7-case
+  controlled-clock test (level-walk OK, immediate 2nd motion rate-limited,
+  stop/get_status exempt, tilted-walk denied, tilted-bow allowed, no-status
+  walk fails open) — all pass. Rebuilt the package OK. NOT live-tested
+  end-to-end with Ollama yet.
 - **Reboot + disk fix VERIFIED WORKING.** Machine rebooted; the UAS-disable
   quirk is now live: VL715 bridge `1-2:1.0` bound to `usb-storage` (not
   `uas`), `/sys/module/usb_storage/parameters/quirks` = `2109:0715:u`. Disk
@@ -266,22 +286,26 @@ first thing to read at the start of a new session.
   offered and deferred.)
 
 **In progress:**
-- Nothing actively mid-edit. AI Steps 1–4 ✅. Next focus is AI Step 5.
+- Nothing actively mid-edit. AI Steps 1–5 ✅ (Step 5 code-complete + unit-
+  verified, but not yet exercised live through the Ollama REPL).
 
 **Next concrete action (in order):**
-1. **AI Step 5 — Safety Validator.** A layer that vets the LLM's chosen
-   tool+args BEFORE `execute_tool()` runs them. The command server already
-   does range/enum rejection (distance 0.1–3.0, direction/which enums) and
-   mutual-exclusion, so decide what the validator adds on top: e.g. tilt/IMU
-   gating (don't walk if already tilted — GetStatus exposes tilt), rate
-   limiting, an explicit allow/deny policy, or confirmation for "risky"
-   commands. Likely lives as a function the dispatcher calls inside
-   `dispatch()` between the model's tool choice and `execute_tool()`.
-2. Consider a `command_api.launch.py`-style launch file that brings up
+1. **Live-test Step 5 end to end.** Two terminals (command_server +
+   llm_dispatcher REPL). Easy checks: fire two motions back-to-back and
+   confirm the 2nd is refused with the rate-limit message relayed by the
+   robot; confirm `stop` still fires during a refusal window. Tilt gate is
+   harder to trigger without a tilted IMU — can lower `tilt_limit_deg` or
+   publish a fake tilted `/imu` to prove it.
+2. **AI Step 6 — Feedback Loop.** Close the loop so the model reacts to
+   what actually happened (e.g. retry/stand_still after a safety denial or
+   a rejected goal). The `denied_by_safety` flag + result dicts already
+   give it the signal to reason over.
+3. Consider a `command_api.launch.py`-style launch file that brings up
    command_server + llm_dispatcher together (currently two manual terminals).
-3. **Commit.** A lot is still uncommitted (see below) — good time for a
-   clean checkpoint commit of the completed AI Steps 3–4 work.
+4. **Commit.** A lot is still uncommitted (see below) — good time for a
+   clean checkpoint commit of completed AI Steps 3–5.
 
 **Not yet committed:** command_server_node.py, command_tools.py,
-llm_dispatcher_node.py, launch/, pose_definitions.py edits, setup.py edits,
-urdf edits, CLAUDE.md, ai_experiments/. Commit when at a clean stopping point.
+llm_dispatcher_node.py, safety_validator.py (new), launch/, pose_definitions.py
+edits, setup.py edits, urdf edits, CLAUDE.md, ai_experiments/. Commit when at
+a clean stopping point.
