@@ -1,0 +1,196 @@
+%=====================================================================
+%  Chapter 2 — Concepts on Bipedal Walking
+%=====================================================================
+\chapter{Concepts on Bipedal Walking}
+\label{chap:walking}
+
+\section{Introduction}
+Bipedal walking, or walking on two legs, is a complex form of locomotion
+that involves the coordination of multiple joints to achieve stability,
+balance, and forward motion. Understanding its principles is essential
+for designing and controlling a humanoid robot. This chapter introduces
+the fundamental concepts of bipedal walking: the definition of walking,
+the motion planes, the centre of mass, the Zero-Moment-Point, the
+support polygon, the stability criteria, the types of walking, and the
+gait cycle that together underpin the locomotion work presented later in
+this report.
+
+\section{Walking Definition}
+Walking can be defined as the action of moving by successive movements
+and support of the legs and feet without ever leaving the ground
+entirely. This definition does not constrain the number of limbs, so
+walking may be bipedal, quadrupedal, and so on; in this work the term
+refers to \emph{bipedal} walking, since the objective is to reproduce
+human locomotion. Walking is therefore a cyclic phenomenon: each foot
+alternately swings through the air and then serves as support, either
+alone or together with the other foot. This cyclic nature is formalised
+through the notion of gait \emph{cycles} and \emph{phases}, developed in
+the following sections.
+
+\section{Motion Planes}
+The motion planes describe the movements associated with walking, as
+shown in Figure~\ref{fig:planes}. The \textbf{sagittal} plane
+corresponds to a side view of the walker, the \textbf{horizontal} plane
+to a top view, and the \textbf{frontal} plane to a front view. The
+walker moves primarily in the sagittal plane, but movements such as hip
+sway, lateral displacement, and pelvic rotation occur in the other two
+planes and enhance the fluidity of walking.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.75\textwidth]{fig_motion_planes.png}
+  \caption{Motion planes: sagittal, horizontal, and frontal.}
+  \label{fig:planes}
+\end{figure}
+
+\section{Robot Control and Stability}
+Bipedal walking relies on several key concepts that ensure stability and
+efficiency. These concepts are essential for understanding how to design
+and control a bipedal robot.
+
+\subsection{Centre of Mass (CoM)}
+The centre of mass (CoM), also known as the centre of gravity, is the
+point at which the mass of a body or system of bodies can be considered
+to be concentrated. For a rigid body, it is the point at which the body
+can be balanced without rotation under the influence of gravity alone.
+Mathematically, it is the weighted average of the positions of all the
+mass elements of the system. The CoM plays a central role in the study
+of the mechanics, dynamics, and stability of a walking robot.
+
+\subsection{Zero-Moment-Point (ZMP)}
+The Zero-Moment-Point (ZMP) is a criterion used to analyse the stability
+of a bipedal or multi-legged robot during dynamic motion. The ZMP is the
+point on the ground where the total moment of the forces acting on the
+robot's feet has no horizontal component --- that is, the point where the
+ground-reaction forces and the inertial forces acting on the robot's body
+balance each other out.
+
+Consider the support foot during the single-support phase
+(Figure~\ref{fig:zmp}). The effect of the parts above the support foot
+can be replaced by a force $\mathbf{F}$ and a moment $\mathbf{M_A}$ at
+the ankle, while the ground reaction $\mathbf{R}$ and moment
+$\mathbf{M_S}$ balance the system at the contact point $S$. Because the
+ground can only act on the foot through friction and a normal force, the
+horizontal moments vanish at this point --- hence the term
+\emph{Zero-Moment-Point}. The ZMP is thus the point under the foot where
+the ground reaction balances the horizontal moments applied at the
+ankle. To maintain dynamic balance, the ZMP must remain inside the
+support polygon; if the support area is too small to compensate the
+horizontal moment, the robot loses dynamic balance and the ZMP is no
+longer defined (a fictitious ZMP may then be computed for analysis).
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\textwidth]{fig_zmp.png}
+  \caption{General case of the ZMP: (a) three-dimensional case at the
+           ankle, (b) planar case where the moment $M_{Ax}$ is balanced
+           by shifting the point of action of the reaction force $R_z$.}
+  \label{fig:zmp}
+\end{figure}
+
+\subsection{Support Polygon}
+The support polygon is one of the stability criteria for humanoid
+walking. It is defined by the outer contour of the points of contact
+between the robot's feet and the ground. As illustrated in
+Figure~\ref{fig:support}, it takes two forms during the walking cycle:
+the \textbf{single-support} polygon, reduced to the contour of a single
+foot, and the larger \textbf{double-support} polygon, spanning both feet
+when they are simultaneously in contact with the ground.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.55\textwidth]{fig_support_polygon.png}
+  \caption{Support polygon in the single- and double-support phases.}
+  \label{fig:support}
+\end{figure}
+
+\subsection{Stability Criteria}
+Two complementary aspects of stability are considered:
+\begin{itemize}[itemsep=2pt,topsep=4pt]
+  \item \textbf{Posture stability} --- the ability to maintain a stable
+        standing position with minimal jerk. Joint positions and the
+        centre of gravity are the main variables involved.
+  \item \textbf{Gait stability} --- the ability to maintain balance
+        during locomotion. The key variables here are step length,
+        foothold positions, and ZMP data.
+\end{itemize}
+
+\section{Types of Bipedal Walking}
+Walking can be categorised into two types:
+\begin{itemize}[itemsep=2pt,topsep=4pt]
+  \item \textbf{Static walking.} The posture is stable at all times: the
+        body weight is always supported by at least one foot, and the
+        projection of the CoM on the ground always remains within the
+        support polygon.
+  \item \textbf{Dynamic walking.} A succession of stable and unstable
+        postures. Instability is deliberately created forward when the
+        projection of the CoM moves outside the support polygon. Dynamic
+        walking is the natural human gait; the resulting instability is
+        corrected by the next step.
+\end{itemize}
+
+\section{Robot Gait Generation}
+
+\subsection{Walking-Cycle Components}
+Ignoring the very first and very last steps to and from a standing
+posture, the walking cycle is composed of two alternating phases:
+\begin{description}[itemsep=2pt,topsep=4pt]
+  \item[Double-Support Phase (DSP)] The robot is in contact with the
+        floor through both legs. This phase lets the robot shift its ZMP
+        into a favourable position for the next step without losing
+        balance; it is therefore called the \emph{stabilisation} phase.
+  \item[Single-Support Phase (SSP)] Also known as the swing phase, the
+        robot is in contact with the floor through a single leg. The leg
+        in contact is the \emph{support} leg and the other is the
+        \emph{swinging} leg.
+\end{description}
+
+\subsection{Walking-Cycle Phases}
+Within these components, the cycle progresses through the following
+phases:
+\begin{itemize}[itemsep=2pt,topsep=4pt]
+  \item \textbf{Impact / contact phase (DSP)} --- the heel of the front
+        foot comes into contact with the floor.
+  \item \textbf{Lift-off / swing phase (SSP)} --- during the transition
+        from double to single support, the swinging foot is lifted off
+        the ground; the robot transfers its weight onto the support foot
+        and starts swinging the rear leg forward.
+  \item \textbf{Catch phase (DSP)} --- the swinging foot comes back into
+        contact with the floor, returning the robot to double support.
+\end{itemize}
+The roles of the two legs are then swapped and the cycle repeats.
+
+\subsection{Gait Engine}
+The gait engine, also referred to as the walking-pattern generator, is
+the software component responsible for producing a sequence of feasible
+joint positions that reproduce a walking motion. It accounts for the
+robot's physical limitations, its preferred walking speed, and the
+desired gait style to compute the best sequence of joint angles and body
+motions for stable and efficient walking. Gait engines fall into two
+main families:
+\begin{itemize}[itemsep=2pt,topsep=4pt]
+  \item \textbf{ZMP-based approach} --- requires comprehensive knowledge
+        of the robot's parameters and uses the ZMP as a feedback signal
+        to adjust joint angles and torques.
+  \item \textbf{Inverted-pendulum approach} --- operates with limited
+        knowledge of the robot model and uses a closed-loop feedback
+        based on the inverted-pendulum abstraction.
+\end{itemize}
+The gait generator developed in this work follows the ZMP-based approach
+and is detailed in Chapter~\ref{chap:kinematics}.
+
+\section{Walking Primitive}
+A walking primitive is a fundamental building block that generates the
+motion of a robot's gait. It defines characteristics such as step
+length, step height, and step frequency, taking into account the robot's
+physical constraints, its stability requirements, and the desired
+locomotion behaviour.
+
+\section{Conclusion}
+This chapter introduced the fundamental concepts of bipedal walking,
+providing the vocabulary and the stability criteria --- centre of mass,
+Zero-Moment-Point, and support polygon --- that govern stable, human-like
+locomotion, together with the structure of the gait cycle. These
+concepts form the theoretical foundation for the hardware, firmware, and
+control chapters that follow. The next chapter presents the hardware and
+mechatronic design of the Abbes robot.

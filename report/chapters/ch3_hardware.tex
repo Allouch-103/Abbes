@@ -1,0 +1,311 @@
+%=====================================================================
+%  Chapter 3 — Hardware and Mechatronic Design
+%=====================================================================
+\chapter{Hardware and Mechatronic Design}
+\label{chap:hardware}
+
+\section{Introduction}
+Designing a bipedal robot is a multidisciplinary task that combines
+principles from mechanical engineering, electronics, and computer
+science. This chapter presents the physical foundation of the
+\textbf{Abbes} robot: the mechanical design derived from human
+proportions, the selection of actuators and sensors, the power supply,
+and the electronic architecture built around an ESP32 microcontroller.
+Together these subsystems form the platform on which the firmware and
+control software of the following chapters run.
+
+\section{Mechanical Design}
+The mechanical design is inspired by the anatomical structure of the
+human body. As the review of existing humanoids in
+Chapter~\ref{chap:presentation} showed, the construction of humanoid
+robots is rooted in mimicking human morphology.
+
+\subsection{Anthropometric Model}
+The anthropometric model expresses the robot's dimensions as a function
+of human-body proportions, so that its segments and movements stay as
+close to human anatomy as possible. Anthropometry --- from the Greek
+\emph{anthropos} (human) and \emph{metron} (measure) --- is the study
+and measurement of the physical dimensions of the human body. This work
+relies on \emph{static} anthropometric measurements, whose implementation
+is simpler, using the normalised segmental proportions established by
+Winter. Figure~\ref{fig:anthropometric} gives the length of each limb
+relative to the total height $H$ of the individual.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.6\textwidth]{fig_anthropometric.png}
+  \caption{Anthropometric model: segment lengths as a proportion of
+           total height $H$ (Winter's model).}
+  \label{fig:anthropometric}
+\end{figure}
+
+\subsection{Mechanical Articulated Structure}
+The articulated structure is the set of interconnected joints and links
+that lets the robot reproduce human-like movements. The number of
+degrees of freedom (DOF) must be large enough for agility and balance,
+yet kept minimal to simplify the model. For a leg, two DOF (at the hip
+and ankle) enable pendulum-like motion in the sagittal plane, and two
+more provide lateral motion in the frontal plane; a fifth DOF at the knee
+is required to clear the foot during the swing phase. This leads to five
+DOF per leg. Each arm uses three DOF, and the head two, as detailed in
+the next section. Figure~\ref{fig:morphology} shows the resulting joint
+arrangement.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.7\textwidth]{fig_morphology.png}
+  \caption{Robot morphology: joint arrangement and reference frame
+           (P: pitch, R: roll, Y: yaw).}
+  \label{fig:morphology}
+\end{figure}
+
+\subsection{Final Design: Joint Limits and Resting Positions}
+The final design is an 18-DOF humanoid with the following distribution:
+\begin{itemize}[itemsep=2pt,topsep=4pt]
+  \item \textbf{Each leg --- 5 DOF:} 2 at the hip (pitch and roll),
+        1 at the knee (pitch), and 2 at the ankle (pitch and roll).
+  \item \textbf{Each arm --- 3 DOF:} 2 at the shoulder (pitch and roll)
+        and 1 at the elbow (roll).
+  \item \textbf{Head --- 2 DOF:} head yaw and camera pitch.
+\end{itemize}
+
+Table~\ref{tab:joints} summarises the complete joint structure. The
+angle range and resting position of each joint are expressed in degrees
+of servo travel; these exact values are the single source of truth used
+by the firmware (the limits are enforced before any command reaches a
+servo, see Chapter~\ref{chap:firmware}). The joints are listed in the
+firmware's index order, which groups the right-side joints and the head
+on the first PWM board and the left-side joints on the second.
+
+\begin{table}[ht]
+  \centering
+  \caption{Robot joint structure: axes, angular limits and resting
+           positions (servo degrees).}
+  \label{tab:joints}
+  \small
+  \setlength{\tabcolsep}{6pt}
+  \renewcommand{\arraystretch}{1.12}
+  \begin{tabular}{@{}clccccc@{}}
+    \toprule
+    \textbf{\#} & \textbf{Joint name} & \textbf{Axis} &
+    \textbf{Min ($^\circ$)} & \textbf{Max ($^\circ$)} &
+    \textbf{Rest ($^\circ$)} \\
+    \midrule
+    1  & r\_shoulder\_pitch & pitch & 0  & 180 & 90  \\
+    2  & r\_shoulder\_roll  & roll  & 0  & 180 & 90  \\
+    3  & r\_elbow\_roll     & roll  & 0  & 180 & 90  \\
+    4  & head\_yaw          & yaw   & 0  & 180 & 90  \\
+    5  & camera\_pitch      & pitch & 0  & 180 & 90  \\
+    6  & r\_hip\_roll       & roll  & 0  & 170 & 50  \\
+    7  & r\_hip\_pitch      & pitch & 0  & 170 & 80  \\
+    8  & r\_knee\_pitch     & pitch & 0  & 170 & 100 \\
+    9  & r\_ankle\_pitch    & pitch & 10 & 180 & 100 \\
+    10 & r\_ankle\_roll     & roll  & 20 & 150 & 90  \\
+    11 & l\_shoulder\_pitch & pitch & 0  & 180 & 90  \\
+    12 & l\_shoulder\_roll  & roll  & 0  & 180 & 90  \\
+    13 & l\_elbow\_roll     & roll  & 0  & 180 & 90  \\
+    14 & l\_hip\_roll       & roll  & 0  & 170 & 50  \\
+    15 & l\_hip\_pitch      & pitch & 0  & 170 & 80  \\
+    16 & l\_knee\_pitch     & pitch & 0  & 170 & 70  \\
+    17 & l\_ankle\_pitch    & pitch & 10 & 180 & 90  \\
+    18 & l\_ankle\_roll     & roll  & 20 & 150 & 90  \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The mechanical parts are designed in CAD (Figure~\ref{fig:cad}) and
+manufactured by 3D printing; the assembled robot is shown in
+Figure~\ref{fig:realrobot}.
+
+\begin{figure}[ht]
+  \centering
+  \begin{subfigure}{0.40\textwidth}
+    \centering
+    \includegraphics[height=6.5cm]{fig_cad_design.png}
+    \caption{CAD model}
+    \label{fig:cad}
+  \end{subfigure}
+  \hspace{0.8cm}
+  \begin{subfigure}{0.40\textwidth}
+    \centering
+    \includegraphics[height=6.5cm]{fig_real_robot.png}
+    \caption{Assembled robot}
+    \label{fig:realrobot}
+  \end{subfigure}
+  \caption{Mechanical design of Abbes: (a) CAD model and (b) the
+           3D-printed, assembled robot.}
+  \label{fig:mechanical}
+\end{figure}
+
+\section{Hardware Components}
+
+\subsection{Actuators}
+Selecting actuators involves several criteria: high torque and precision
+for accurate motion, efficient current consumption, a size and weight
+compatible with the structure, durability, and cost. Table~\ref{tab:act}
+compares the candidates considered. The \textbf{MG996R} servo was
+selected: it offers a sufficient torque-to-cost ratio for a child-sized,
+3D-printed platform, and it is directly compatible with standard PWM
+control. The robot uses eighteen such servos, one per joint.
+
+\begin{table}[ht]
+  \centering
+  \caption{Actuator specifications.}
+  \label{tab:act}
+  \small
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{@{}lccccc@{}}
+    \toprule
+    \textbf{Actuator} & \textbf{Model} & \textbf{Price (\euro)} &
+    \textbf{Torque (kg$\cdot$cm)} & \textbf{Position sensor} &
+    \textbf{Current (A)} \\
+    \midrule
+    Servo      & MG996R  & 20    & 10        & --          & 1   \\
+    Dynamixel  & MX-28   & 312   & 31.6      & Contactless & 1.7 \\
+    Servo      & HS-645MG& 38.40 & 107 / 133 & --          & 2.5 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Sensors}
+The robot's primary sensor is the \textbf{MPU6050}, which combines a
+three-axis gyroscope and a three-axis accelerometer in a single
+low-cost, I\textsuperscript{2}C-compatible package
+(Table~\ref{tab:sensor}). It provides the angular-velocity and
+acceleration data needed to estimate the robot's orientation and to
+maintain balance during motion. Its digital interface simplifies
+integration with the microcontroller.
+
+\begin{table}[ht]
+  \centering
+  \caption{Sensor description.}
+  \label{tab:sensor}
+  \small
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{0.7\textwidth}{@{}lX@{}}
+    \toprule
+    \textbf{Sensor} & \textbf{Description} \\
+    \midrule
+    MPU6050 & Combines a three-axis gyroscope and a three-axis
+              accelerometer (raw I\textsuperscript{2}C). \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Power Supply}
+The power supply must deliver the voltage and current required by all
+components within budget constraints. The robot is \emph{currently
+powered from an off-board source}; a battery-powered version is planned
+as future work. Table~\ref{tab:battery} lists the battery options
+selected for that version: a high-capacity LiPo pack is preferred for its
+current rating, at a higher cost than a basic lithium cell.
+
+\begin{table}[ht]
+  \centering
+  \caption{Battery specifications.}
+  \label{tab:battery}
+  \small
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabular}{@{}lcc@{}}
+    \toprule
+    \textbf{Battery} & \textbf{Current rating (mAh)} & \textbf{Cost} \\
+    \midrule
+    LiPo    & 5000 & High \\
+    Lithium & 1000 & Low  \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{DC/DC Regulator}
+A DC/DC converter adapts the battery voltage to the levels required by
+the servos and the electronics. Table~\ref{tab:regulator} compares the
+regulators considered, trading current rating against cost.
+
+\begin{table}[ht]
+  \centering
+  \caption{Regulator specifications.}
+  \label{tab:regulator}
+  \small
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabular}{@{}lcc@{}}
+    \toprule
+    \textbf{Regulator} & \textbf{Current rating (A)} & \textbf{Cost (\euro)} \\
+    \midrule
+    XL6009 & 3.0 & 14 \\
+    XL4016 & 9.0 & 30 \\
+    LM2596 & 1.5 & 8  \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{Electronic Architecture}
+\label{sec:hw-arch}
+The robot's electronics are organised into a \textbf{control section} and
+a \textbf{power section}.
+
+The control section is built around an \textbf{ESP32 microcontroller},
+which runs the real-time control loop directly on the robot and joins the
+ROS\,2 graph as a \emph{micro-ROS} node over WiFi/UDP. The ESP32 drives
+the eighteen servos through \textbf{two PCA9685} 16-channel PWM driver
+boards on the I\textsuperscript{2}C bus (at addresses 0x40 and 0x41): the
+first board carries the right-side and head joints, the second the
+left-side joints. The same I\textsuperscript{2}C bus connects the
+\textbf{MPU6050} IMU. On the host (laptop) side, a micro-ROS \emph{agent}
+bridges the ESP32 into ROS\,2, so that the inertial data published by the
+node and the joint commands it receives are available as ordinary ROS\,2
+topics. This architecture replaces the more common pairing of a
+single-board computer with a separate servo controller by a single,
+low-cost microcontroller that communicates wirelessly. The power section
+supplies the servos and electronics through the battery and DC/DC
+regulator described above. Figure~\ref{fig:hwarch} summarises the
+architecture.
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[
+      font=\small,
+      box/.style={draw, rounded corners=2pt, align=center,
+                  minimum height=9mm, minimum width=22mm, thick},
+      host/.style={box, fill=blue!8},
+      mcu/.style={box, fill=orange!12},
+      drv/.style={box, fill=green!10},
+      sen/.style={box, fill=purple!8},
+      pwr/.style={box, fill=red!8},
+      >=Latex
+    ]
+    \node[host] (host) {Host PC\\\scriptsize ROS\,2 + micro-ROS agent};
+    \node[mcu, right=22mm of host] (esp) {ESP32\\\scriptsize micro-ROS node};
+    \node[drv, right=20mm of esp, yshift=12mm] (pca0) {PCA9685 \#0\\\scriptsize 0x40};
+    \node[drv, right=20mm of esp, yshift=-12mm] (pca1) {PCA9685 \#1\\\scriptsize 0x41};
+    \node[sen, below=10mm of esp] (imu) {MPU6050\\\scriptsize IMU};
+    \node[box, right=14mm of pca0, fill=gray!10] (s0) {10 servos\\\scriptsize joints 1--10};
+    \node[box, right=14mm of pca1, fill=gray!10] (s1) {8 servos\\\scriptsize joints 11--18};
+    \node[pwr, below=10mm of imu, xshift=20mm] (pwr) {Battery $\rightarrow$ DC/DC regulator};
+
+    \draw[<->] (host) -- node[above,font=\scriptsize]{WiFi/UDP} (esp);
+    \draw[->] (esp) -- node[above,sloped,font=\scriptsize]{I\textsuperscript{2}C} (pca0);
+    \draw[->] (esp) -- node[below,sloped,font=\scriptsize]{I\textsuperscript{2}C} (pca1);
+    \draw[<->] (esp) -- node[right,font=\scriptsize]{I\textsuperscript{2}C} (imu);
+    \draw[->] (pca0) -- (s0);
+    \draw[->] (pca1) -- (s1);
+    \draw[-, dashed, red!60] (pwr) -- (esp);
+    \draw[-, dashed, red!60] (pwr) -| (s0);
+    \draw[-, dashed, red!60] (pwr) -| (s1);
+  \end{tikzpicture}
+  \caption{Electronic architecture of Abbes: the ESP32 micro-ROS node
+           drives 18 servos through two PCA9685 boards and reads the
+           MPU6050, communicating with the ROS\,2 host over WiFi. Dashed
+           red lines indicate power distribution.}
+  \label{fig:hwarch}
+\end{figure}
+
+\section{Conclusion}
+This chapter presented the hardware foundation of Abbes. The mechanical
+structure was derived from anthropometric data to obtain a human-like,
+18-DOF morphology, and its joint limits were defined
+(Table~\ref{tab:joints}). The components were selected to balance
+performance, cost, and efficiency: MG996R servos, an MPU6050 IMU, and a
+battery/regulator pair for the powered version. The electronic
+architecture is built around an ESP32 that drives the servos through two
+PCA9685 boards and joins ROS\,2 as a micro-ROS node. The next chapter
+details the embedded firmware that runs on this ESP32.

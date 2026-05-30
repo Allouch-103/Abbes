@@ -1,0 +1,22 @@
+%=====================================================================
+%  Abstract   (draft text -- edit freely)
+%=====================================================================
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+This report presents the design and software architecture of
+\textbf{Abbes}, a child-sized, 3D-printed humanoid robot with eighteen
+degrees of freedom (18-DOF). The platform is built end to end: from the
+mechanical CAD model and the electronics organised around an ESP32
+micro-ros node, to a complete ROS\,2 software stack that handles
+kinematics, balance and bipedal-gait generation. A Gazebo simulation
+provides a digital twin used for validation before deployment on the
+physical robot. Beyond the classical motion-control pipeline, the
+project introduces a high-level \emph{natural-language command layer}:
+a locally hosted Large Language Model grounds free-form user
+instructions into a fixed, safety-checked command vocabulary that
+drives the robot's actions. Particular emphasis is placed on the
+software engineering aspects of the system --- the embedded firmware,
+the ROS\,2 control architecture and the artificial-intelligence command
+pipeline --- while the mechatronic and gait-planning foundations of the
+platform are also covered.

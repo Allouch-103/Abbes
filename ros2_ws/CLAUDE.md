@@ -1,50 +1,14 @@
-# Humanoid Robot PFE — Project Memory
+# Abbes — ROS2 Workspace (component memory)
 
-This file is read by Claude Code at the start of every session. It is the
-durable context for the entire project. Update it whenever a major piece
-of work finishes.
+Component context for the ROS2 workspace. Loads when I touch files under
+`ros2_ws/`. **Project-wide context — hardware, software stack, system
+constraints, how-to-work-with-me, and the cross-cutting conventions — lives in
+`~/Abbes/CLAUDE.md`; read that first.** Firmware context is in
+`~/Abbes/firmware/CLAUDE.md`.
 
----
-
-## 1. What this project is
-
-PFE (Projet de Fin d'Études) at INSAT, Tunisia, by Yassine Allouch.
-A from-scratch humanoid robot built end-to-end: mechanical CAD, 3D-printed
-parts, electronics, low-level control, kinematics, simulation, and (now) an
-AI/natural-language layer for high-level control.
-
-The robot is roughly child-sized, 18 degrees of freedom, designed to walk,
-balance, gesture, and respond to spoken commands.
-
----
-
-## 2. Hardware
-
-- **Frame:** 3D-printed, designed in Onshape. ~18 DOF total.
-- **Joint layout (18 servos):**
-    - 2× legs × 5 DOF each = 10 (hip_roll, hip_pitch, knee_pitch,
-      ankle_pitch, ankle_roll, per leg)
-    - 2× arms × 3 DOF each = 6 (shoulder_pitch, shoulder_roll, elbow_roll)
-    - Head: head_yaw, camera_pitch = 2
-- **Actuators:** standard hobby servos driven by PCA9685 I²C PWM driver.
-- **Brain:** ESP32 microcontroller. Runs the real-time control loop on
-  hardware, talks to PCA9685, reads IMU.
-- **Sensors:** IMU (orientation), planned vision via a head-mounted camera.
-- **Power:** off-board for now; battery-powered version is post-PFE.
-
----
-
-## 3. Software stack
-
-- **OS:** Ubuntu 24.04 LTS
-- **ROS2 distro:** Jazzy Jalisco
-- **Simulator:** Gazebo Harmonic (the modern Gazebo, not classic Gazebo
-  /Ignition naming). Bridged to ROS2 via `gz_ros2_control`.
-- **Languages:** C++ for real-time control nodes, Python for
-  higher-level orchestration (action servers, dispatcher, etc).
-- **LLM stack:** Ollama running local models (target: llama3.1:8b or
-  llama3.2:3b depending on RAM). Function-calling / tool-use for
-  command grounding. No cloud dependency.
+This file covers the ROS2 packages, ROS2/AI-specific conventions, the AI
+(natural-language) phase roadmap, and its live **session handoff** (§10) — keep
+that handoff current whenever a meaningful chunk of work finishes.
 
 ---
 
@@ -64,8 +28,9 @@ balance, gesture, and respond to spoken commands.
 - **`humanoid_command_api`** — Python action/service server node
   exposing the 7-command vocabulary to higher layers.
 
-There may also be a `firmware/` folder for the ESP32 code (PlatformIO
-project) — that lives outside the ros2_ws.
+The ESP32 firmware lives in `~/Abbes/firmware/` (a PlatformIO **micro-ROS**
+project, outside this workspace) — see `~/Abbes/firmware/CLAUDE.md`. It joins
+the ROS2 graph over WiFi: SUB `/joint_commands` (degrees, 18 vals), PUB `/imu`.
 
 ---
 
@@ -117,50 +82,12 @@ interface.
 
 ---
 
-## 7. Critical system constraints
+## 7 & 8 — moved to the root hub
 
-- **Root filesystem `/` is on `/dev/nvme0n1p6` (46 GB) and frequently
-  near-full.** Do not install or download anything large to `/`. Check
-  `df -h /` before any operation expected to use more than ~100 MB.
-- **External USB disk** is mounted at `/mnt/ollama_disk` (440 GB ext4,
-  label `OllamaModels`). All LLM models, large caches, and AI-phase
-  downloads go here.
-- **Ollama configuration:** must redirect both `OLLAMA_MODELS` and
-  the `ollama` user's home directory to `/mnt/ollama_disk`, because
-  Ollama writes config and SSH keys to `$HOME/.ollama` and `/` cannot
-  hold them.
-- **GPU:** NVIDIA GPU is present and Ollama detected it. Models run
-  GPU-accelerated; expect ~1-2 second response times.
-
----
-
-## 8. How I want you (Claude Code) to work with me
-
-- **Teach as you go.** I am learning the AI/LLM domain from scratch.
-  Before any non-trivial edit, briefly explain what you're going to
-  change and why. After the edit, summarize what the new code does.
-- **One change at a time.** Don't bundle several edits. Make one
-  change, let me read and acknowledge, then move on.
-- **Verify before assuming.** If you're unsure where a file is, what
-  a function does, what's already implemented, or what the current
-  state is — read the file or run a check. Don't guess.
-- **Conservative changes only.** Don't reformat, reinstall, or
-  refactor unrelated things to "improve" them. Touch the minimum
-  needed.
-- **Disk-aware.** Before any download/install/build that could exceed
-  ~100 MB, confirm the target path is on `/mnt/ollama_disk` and that
-  it has space.
-- **Honest about uncertainty.** When you don't know, say so. Don't
-  bluff. If a fix is a guess, label it as such.
-- **Update CLAUDE.md as we complete steps.** When a roadmap item
-  finishes, update its checkbox and add a short note about what was
-  built.
-- **Always leave a session handoff.** Before ending a work session (or
-  whenever a meaningful chunk of work finishes), update **section 10
-  "Session handoff"** so a fresh session can pick up exactly where we
-  left off: what was just done, what's in progress, and the single next
-  concrete action. Treat this as mandatory, not optional — it's the
-  first thing I rely on at the start of every new session.
+Project-wide **system constraints** (small `/`, `/mnt/ollama_disk`, Ollama, GPU)
+and **how-to-work-with-me** now live in **`~/Abbes/CLAUDE.md` (§7, §8)**. The
+AI-phase operational war-stories (disk drops, GPU/DKMS history, model keep-alive)
+remain in §9 below, where the AI work happens.
 
 ---
 

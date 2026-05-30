@@ -1,0 +1,229 @@
+%=====================================================================
+%  Chapter 1 — General Presentation and State of the Art
+%=====================================================================
+\chapter{General Presentation and State of the Art}
+\label{chap:presentation}
+
+\section{Introduction}
+
+Humanoid robotics is one of the most demanding fields of modern
+engineering: it combines mechanical design, real-time control, embedded
+electronics, and, increasingly, artificial intelligence into a single
+integrated system. Reproducing a behaviour as ordinary as human walking
+requires a machine to balance on a small support area while continuously
+coordinating many actuators, all under strict timing constraints. This
+makes a humanoid platform an ideal testbed for studying the interaction
+between low-level real-time control and high-level decision making.
+
+This chapter introduces the project by outlining its objectives and its
+significance in the field of bipedal robotics. It then discusses the
+problematic aspects associated with bipedal walking, presents the state
+of the art through a few representative humanoid robots, and finally
+positions the \textbf{Abbes} robot --- the platform developed in this
+work --- with respect to those references. The objectives pursued are:
+
+\begin{enumerate}[itemsep=2pt,topsep=4pt]
+  \item Design and assemble an 18-DOF humanoid structure from 3D-printed
+        parts driven by hobby servo-motors.
+  \item Implement the on-board real-time firmware that actuates the
+        joints and streams inertial measurements.
+  \item Build a modular ROS\,2 software stack covering the kinematic
+        model, balance control, and bipedal-gait generation.
+  \item Validate the robot in a physics-based simulation (digital twin)
+        before deployment on hardware.
+  \item Add a natural-language command layer, based on a locally hosted
+        Large Language Model, that translates free-form user requests
+        into a fixed and safety-checked set of robot actions.
+\end{enumerate}
+
+\section{Problematic}
+\label{sec:problematic}
+
+Bipedal walking poses a unique set of challenges that stem from the need
+to maintain dynamic stability on two legs. For the platform developed
+here, these challenges are tightly coupled with the software-engineering
+goals of the project. The core problematic aspects are:
+
+\begin{itemize}[itemsep=2pt,topsep=4pt]
+  \item \textbf{Mechanical design.} Defining a joint distribution that
+        is rich enough to produce a stable, human-like gait while
+        remaining buildable with low-cost, 3D-printed parts and hobby
+        servo-motors.
+  \item \textbf{Control system.} Despite the need for inverse kinematics
+        in controlling a walking humanoid, ensuring robustness and
+        adaptability in real-time control algorithms running on a
+        resource-constrained microcontroller remains a significant
+        challenge.
+  \item \textbf{Stability criteria.} Keeping the robot balanced during
+        the various phases of walking, which requires a recognised
+        stability criterion and an inertial feedback loop.
+  \item \textbf{ROS\,2 integration.} Leveraging the advanced integration
+        capabilities of ROS\,2 to bridge a physics-based simulation and
+        the physical robot through a common middleware.
+  \item \textbf{High-level interaction.} Allowing a user to command the
+        robot in natural language while guaranteeing that only safe,
+        well-defined motions are ever executed.
+\end{itemize}
+
+\section{State of the Art}
+\label{sec:sota}
+
+Existing humanoid robots around the world showcase the remarkable
+advancements in robotics technology, demonstrating capabilities ranging
+from human-like motion and interaction to replacing humans in various
+industrial areas. The following sections review a few representative
+platforms.
+
+\subsection{WABIAN by Waseda}
+Since 1967, Waseda University has been at the forefront of biped-robot
+research. WABIAN-2 features 41 mechanical degrees of freedom, including
+two 6-DoF legs, a 2-DoF waist, a 2-DoF trunk, two 7-DoF arms, two 3-DoF
+hands, a 3-DoF neck, and two 1-DoF feet with passive toe joints.
+Standing at 1480~mm tall and weighing 64~kg, WABIAN-2 achieves a
+human-like gait characterised by stretched knees, heel-contact, and
+toe-off motion. This is made possible by its foot mechanism with passive
+toe joints and a 2-DoF (Roll, Yaw) waist that emulates human pelvic
+movement.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[height=6cm]{robot_wabian.png}
+  \caption{WABIAN by Waseda.}
+  \label{fig:wabian}
+\end{figure}
+
+\subsection{ASIMO by Honda}
+ASIMO is a research robot and is not available for commercial sale; it
+has, however, been loaned for unique events and used by major companies
+as a reception host. As of February 2009, there were over 100 ASIMO
+robots in various versions, ultimately aiming to assist individuals who
+are disabled, elderly, or ill, and to perform tasks that are dangerous
+for humans. The fifth version of ASIMO, released in September 2011,
+features enhanced capabilities including the use of all its fingers,
+equipped with tactile sensors in the palm and force detectors in each
+finger; combined with object-recognition technology, it can pick up a
+bottle and unscrew its cap, or hold a paper cup without crushing it. One
+of its main innovations is the ability to change direction smoothly
+while walking, without interrupting its stride.
+
+\begin{table}[ht]
+  \centering
+  \caption{Comparison of ASIMO Robot Models.}
+  \label{tab:asimo}
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabularx}{\textwidth}{@{}llllXXcc@{}}
+    \toprule
+    \textbf{Project} & \textbf{Date} & \textbf{Weight} & \textbf{Length}
+    & \textbf{Anatomy} & \textbf{Functions} & \textbf{DoF} &
+    \textbf{DoF Head} \\
+    \midrule
+    P-1   & 1993--1997 & 175\,kg & 1.915\,m & Head, Arm, Hand, Leg, Feet, Trunk & Walking & -- & -- \\
+    P-2   & --   & 210\,kg & 1.82\,m & -- & Walking, Climbing stairs & 30 & -- \\
+    P-3   & --   & 52\,kg  & 1.2\,m  & -- & Speed walking (1.6\,km/h) & 26 & -- \\
+    Asimo I   & 2000 & 54\,kg & 1.3\,m & -- & Speed walking (3\,km/h), Object detection, Face recognition & 34 & 3 \\
+    Asimo II  & 2005 & 54\,kg & 1.3\,m & -- & Running (6\,km/h), Gripping objects & 34 & 3 \\
+    Asimo III & 2011 & 48\,kg & 1.3\,m & -- & Human daily tasks, Collision avoidance, Dynamic path planning & 57 & 3 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[height=6cm]{robot_asimo.png}
+  \caption{ASIMO.}
+  \label{fig:asimo}
+\end{figure}
+
+\subsection{HRP Humanoid Series by AIST}
+The Humanoid Robotics Project (HRP) is an initiative aimed at developing
+general domestic-helper robots, funded by Japan's Ministry of Economy,
+Trade and Industry (METI) and the New Energy and Industrial Technology
+Development Organization (NEDO). The project is led by Kawada Industries
+with support from the National Institute of Advanced Industrial Science
+and Technology (AIST) and Kawasaki Heavy Industries. The HRP series,
+also known as Promet, began with modifications to Honda's P3 robots and
+includes features such as a tele-command system. Notably, HRP-2 can
+stand up after lying flat, a capability lacking in Honda's ASIMO. The
+HRP-4, a bipedal humanoid, stands 150~cm tall and weighs 39~kg.
+
+\begin{table}[ht]
+  \centering
+  \caption{Comparison of HRP Robot Models.}
+  \label{tab:hrp}
+  \scriptsize
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabularx}{\textwidth}{@{}llllXXcXXc@{}}
+    \toprule
+    \textbf{Project} & \textbf{Date} & \textbf{Weight} & \textbf{Length}
+    & \textbf{Anatomy} & \textbf{Functions} & \textbf{DoF} &
+    \textbf{DoF Head} & \textbf{DoF Arm} & \textbf{DoF Leg} \\
+    \midrule
+    HRP-1  & 1998 & 120\,kg & 1.6\,m  & Head, Trunk, Arm, Hand, Leg, Feet & Walking / Hand operations & 30 & 2 & 14: 3 shoulders, 1 elbow, 3 wrist & 12 \\
+    HRP-2  & 2003 & 58\,kg  & 1.54\,m & -- & Walking on rug, Standing, Human interaction & 30 & 2 & 12: 3 shoulders, 1 elbow, 2 wrist & 12 \\
+    HRP-3  & 2007 & 65\,kg  & 1.6\,m  & -- & Speed walking 2\,km/h & 42 & 2 & 12: 3 shoulders, 1 elbow, 2 wrist & 12 \\
+    HRP-4C & 2009 & 43\,kg  & 1.58\,m & -- & Anthropomorphic, Face expressions & 42 & 11: 3 neck, 8 face & 4 & 12 \\
+    HRP-4  & 2010 & 39\,kg  & 1.51\,m & -- & Athleticism, Running, Operating tasks & 34 & 2 & 4 & 12 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{figure}[ht]
+  \centering
+  \begin{subfigure}{0.35\textwidth}
+    \centering
+    \includegraphics[height=6.5cm]{robot_hrp1.png}
+    \caption{HRP-1}
+    \label{fig:hrp1}
+  \end{subfigure}
+  \hspace{1.2cm}
+  \begin{subfigure}{0.35\textwidth}
+    \centering
+    \includegraphics[height=6.5cm]{robot_hrp2.png}
+    \caption{HRP-2}
+    \label{fig:hrp2}
+  \end{subfigure}
+  \caption{HRP humanoid robots.}
+  \label{fig:hrp}
+\end{figure}
+
+\subsection{Positioning of Abbes}
+\label{sec:positioning}
+The platforms above achieve outstanding performance but rely on custom,
+expensive hardware that is out of reach for a student project. Abbes is
+positioned instead as a low-cost, fully 3D-printed, 18-DOF humanoid
+built around hobby servo-motors and an ESP32 microcontroller. Its
+distinguishing contribution is not raw locomotion performance but its
+\emph{software}: a modern ROS\,2 control stack with a physics-based
+digital twin, and a natural-language command layer driven by a locally
+hosted Large Language Model --- a feature uncommon on platforms of this
+scale, and the main software-engineering contribution of this work.
+
+\section{Conclusion}
+This chapter explored the fundamental principles and obstacles within
+bipedal robotics. By examining both the challenges and the
+state-of-the-art developments, it identified the critical focal points
+for the project. The subsequent chapters delve into the specific
+methodologies, design considerations, and practical implementations
+required to build the robot. Table~\ref{tab:bipedal} provides a concise
+overview of the key features of the robots studied above.
+
+\begin{table}[ht]
+  \centering
+  \caption{Comparison of Bipedal Robots.}
+  \label{tab:bipedal}
+  \small
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabularx}{\textwidth}{@{}lccX@{}}
+    \toprule
+    \textbf{Robot} & \textbf{Height (mm)} & \textbf{Number of DoF} &
+    \textbf{Capabilities and Features} \\
+    \midrule
+    WABIAN by Waseda & 1480 & 41 & Human-like gait, stretched knees, heel-contact, toe-off motion \\
+    ASIMO by Honda   & Varies & Varies & Bipedal locomotion, object manipulation, human interaction \\
+    HRP Series by AIST & Varies & Varies & Anthropomorphic design, various locomotion modes \\
+    \bottomrule
+  \end{tabularx}
+\end{table}

@@ -1,0 +1,94 @@
+%=====================================================================
+%  Abbes — 18-DOF Humanoid Robot : End-of-Studies Project Report
+%  Main file.  Compile with:  latexmk -pdf main.tex
+%=====================================================================
+\documentclass[12pt,a4paper,oneside]{report}
+
+%--------------------- Encoding & language ---------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage{textcomp}
+\providecommand{\euro}{\texteuro}
+
+%--------------------- Page geometry ---------------------------------
+\usepackage[a4paper,margin=2.5cm]{geometry}
+
+%--------------------- Graphics & color ------------------------------
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,fit,backgrounds,calc}
+\graphicspath{{figures/}}
+
+%--------------------- Math, tables, lists ---------------------------
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}        % professional tables (\toprule \midrule \bottomrule)
+\usepackage{array}
+\usepackage{tabularx}        % auto-width columns
+\usepackage{enumitem}        % tighter list control
+
+%--------------------- Source-code listings --------------------------
+\usepackage{listings}
+\lstdefinestyle{cpp}{
+  language=C++,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{blue!60!black}\bfseries,
+  commentstyle=\color{green!35!black}\itshape,
+  stringstyle=\color{purple!70!black},
+  numbers=left, numberstyle=\tiny\color{gray}, numbersep=7pt,
+  frame=single, rulecolor=\color{gray!40},
+  backgroundcolor=\color{gray!4},
+  breaklines=true, showstringspaces=false, tabsize=2,
+  columns=flexible, captionpos=b, xleftmargin=14pt,
+}
+\lstset{style=cpp}
+
+%--------------------- Misc layout helpers ---------------------------
+\usepackage{setspace}
+\usepackage{ulem}\normalem   % for \uline (underline) without italicising everything
+
+%--------------------- Cross-refs & links (load last) ----------------
+\usepackage[hidelinks]{hyperref}
+
+%=====================================================================
+%  COVER-PAGE CONFIGURATION  --  *** EDIT THESE VALUES ***
+%=====================================================================
+\newcommand{\projType}{Projet Personnel Professionnel}
+\newcommand{\projSpeciality}{Software Engineering}
+\newcommand{\projLevel}{3rd Year Engineering}
+\newcommand{\projTitle}{Design and Software Architecture of an 18-DOF
+  Humanoid Robot: ROS\,2 Control, Simulation and an LLM-Based
+  Natural-Language Command Layer}
+\newcommand{\projAuthorA}{Zeyneb Benabdallah}
+\newcommand{\projAuthorB}{Yassine Allouch}
+\newcommand{\projSupervisor}{Mme Hajer Taktak}
+\newcommand{\projDefDate}{03/06/2026}
+\newcommand{\projYear}{2025\,/\,2026}
+%=====================================================================
+
+\begin{document}
+
+\input{frontmatter/cover}
+
+\pagenumbering{roman}
+\input{frontmatter/acknowledgements}
+\input{frontmatter/abstract}
+
+\tableofcontents
+\listoffigures
+\listoftables
+\cleardoublepage
+
+\pagenumbering{arabic}
+
+% ---- Chapters (added part by part) ----
+\input{chapters/ch1_presentation}
+\input{chapters/ch2_walking}
+\input{chapters/ch3_hardware}
+\input{chapters/ch4_firmware}
+
+\end{document}

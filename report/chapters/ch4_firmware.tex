@@ -1,0 +1,247 @@
+%=====================================================================
+%  Chapter 4 — Embedded Firmware: the ESP32 micro-ROS Node
+%=====================================================================
+\chapter{Embedded Firmware: the On-Board Controller}
+\label{chap:firmware}
+
+\section{Introduction}
+The firmware is the lowest software layer of the robot: it runs directly
+on the microcontroller introduced in Chapter~\ref{chap:hardware} and
+turns the electronics into an active component of the robot's software
+system. Its responsibilities are concrete: receive the eighteen target
+joint angles, drive the servos smoothly through the two PCA9685 boards,
+read the MPU6050 inertial sensor, and make all of this available to the
+rest of the system. This chapter first justifies the choice of the ESP32,
+then explains how the firmware is organised, how it handles the actuators
+and sensors over the I\textsuperscript{2}C bus, and finally how it joins
+the ROS\,2 world through \emph{micro-ROS} --- the bridge that leads
+naturally into the next chapter.
+
+\section{Choice of the ESP32}
+\label{sec:choice-esp}
+The on-board controller has a demanding but bounded role: it must update
+eighteen servos and sample an inertial sensor at a steady rate, while
+exchanging data with the host computer. Selecting a microcontroller for
+this task involves balancing computing power, connectivity, and cost.
+
+The \textbf{ESP32} was chosen because it meets all of these constraints
+at once. It is a low-cost, dual-core processor running at 240~MHz with
+enough memory to host a lightweight ROS\,2 client, which is far beyond
+the reach of an 8-bit board such as a basic Arduino. Crucially, it
+integrates \textbf{WiFi}, allowing the robot to communicate with the host
+wirelessly and to operate untethered. It natively supports the
+\textbf{I\textsuperscript{2}C} bus required by both the PCA9685 PWM
+drivers and the MPU6050 sensor, and it runs a real-time operating system
+(FreeRTOS) whose two cores can separate time-critical communication from
+supervision. Finally, it is well supported by the embedded ROS\,2
+tooling used in this project. Compared with a single-board computer such
+as a Raspberry Pi, the ESP32 is cheaper, lighter, and consumes far less
+power --- and the modest computation performed on board does not require
+a full operating system, making the single-board computer unnecessary
+for this layer.
+
+\section{Firmware Architecture}
+\label{sec:fw-arch}
+The firmware is written in C++ on the Arduino/PlatformIO framework and is
+deliberately split into focused modules rather than a single monolithic
+program: one module manages the servos, one is a self-contained driver
+for the IMU, and one handles the communication with the host. A separate
+file holds the joint map (Table~\ref{tab:joints}) and all hardware
+constants, so that no hardware-specific value is hidden in the logic.
+
+The architecture takes advantage of the ESP32's two cores. All
+communication --- the wireless link, the connection lifecycle, and the
+dispatching of incoming and outgoing messages --- runs in a dedicated
+real-time task pinned to \textbf{core~1}. \textbf{Core~0} is left to the
+main program, which only supervises the system and is reserved for future
+watchdog and safety logic. Separating communication from supervision in
+this way ensures that activity on the network cannot stall the safety
+logic, and vice versa.
+
+Functionally, the firmware implements two continuous data paths, shown in
+Figure~\ref{fig:fwflow}. On the \emph{command path}, target joint angles
+arriving from the host are stored, and a periodic 100~Hz routine drives
+the servos toward those targets through the PWM boards. On the
+\emph{sensing path}, the inertial sensor is sampled and a periodic 50~Hz
+routine sends the measurements back to the host. Both periodic routines
+are driven by the microcontroller's own clock, so the joint-control rate
+remains regular even when network traffic is not. On start-up, the same
+servo mechanism first brings all joints smoothly to their resting
+position before any command is accepted.
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[
+      font=\small, >=Latex,
+      mod/.style={draw, rounded corners=2pt, align=center, thick,
+                  minimum height=9mm, fill=orange!10},
+      hw/.style={draw, rounded corners=2pt, align=center, thick,
+                 minimum height=9mm, fill=gray!12},
+      ext/.style={draw, rounded corners=2pt, align=center, thick,
+                  minimum height=9mm, fill=blue!8},
+    ]
+    \node[ext] (host) {ROS\,2\\host};
+    \node[mod, right=20mm of host, yshift=11mm] (sub) {Command\\handler};
+    \node[mod, right=12mm of sub] (servo) {Servo loop\\100\,Hz};
+    \node[mod, below=12mm of sub] (imudrv) {IMU driver\\(I\textsuperscript{2}C)};
+    \node[mod, right=12mm of imudrv] (imutim) {IMU loop\\50\,Hz};
+    \node[hw, right=14mm of servo] (pca) {2$\times$PCA9685\\$\rightarrow$ 18 servos};
+    \node[hw, right=14mm of imutim] (imu) {MPU6050};
+
+    \begin{scope}[on background layer]
+      \node[draw, dashed, thick, rounded corners, fill=green!4,
+            fit=(sub)(servo)(imudrv)(imutim), inner sep=10pt] (esp) {};
+      \node[anchor=south west, font=\scriptsize\itshape]
+            at (esp.north west) {ESP32 (FreeRTOS, core 1)};
+    \end{scope}
+
+    \draw[->] (host.north) |- (sub.west) node[midway,above,font=\scriptsize]{};
+    \draw[->] (sub) -- (servo);
+    \draw[->] (servo) -- node[above,font=\scriptsize]{I\textsuperscript{2}C} (pca);
+    \draw[->] (imu) -- node[above,font=\scriptsize]{I\textsuperscript{2}C} (imutim);
+    \draw[->] (imutim) -- (imudrv);
+    \draw[->] (imudrv.west) -| (host.south);
+    \node[font=\scriptsize] at ($(host)!0.5!(sub)+(0,4mm)$) {/joint\_commands};
+    \node[font=\scriptsize] at ($(host)!0.5!(imudrv)+(2mm,-4mm)$) {/imu};
+  \end{tikzpicture}
+  \caption{Firmware data paths: the command path (top) drives the servos
+           at 100~Hz, the sensing path (bottom) publishes the IMU at
+           50~Hz. Both periodic loops run on the microcontroller's clock.}
+  \label{fig:fwflow}
+\end{figure}
+
+\section{Actuators and Sensors over I\texorpdfstring{\textsuperscript{2}}{2}C}
+\label{sec:fw-io}
+The PWM driver boards and the inertial sensor all share a single
+\textbf{I\textsuperscript{2}C} bus, a two-wire serial bus on which each
+device has its own address. This is what allows three peripherals --- the
+two PCA9685 boards (at addresses 0x40 and 0x41) and the MPU6050 --- to be
+controlled through only two microcontroller pins.
+
+\paragraph{Actuators.}
+A joint angle cannot be sent to a servo directly; it must be expressed as
+the width of a PWM pulse. The firmware converts each angle in degrees to
+the corresponding pulse width for the MG996R servos and sends it to the
+appropriate PCA9685 channel. Two safeguards are applied in the process.
+First, every command is \emph{clamped} to the individual angular limits
+of the joint (Table~\ref{tab:joints}) before it reaches a servo, so an
+out-of-range request can never force a joint past its mechanical limit.
+Second, and most importantly, the servos are never commanded to jump
+straight to a new target: the target is only stored, and the 100~Hz loop
+moves each joint toward it by a small, fixed maximum step on every tick
+--- a \emph{velocity-limited interpolation}. This ramps every motion
+smoothly and protects the plastic gears of the hobby servos from the
+abrupt slams that a sudden set-point would otherwise cause.
+
+\paragraph{Sensor.}
+The MPU6050 combines a three-axis accelerometer and a three-axis
+gyroscope, and is read over the same I\textsuperscript{2}C bus through a
+self-contained driver rather than a third-party library, keeping the
+behaviour fully under control. At start-up the driver wakes the sensor,
+enables a low-pass filter to reject vibration noise, and sets the
+measurement ranges and sampling rate. Each reading then retrieves all of
+the acceleration and angular-velocity data in a single bus transaction,
+which guarantees that every axis belongs to the same sample, and converts
+the raw values into physical units. Importantly, the firmware performs
+\emph{no orientation estimation on the device}: it transmits acceleration
+and angular velocity only. Fusing those two signals into a usable tilt
+estimate is left to a node on the host side
+(Chapter~\ref{chap:software}), which keeps the microcontroller's workload
+light and places the filtering logic where it is easiest to tune.
+
+\section{Joining ROS\,2 with micro-ROS}
+\label{sec:fw-microros}
+The two data paths described above must ultimately connect to the rest of
+the system. The entire software stack of Abbes is built on ROS\,2 --- the
+simulation, the controllers, and the artificial-intelligence layer of the
+following chapters all communicate through it. ROS\,2, however, is
+designed to run on full computers: its communication relies on the DDS
+middleware, whose memory and processing requirements far exceed what a
+microcontroller can provide. Keeping the ESP32 outside ROS\,2 and talking
+to it over a custom serial protocol would mean hand-written message
+framing on both sides, no introspection, and brittle, hard-to-extend
+code.
+
+\textbf{micro-ROS} resolves this. It brings the ROS\,2 client concepts
+--- nodes, topics, publishers and subscribers --- to microcontrollers
+running a real-time operating system. In place of the full DDS middleware
+it uses a lightweight client that communicates with a companion process
+on the host, the \textbf{micro-ROS agent}; the agent translates the
+compact messages from the microcontroller into the full ROS\,2 traffic,
+and back (Figure~\ref{fig:microros}). From the point of view of the rest
+of the system, the ESP32 then appears as an ordinary ROS\,2 node: its
+data can be inspected with the same tools and uses the same standard
+message types as any other node.
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[
+      font=\small, >=Latex, node distance=20mm,
+      b/.style={draw, rounded corners=2pt, align=center, thick,
+                minimum height=12mm, minimum width=30mm},
+    ]
+    \node[b, fill=orange!12] (esp) {ESP32\\\scriptsize micro-ROS client};
+    \node[b, fill=green!10, right=24mm of esp] (agent) {micro-ROS agent\\\scriptsize (host)};
+    \node[b, fill=blue!8, right=24mm of agent] (ros) {ROS\,2 graph\\\scriptsize controllers, sim, AI};
+    \draw[<->] (esp) -- node[above,font=\scriptsize]{WiFi/UDP} (agent);
+    \draw[<->] (agent) -- node[above,font=\scriptsize]{DDS} (ros);
+  \end{tikzpicture}
+  \caption{micro-ROS bridges the microcontroller to the ROS\,2 graph: a
+           lightweight client on the ESP32 talks to an agent on the host,
+           which connects it to the full DDS network.}
+  \label{fig:microros}
+\end{figure}
+
+This is exactly why micro-ROS is convenient here: the on-robot controller
+speaks the same language as everything else, so the inertial data and the
+joint commands are exposed as standard ROS\,2 topics, with no custom
+protocol or translation glue to maintain. Concretely, the firmware
+advertises a node that \emph{subscribes} to the joint-command topic and
+\emph{publishes} the IMU topic. Both use \textbf{best-effort} delivery:
+for a continuous stream of set-points and inertial samples, the newest
+value always supersedes the previous one, so re-transmitting a lost
+message would only add latency.
+
+Because the wireless link can drop, the firmware tolerates an agent that
+comes and goes through the explicit state machine of
+Figure~\ref{fig:fsm}. It waits for the network, then for the agent; once
+the agent answers it creates the ROS\,2 entities and enters the connected
+state, where it periodically re-checks the link. If the agent is lost,
+the node cleanly destroys its entities and returns to waiting --- so the
+robot reconnects automatically, without a reboot. An on-board LED mirrors
+this state, lit only while connected.
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[
+      font=\small, >=Latex, node distance=18mm and 24mm,
+      st/.style={draw, rounded corners=3pt, align=center, thick,
+                 minimum height=9mm, minimum width=26mm, fill=blue!7}
+    ]
+    \node[st] (wifi) {\textsc{Waiting\_WiFi}};
+    \node[st, right=of wifi] (agent) {\textsc{Waiting\_Agent}};
+    \node[st, right=of agent] (conn) {\textsc{Connected}};
+    \node[st, below=of agent] (disc) {\textsc{Disconnected}};
+
+    \draw[->] (wifi) -- node[above,font=\scriptsize,align=center]{WiFi up} (agent);
+    \draw[->] (agent) -- node[above,font=\scriptsize,align=center]{agent replies} (conn);
+    \draw[->] (conn) -- node[right,font=\scriptsize,align=center]{link lost} (disc);
+    \draw[->] (disc) -- node[below,font=\scriptsize,align=center]{entities destroyed} (agent);
+  \end{tikzpicture}
+  \caption{Agent-connection state machine, providing automatic
+           reconnection without rebooting the robot.}
+  \label{fig:fsm}
+\end{figure}
+
+\section{Conclusion}
+This chapter described the embedded firmware of Abbes. The ESP32 was
+chosen for its dual-core processing, integrated WiFi, native
+I\textsuperscript{2}C support, and low cost. Around it, the firmware is
+organised into focused modules running two periodic data paths --- a
+100~Hz servo loop and a 50~Hz sensing loop --- with per-joint limiting
+and velocity-limited interpolation to protect the hardware. The actuators
+and the inertial sensor share a single I\textsuperscript{2}C bus, and the
+node joins the rest of the system through micro-ROS, which makes the
+microcontroller a first-class participant in the ROS\,2 graph. That graph
+--- the host-side software architecture that produces the joint commands
+and consumes the inertial data --- is the subject of the next chapter.

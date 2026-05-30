@@ -1,0 +1,50 @@
+\babel@toc {english}{}\relax 
+\contentsline {chapter}{Acknowledgements}{i}{chapter*.1}%
+\contentsline {chapter}{Abstract}{ii}{chapter*.2}%
+\contentsline {chapter}{\numberline {1}General Presentation and State of the Art}{1}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Introduction}{1}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Problematic}{1}{section.1.2}%
+\contentsline {section}{\numberline {1.3}State of the Art}{2}{section.1.3}%
+\contentsline {subsection}{\numberline {1.3.1}WABIAN by Waseda}{2}{subsection.1.3.1}%
+\contentsline {subsection}{\numberline {1.3.2}ASIMO by Honda}{2}{subsection.1.3.2}%
+\contentsline {subsection}{\numberline {1.3.3}HRP Humanoid Series by AIST}{3}{subsection.1.3.3}%
+\contentsline {subsection}{\numberline {1.3.4}Positioning of Abbes}{4}{subsection.1.3.4}%
+\contentsline {section}{\numberline {1.4}Conclusion}{4}{section.1.4}%
+\contentsline {chapter}{\numberline {2}Concepts on Bipedal Walking}{6}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Introduction}{6}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Walking Definition}{6}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Motion Planes}{6}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Robot Control and Stability}{6}{section.2.4}%
+\contentsline {subsection}{\numberline {2.4.1}Centre of Mass (CoM)}{7}{subsection.2.4.1}%
+\contentsline {subsection}{\numberline {2.4.2}Zero-Moment-Point (ZMP)}{7}{subsection.2.4.2}%
+\contentsline {subsection}{\numberline {2.4.3}Support Polygon}{7}{subsection.2.4.3}%
+\contentsline {subsection}{\numberline {2.4.4}Stability Criteria}{8}{subsection.2.4.4}%
+\contentsline {section}{\numberline {2.5}Types of Bipedal Walking}{8}{section.2.5}%
+\contentsline {section}{\numberline {2.6}Robot Gait Generation}{9}{section.2.6}%
+\contentsline {subsection}{\numberline {2.6.1}Walking-Cycle Components}{9}{subsection.2.6.1}%
+\contentsline {subsection}{\numberline {2.6.2}Walking-Cycle Phases}{9}{subsection.2.6.2}%
+\contentsline {subsection}{\numberline {2.6.3}Gait Engine}{9}{subsection.2.6.3}%
+\contentsline {section}{\numberline {2.7}Walking Primitive}{10}{section.2.7}%
+\contentsline {section}{\numberline {2.8}Conclusion}{10}{section.2.8}%
+\contentsline {chapter}{\numberline {3}Hardware and Mechatronic Design}{11}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Introduction}{11}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Mechanical Design}{11}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Anthropometric Model}{11}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Mechanical Articulated Structure}{11}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Final Design: Joint Limits and Resting Positions}{12}{subsection.3.2.3}%
+\contentsline {section}{\numberline {3.3}Hardware Components}{12}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Actuators}{12}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Sensors}{13}{subsection.3.3.2}%
+\contentsline {subsection}{\numberline {3.3.3}Power Supply}{14}{subsection.3.3.3}%
+\contentsline {subsection}{\numberline {3.3.4}DC/DC Regulator}{14}{subsection.3.3.4}%
+\contentsline {section}{\numberline {3.4}Electronic Architecture}{15}{section.3.4}%
+\contentsline {section}{\numberline {3.5}Conclusion}{16}{section.3.5}%
+\contentsline {chapter}{\numberline {4}Embedded Firmware: the On-Board Controller}{17}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Introduction}{17}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Choice of the ESP32}{17}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Firmware Architecture}{18}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Actuators and Sensors over I\textsuperscript {2}C}{18}{section.4.4}%
+\contentsline {paragraph}{Actuators.}{18}{section*.25}%
+\contentsline {paragraph}{Sensor.}{19}{section*.26}%
+\contentsline {section}{\numberline {4.5}Joining ROS\,2 with micro-ROS}{19}{section.4.5}%
+\contentsline {section}{\numberline {4.6}Conclusion}{20}{section.4.6}%
