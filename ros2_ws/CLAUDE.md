@@ -89,7 +89,7 @@ AI intelligence phase (current focus):
   AI Step 4  Connect LLM → Robot (dispatcher) ................. ✅
   AI Step 5  Safety Validator ................................. ✅
   AI Step 6  Feedback Loop .................................... ✅
-  AI Step 7  Web UI ........................................... ⏳
+  AI Step 7  Web UI ........................................... ✅
   AI Step 8  Voice Input (Whisper) [BONUS] .................... ⏳
   AI Step 9  Graphic Path Picker [BONUS] ...................... ⏳
 
@@ -231,6 +231,29 @@ and abandoned. Free-form. Update over time.)
       function-calling mechanism the dispatcher (Step 4) needs, on the 3B
       model + 4 GB GPU. Step 3 ✅.
 
+- **GPU mismatch RESOLVED — reboot done, GPU LIVE (2026-05-30 evening).** The
+  DKMS 309 fix below worked: after rebooting onto 6.17.0-23, `nvidia-smi`
+  works (Driver 535.309.01, no mismatch), `modinfo nvidia` = 309, and
+  `ollama ps` shows `100% GPU`. Steps 4–7 then ran LIVE through Ollama for the
+  first time.
+- **Model keep-alive / "why is it stuck" (2026-05-30).** On the MX150 the
+  model EVICTS from VRAM after ~5 min idle, and a cold RELOAD of the 2 GB model
+  FROM THE USB DISK takes ~47 s — so the first command after idle looks frozen.
+  Keep the web UI snappy by pinning the model warm with one call (loads it AND
+  sets a 30-min TTL, no systemd edit/restart):
+  `curl -s localhost:11434/api/generate -d '{"model":"llama3.2:3b","prompt":"hi","keep_alive":"30m"}'`.
+- **DISK DROPPED AGAIN — now TWICE in one day (2026-05-30): at boot AND while
+  idle.** `/mnt/ollama_disk` was found unmounted at boot, then AGAIN later while
+  idle (the 2nd time showed NO dmesg UAS error — device `sda1`/`OllamaModels`
+  present, ext4 clean, just not mounted). Downstream symptom: Ollama can't reach
+  its model store → `ollama list` errors `mkdir .../ollama: permission denied`
+  and `/api/chat` returns `400 {"error":"model is required"}` — the WHOLE LLM
+  stack dies. RECOVERY (both times): `sudo mount /mnt/ollama_disk` then
+  `sudo systemctl restart ollama`, then re-warm the model. The UAS quirk may not
+  be fully holding, or something is unmounting it — NOT yet root-caused. If it
+  recurs, investigate fstab `nofail`/automount and whether the VL715 bridge
+  still transiently drops.
+
 ---
 
 ## 10. Session handoff — where we are right now
@@ -238,9 +261,83 @@ and abandoned. Free-form. Update over time.)
 **Always keep this section current (see section 8 rule).** This is the
 first thing to read at the start of a new session.
 
-**Last updated:** 2026-05-30
+**Last updated:** 2026-05-30 (evening)
 
-**Just done:**
+**Just done (THIS SESSION, 2026-05-30 evening):**
+- **AI Steps 4–7 LIVE-verified end-to-end through Ollama for the FIRST time.**
+  GPU fix activated by the reboot (§9). Browser → dispatcher → Ollama tool pick
+  → real ROS2 action all proven: wave/bow/sit/stand fire and report (`Waved with
+  left hand.`, `Bow complete.`, `Returned to home pose.`); live status bar tracks
+  `idle→walking`; **STOP interrupts an in-flight walk** ("Stopped (was 'walking')
+  and snapped to home"). Step 5 rate-limit did NOT trip live (two real motions are
+  naturally >1.5 s apart because each action blocks; only fires if the model emits
+  both tool calls in one turn — already unit-proven offline). Step 6 tilt-recovery
+  not exercised live (no real IMU).
+- **Web UI REDESIGNED (frontend-only, `INDEX_HTML` in web_ui_node.py).** Robot
+  branded **Abbes**: animated avatar, online/offline + ECHO badges, a live status
+  dashboard with a tilt/level DIAL (bubble moves with pitch/roll, ambers >15°),
+  "What Abbes can do" cards (the 7 commands w/ descriptions from command_tools.py,
+  click-to-send), chat avatars+timestamps, animated "thinking…" with an
+  elapsed-seconds counter, Clear button, About blurb. Fully offline (inline
+  SVG/emoji, no CDN). Rebuilt; served HTML verified.
+- **CONCURRENCY BUG found + FIXED (the important one).** Symptom: after the 1st
+  action, EVERY action returned `ok:false` with
+  `RCLError: wait set index for cancel client is out of bounds
+  (rcl_action/action_client.c:650)`, and the model (per Step-6) confabulated
+  "I'm unbalanced, let me stand_still" excuses — looked like "the AI is dumb" but
+  was a real ROS bug. ROOT CAUSE (reproduced deterministically): the browser
+  polls `/api/status` every 3 s on the SEPARATE `_EmergencyNode`, which SHARED
+  the default rclpy context with the dispatcher; two threads each calling
+  `spin_until_future_complete` on that ONE context race on its wait set and
+  corrupt the dispatcher's action clients. (Earlier curl tests never hit it — no
+  continuous polling.) FIX: give `_EmergencyNode` its OWN `rclpy.Context()` +
+  `SingleThreadedExecutor` (4 small edits in web_ui_node.py; dispatcher code
+  untouched). VERIFIED: shared-context repro crashes on action #2; with separate
+  contexts 8/8 pass, and a live run (4 commands under fast concurrent polling) =
+  **0** wait-set errors. STOP/status still work on the isolated path. Repro
+  scripts: `/tmp/repro_concurrent.py` (fails), `/tmp/repro_fix.py` (passes).
+- **System prompt tuned (`ROBOT_SYSTEM_PROMPT` in llm_dispatcher_node.py).** Gave
+  the model the identity "Abbes", required ONE short plain-language first-person
+  confirmation, forbade JSON/braces/tool-names in the user-facing reply (request
+  tools ONLY via the tool channel), kept the Step-6 recovery rule. PARTIALLY
+  effective: confirmations are now clean ("Done, I waved my left hand!"), but
+  `llama3.2:3b` STILL intermittently (a) types a tool call as TEXT instead of
+  using the tool channel (e.g. `{"name":"sit_down", {}}` → action doesn't fire)
+  and (b) drops required args (called `walk` with no distance_m/direction →
+  rejected, then confabulated). These are 3B tool-calling limits, not fixable by
+  prompt alone — see "Next" for the two no-/low-cost mitigations.
+
+**Earlier build (context):**
+- **AI Step 7 ✅ — Web UI built + echo-verified (now superseded by the live run above).**
+  New node `humanoid_command_api/web_ui_node.py`: a browser control panel that
+  reuses the WHOLE Step 4-6 brain. Deliberately built on Python stdlib
+  `http.server` (NO Flask/FastAPI — neither was installed and `/` is tight,
+  §7; only `uvicorn` was present, useless without a framework).
+    - Holds ONE `LLMDispatcherNode`; routes: `GET /` (embedded dark chat page,
+      HTML-in-a-string so there are no ament resource-path headaches),
+      `GET /health`, `POST /api/command` ({"text":..} -> `dispatch()` ->
+      {"reply":..}), `GET /api/status`, `POST /api/stop`. Binds 127.0.0.1:8080.
+    - CONCURRENCY (the teaching point): `dispatch()` blocks + spins rclpy, and
+      http.server is multi-threaded, so command requests are serialized by a
+      single `_DISPATCH_LOCK` (one motion at a time — matches the robot + the
+      Step-4 design). BUT the Stop button + status poll use a SEPARATE node
+      `_EmergencyNode` (own Stop/GetStatus clients, own `_EMERGENCY_LOCK`) so
+      they run CONCURRENTLY with an in-flight dispatch — making the red STOP a
+      REAL interrupt (the command server is multi-threaded and its Stop sets a
+      flag every action's trajectory loop checks each tick -> `canceled()`).
+    - `--echo` debug mode skips Ollama/ROS and echoes (incl. fake status/stop),
+      so the browser<->backend loop is testable with no GPU/Ollama/server.
+    - Piece 2 = the page's live status bar + STOP button; Piece 3 = extended
+      `launch/command_api.launch.py` to bring up command_server + web_ui
+      together (NOT llm_dispatcher — web_ui embeds the dispatcher in-process),
+      and added the `web_ui` console_scripts entry point to setup.py.
+  VERIFIED via `ros2 run humanoid_command_api web_ui --echo` + curl: /health,
+  /api/status, /api/stop, /api/command all return correct JSON and the page
+  carries the status bar + STOP button. Rebuilt OK. NOT yet driven live
+  through Ollama/command_server (needs the GPU reboot). Gotcha learned:
+  background `&` test servers ORPHAN across separate Bash calls and keep
+  :8080 bound — kill the `web_ui` python by the PID from `ss -ltnp` (do NOT
+  `pkill -f web_ui`: it matches and kills the calling shell too).
 - **AI Step 6 ✅ — Feedback Loop built + scripted-verified.** Turned
   `dispatch()` in `llm_dispatcher_node.py` from a fixed two-call exchange
   (ask → run tools → ask once for text) into a BOUNDED AGENTIC LOOP: it keeps
@@ -323,12 +420,13 @@ first thing to read at the start of a new session.
   offered and deferred.)
 
 **In progress:**
-- Nothing actively mid-edit. AI Steps 1–6 ✅ (Steps 5 & 6 code-complete +
-  scripted/unit-verified, but neither yet exercised live through the Ollama
-  REPL — was blocked on the GPU, now FIXED via DKMS and just awaiting a
-  reboot to activate; see GPU note below).
+- Nothing actively mid-edit. AI Steps 1–7 ✅ and now LIVE-verified through Ollama
+  on the GPU. Step 8 (Voice/Whisper) and Step 9 (path picker) are the remaining
+  BONUS steps and the likely "another one" to start next. A no-download
+  reliability fix for the 3B (dispatcher-side guard) was scoped but NOT
+  implemented (see Next #2).
 
-**GPU mismatch FIXED via DKMS — REBOOT PENDING to activate (2026-05-30).**
+**GPU mismatch — RESOLVED 2026-05-30 (reboot done, GPU live; history below).**
 Root cause was a half-finished apt upgrade: the 309 driver metapackage
 `nvidia-driver-535` *Depends on* `nvidia-dkms-535`, which was NEVER installed
 — so the driver sat `iU` (unconfigured) and the running kernel `6.17.0-23`
@@ -367,25 +465,28 @@ refusal RELAY through Ollama — the LLM call timed out because the GPU is
 currently CPU-only (driver/lib mismatch, see above + §9). Committed as `2867bf2`.
 
 **Next concrete action (in order):**
-1. **REBOOT (stay on kernel 6.17.0-23) to activate the GPU fix**, then
-   verify: `nvidia-smi` works (no mismatch), `modinfo nvidia | grep version`
-   == 309, `ollama ps` shows GPU not `100% CPU`. The DKMS 309 module is
-   already built + installed for 6.17.0-23 (see GPU note above); only the
-   reboot to load it remains.
-2. **Live-test Steps 5 + 6 through Ollama** (needs GPU from #1). Step 5:
-   ask for two motions in one breath → robot SPEAKS the rate-limit refusal
-   for the 2nd. Step 6: ask to walk while tilted → robot should recover
-   (stand_still) then retry, OR explain. Tilt is hard to trigger without a
-   tilted IMU — lower `tilt_limit_deg` or publish a fake tilted `/imu`. (The
-   recover-then-retry path is ALREADY proven offline via
-   `/tmp/test_step6_loop.py`; this just confirms the real model does it.)
-3. Consider a `command_api.launch.py`-style launch file that brings up
-   command_server + llm_dispatcher together (currently two manual terminals).
-4. **AI Step 7 — Web UI** (next roadmap item) once the above is green.
-5. **Commit.** A lot is still uncommitted (see below) — good time for a
-   clean checkpoint commit of completed AI Steps 3–6.
+1. **Start the next step** — user said they want to move to "another one".
+   Most likely **AI Step 8 — Voice Input (Whisper) [BONUS]** (Whisper download
+   is LARGE — must go to /mnt/ollama_disk, not /, per §7) or **Step 9 — Graphic
+   Path Picker [BONUS]**. Confirm which with the user.
+2. **(Deferred) Improve 3B tool-call reliability.** Two mitigations were scoped
+   but not done; user has LITTLE INTERNET right now so the download option is
+   deferred:
+   (a) **Model swap to `qwen2.5:3b`** — same ~2 GB / 4 GB-VRAM budget, markedly
+       better at function-calling than llama3.2:3b. Needs a ~2 GB pull to
+       /mnt/ollama_disk — do when internet allows.
+   (b) **Dispatcher-side guard (no download)** in `dispatch()` /`execute_tool`:
+       detect a tool-call leaked as TEXT (reply looks like `{"name":...}`),
+       parse + execute it; and DEFAULT walk's missing args (e.g. 0.5 m forward)
+       instead of rejecting. Directly fixes the two failure modes seen this
+       session. (I had just read dispatch()/execute_tool to implement this when
+       we paused to commit.)
+3. **Watch the disk** (§9): if `/mnt/ollama_disk` unmounts again, remount +
+   restart ollama before anything LLM-related.
 
-**Commit state (2026-05-30):** AI Steps 3–6 are now COMMITTED to `main`
-(Step 6 + the GPU-fix/Step-6 CLAUDE.md updates committed this session; Steps
-3–5 in `2867bf2` and earlier). Working tree clean after that commit. `main`
-is a few commits ahead of `origin/main` (not pushed — push only when you ask).
+**Commit state (2026-05-30 evening):** Steps 3–6 were already on `main` (Step 6
+`eeaf375`). **This session's commit** adds AI Step 7 + the concurrency fix +
+prompt tuning: `web_ui_node.py` (new + redesign + own-context fix), `setup.py`
+(web_ui entry point), `launch/command_api.launch.py`, `llm_dispatcher_node.py`
+(prompt), and this CLAUDE.md. Being committed AND PUSHED now at the user's
+request.

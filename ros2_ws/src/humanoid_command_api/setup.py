@@ -25,6 +25,7 @@ setup(
             'test_motions   = humanoid_command_api.test_motions:main',
             'command_server = humanoid_command_api.command_server_node:main',
             'llm_dispatcher = humanoid_command_api.llm_dispatcher_node:main',
+            'web_ui         = humanoid_command_api.web_ui_node:main',
         ],
     },
 )
