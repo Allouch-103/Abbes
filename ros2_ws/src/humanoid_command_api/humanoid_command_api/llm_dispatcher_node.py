@@ -76,6 +76,15 @@ SERVER_WAIT_TIMEOUT_SEC = 5.0
 OLLAMA_URL = "http://127.0.0.1:11434/api/chat"
 MODEL = "llama3.2:3b"
 
+# AI Step 6 (Feedback Loop): how many model<->robot rounds we allow inside a
+# SINGLE user turn before forcing a stop. Each round = the model requests
+# tool(s), we run them, we feed the real results back. The cap exists because
+# the loop now lets the model REACT to results (retry, recover, try a
+# different tool); without a ceiling a confused 3B model could keep "fixing"
+# things forever. 5 is comfortably more than "denied -> recover -> retry ->
+# explain" yet still bounded.
+MAX_AGENT_TURNS = 5
+
 # The system prompt is the model's "job description" — the one place we tell
 # it WHO it is and HOW to behave. Kept short and concrete because a 3B model
 # follows tight instructions far better than long essays.
@@ -88,7 +97,15 @@ ROBOT_SYSTEM_PROMPT = (
     "movement, reply in one short sentence and call no tool. "
     "Never invent tools or arguments that were not provided. "
     "Safety first: if the user sounds urgent or says stop/halt/freeze, "
-    "call the 'stop' tool."
+    "call the 'stop' tool. "
+    # AI Step 6 (Feedback Loop): tools report back whether they worked. This
+    # tells the model to USE that feedback to recover instead of giving up.
+    "When a tool result comes back with \"ok\": false (for example "
+    "\"denied_by_safety\": true because the robot is tilted, or a goal was "
+    "rejected), do not just apologize: decide whether you can fix the "
+    "situation first — for instance call 'stand_still' to steady yourself, "
+    "then try the original command again — and only explain to the user if "
+    "you truly cannot proceed."
 )
 
 
@@ -310,63 +327,85 @@ class LLMDispatcherNode(Node):
         return resp.json()["message"]
 
     def dispatch(self, user_text: str) -> str:
-        """Run one full natural-language → action → reply cycle.
+        """Run one full natural-language → action(s) → reply cycle.
 
-        Returns the model's final natural-language reply (a string the
-        caller can print or, later, speak).
+        AI Step 6 (Feedback Loop): this is now a bounded AGENTIC LOOP, not a
+        single tool-use exchange. We keep asking the model and running the
+        tools it requests, feeding each real robot result back, UNTIL the
+        model stops asking for tools (it's satisfied and writes its reply) or
+        we hit MAX_AGENT_TURNS. Because every result — including a safety
+        denial or a rejected goal — goes back into the transcript before the
+        NEXT model call, the model can now REACT: stand_still then retry after
+        a tilt denial, pick a different tool, or give up and explain.
+
+        Returns the model's final natural-language reply (a string the caller
+        can print or, later, speak).
         """
         # The transcript. We APPEND to it as the loop runs so the model
-        # always sees the full context: its own tool request, then the
-        # real result the robot produced.
+        # always sees the full context: its own tool requests, then the
+        # real results the robot produced.
         messages = [
             {"role": "system", "content": ROBOT_SYSTEM_PROMPT},
             {"role": "user", "content": user_text},
         ]
 
-        # ── Phase 1 & 2: ask the model; it chats OR requests tool(s) ──
-        try:
-            assistant_msg = self._call_ollama(messages)
-        except requests.exceptions.ConnectionError:
-            return "ERROR: Ollama not reachable (check: systemctl status ollama)."
-        except requests.exceptions.HTTPError as e:
-            return f"ERROR from Ollama: {e} (is the model {MODEL} pulled?)"
-        messages.append(assistant_msg)
+        # Remember the last thing the model "said" so that if we exhaust the
+        # turn budget mid-action we still have something to show the user.
+        last_reply = ""
 
-        tool_calls = assistant_msg.get("tool_calls")
-        if not tool_calls:
-            # No movement needed — the model just talked.
-            return assistant_msg.get("content", "")
+        for turn in range(MAX_AGENT_TURNS):
+            # ── Ask the model what to do next, given everything that has
+            #    happened so far (its own past tool calls + their results). ──
+            try:
+                assistant_msg = self._call_ollama(messages)
+            except requests.exceptions.ConnectionError:
+                return "ERROR: Ollama not reachable (check: systemctl status ollama)."
+            except requests.exceptions.HTTPError as e:
+                return f"ERROR from Ollama: {e} (is the model {MODEL} pulled?)"
+            except requests.exceptions.RequestException as e:
+                # A later round failed; surface what we have rather than crash.
+                return last_reply or f"(reply failed mid-loop: {e})"
+            messages.append(assistant_msg)
 
-        # ── Phase 3: run each requested command ON THE ROBOT ──────────
-        for call in tool_calls:
-            name = call["function"]["name"]
-            args = call["function"].get("arguments", {}) or {}
-            self.get_logger().info(f"LLM -> {name}({args})")
+            tool_calls = assistant_msg.get("tool_calls")
+            content = assistant_msg.get("content", "") or ""
+            if content:
+                last_reply = content
 
-            # AI Step 5: gate the chosen tool BEFORE it runs. On deny we
-            # skip execute_tool entirely and report the reason as the tool
-            # result, so the model explains the refusal instead of moving.
-            allowed, reason = self.validator.check(name, args, self.do_get_status)
-            if not allowed:
-                self.get_logger().warn(f"   SAFETY denied {name}: {reason}")
-                result = {"ok": False, "denied_by_safety": True, "message": reason}
-            else:
-                result = self.execute_tool(name, args)   # the Piece 2 seam
-            self.get_logger().info(f"   robot result: {result}")
-            # Feed the result back with role="tool" so the model sees what
-            # its requested action actually produced.
-            messages.append({
-                "role": "tool",
-                "tool_name": name,
-                "content": json.dumps(result),
-            })
+            # No tool requested -> the model is done acting; this is its reply.
+            if not tool_calls:
+                return content
 
-        # ── Phase 4: results back in; model writes the human reply ────
-        try:
-            final_msg = self._call_ollama(messages)
-        except requests.exceptions.RequestException as e:
-            return f"(action ran, but the follow-up reply failed: {e})"
-        return final_msg.get("content", "")
+            # ── Run each requested command ON THE ROBOT, feed the real
+            #    result back, then LOOP so the model can react to it. ──
+            for call in tool_calls:
+                name = call["function"]["name"]
+                args = call["function"].get("arguments", {}) or {}
+                self.get_logger().info(f"LLM -> {name}({args})")
+
+                # AI Step 5: gate the chosen tool BEFORE it runs. On deny we
+                # skip execute_tool entirely and report the reason as the tool
+                # result, so the model can recover or explain the refusal.
+                allowed, reason = self.validator.check(name, args, self.do_get_status)
+                if not allowed:
+                    self.get_logger().warn(f"   SAFETY denied {name}: {reason}")
+                    result = {"ok": False, "denied_by_safety": True, "message": reason}
+                else:
+                    result = self.execute_tool(name, args)   # the Piece 2 seam
+                self.get_logger().info(f"   robot result: {result}")
+                # Feed the result back with role="tool" so the next model call
+                # sees what its requested action actually produced.
+                messages.append({
+                    "role": "tool",
+                    "tool_name": name,
+                    "content": json.dumps(result),
+                })
+
+        # ── Turn budget exhausted: the model kept acting without settling. ──
+        self.get_logger().warn(
+            f"dispatch hit MAX_AGENT_TURNS ({MAX_AGENT_TURNS}) without a final reply")
+        return (last_reply or
+                f"(stopped after {MAX_AGENT_TURNS} action rounds without a final reply)")
 
 
 def _run_smoke_test(node: "LLMDispatcherNode") -> None:

@@ -88,7 +88,7 @@ AI intelligence phase (current focus):
   AI Step 3  LLM Kindergarten (Ollama, tool use) .............. ✅
   AI Step 4  Connect LLM → Robot (dispatcher) ................. ✅
   AI Step 5  Safety Validator ................................. ✅
-  AI Step 6  Feedback Loop .................................... ⏳
+  AI Step 6  Feedback Loop .................................... ✅
   AI Step 7  Web UI ........................................... ⏳
   AI Step 8  Voice Input (Whisper) [BONUS] .................... ⏳
   AI Step 9  Graphic Path Picker [BONUS] ...................... ⏳
@@ -203,6 +203,20 @@ and abandoned. Free-form. Update over time.)
     remount → `systemctl start ollama`. If writes EIO again, check
     `mount | grep ollama_disk` for `shutdown`/`emergency_ro` first.
 
+- **GPU fell back to CPU — NVIDIA driver/lib version mismatch (2026-05-30).**
+  During the Step 5 live test, the LLM call timed out (120s). Cause: an
+  NVIDIA driver package update bumped the USERSPACE libs to `535.309.01`
+  while the RUNNING KERNEL module is still the old `535.288.01`
+  (`/proc/driver/nvidia/version` vs `libnvidia-ml.so.535.309.01`). NVML
+  then fails to init (`nvidia-smi` → "Driver/library version mismatch"),
+  so Ollama can't see the GPU and loads the model 100% on CPU
+  (`ollama ps` shows `100% CPU`; journald shows `device=CPU`,
+  `GPULayers:[]`). On CPU a trivial reply is ~3.5s but the tool-use
+  dispatch (big ROBOT_TOOLS prompt) exceeds the 120s client timeout.
+  **Fix = REBOOT** (loads the matching 535.309.01 kernel module). After
+  reboot verify: `nvidia-smi` works, `ollama ps` shows the GPU not
+  `100% CPU`. This is purely environmental — Step 5 code is fine.
+
 - **AI Step 3 DONE (2026-05-29).** After the reboot activated the UAS disk
   fix (verified: VL715 bridge `1-2:1.0` bound to `usb-storage`, quirks
   `2109:0715:u` present, NOT `uas`), `ollama pull llama3.2:3b` ran to
@@ -227,6 +241,29 @@ first thing to read at the start of a new session.
 **Last updated:** 2026-05-30
 
 **Just done:**
+- **AI Step 6 ✅ — Feedback Loop built + scripted-verified.** Turned
+  `dispatch()` in `llm_dispatcher_node.py` from a fixed two-call exchange
+  (ask → run tools → ask once for text) into a BOUNDED AGENTIC LOOP: it keeps
+  calling the model and running whatever tool the model requests, feeding
+  each real robot result back as a `role:"tool"` message, UNTIL the model
+  stops requesting tools (= it writes its final reply) or hits the new
+  `MAX_AGENT_TURNS=5` ceiling. Because every result — incl. a safety denial
+  (`denied_by_safety`) or a rejected goal — now lands in the transcript
+  BEFORE the next model call, the model can REACT (recover then retry, pick a
+  different tool, or give up and explain) instead of only narrating the
+  failure. Same Step-5 safety gate, same `execute_tool` seam, same error
+  handling on the first call; added a `RequestException` catch on later
+  rounds + a warn-and-return-last-reply on the turn cap. Also added one
+  sentence to `ROBOT_SYSTEM_PROMPT` telling the model: on a tool result with
+  `"ok": false` / `denied_by_safety`, try to fix the situation (e.g.
+  `stand_still` then retry) before apologizing — the loop only helps if the
+  model knows it may recover. Both edits compile; rebuilt package OK.
+  VERIFIED with a scripted fake-model test (`/tmp/test_step6_loop.py`, NO
+  Ollama/GPU needed): model asks to walk while tilted (30°) → safety denies,
+  execute_tool NOT called → model stand_still's (robot becomes level) →
+  retries walk (now level) → runs → model writes final reply. Asserted: 4
+  model rounds, tools executed == [stand_still, walk], non-empty reply →
+  PASS. NOT yet live-tested through real Ollama (GPU still CPU-only, see §9).
 - **AI Step 5 ✅ — Safety Validator built + wired + unit-verified.** New pure
   (no-rclpy) module `humanoid_command_api/safety_validator.py`: a stateful
   `SafetyValidator.check(name, args, status_provider) -> (allowed, reason)`.
@@ -286,26 +323,69 @@ first thing to read at the start of a new session.
   offered and deferred.)
 
 **In progress:**
-- Nothing actively mid-edit. AI Steps 1–5 ✅ (Step 5 code-complete + unit-
-  verified, but not yet exercised live through the Ollama REPL).
+- Nothing actively mid-edit. AI Steps 1–6 ✅ (Steps 5 & 6 code-complete +
+  scripted/unit-verified, but neither yet exercised live through the Ollama
+  REPL — was blocked on the GPU, now FIXED via DKMS and just awaiting a
+  reboot to activate; see GPU note below).
+
+**GPU mismatch FIXED via DKMS — REBOOT PENDING to activate (2026-05-30).**
+Root cause was a half-finished apt upgrade: the 309 driver metapackage
+`nvidia-driver-535` *Depends on* `nvidia-dkms-535`, which was NEVER installed
+— so the driver sat `iU` (unconfigured) and the running kernel `6.17.0-23`
+kept its old prebuilt `535.288.01` module while userspace was bumped to
+`535.309.01` → "Driver/library version mismatch", Ollama on CPU.
+  KEY CONSTRAINT (user, 2026-05-30): STAY ON KERNEL `6.17.0-23-generic`. Do
+  NOT switch to / boot `6.17.0-29` (user explicitly refused). The archive has
+  a prebuilt 309 module ONLY for 6.17.0-29, NOT for 23; and 288 userspace is
+  gone from the repo (only 309 + old 171.04 remain) — so neither a prebuilt-
+  module install nor an apt downgrade could fix 23. DKMS was the right path.
+  WHAT WAS DONE: Secure Boot is DISABLED + `linux-headers-6.17.0-23-generic`
+  installed, so `sudo apt-get install dkms nvidia-dkms-535` (309) COMPILED
+  the module against the running kernel → `dkms status` =
+  `nvidia/535.309.01, 6.17.0-23-generic: installed`, module at
+  `/lib/modules/6.17.0-23-generic/updates/dkms/nvidia.ko.zst` version
+  535.309.01. `modinfo nvidia` now resolves to that 309 DKMS module (updates/
+  dir outranks the leftover prebuilt 288 in kernel/). Then removed the two
+  broken 6.17.0-29 packages (`linux-modules-nvidia-535-6.17.0-29-generic`,
+  `linux-modules-nvidia-535-generic-hwe-24.04`); `dpkg --audit` now clean, no
+  nvidia pkg left in iU/iF. Disk fine (~6.1G free on /). Display is on Intel
+  i915 so this can't break the screen. Going forward, future kernel upgrades
+  will auto-build the nvidia module via DKMS (as long as that kernel's headers
+  are installed) — no more prebuilt-module version skew.
+  STILL PENDING: the RUNNING module is still 288 (loaded at boot). **REBOOT**
+  (stay on 6.17.0-23) to load the 309 DKMS module. After reboot VERIFY:
+  `nvidia-smi` works (no mismatch), `modinfo nvidia | grep version` == 309,
+  and `ollama ps` shows the GPU (NOT `100% CPU`). THEN the Steps 5+6 live
+  Ollama relay tests can finally run.
+
+**Step 5 live test (2026-05-30): PARTIALLY done.** Ran an automated driver
+against a live command_server. PROVEN live: `do_get_status()` round-trips a
+real status dict; the tilt gate reads that live status (no IMU → 0° → walk
+allowed); rate-limiting denies a too-soon 2nd motion; `stop`/`get_status`
+are exempt even inside the rate window. NOT yet proven: the natural-language
+refusal RELAY through Ollama — the LLM call timed out because the GPU is
+currently CPU-only (driver/lib mismatch, see above + §9). Committed as `2867bf2`.
 
 **Next concrete action (in order):**
-1. **Live-test Step 5 end to end.** Two terminals (command_server +
-   llm_dispatcher REPL). Easy checks: fire two motions back-to-back and
-   confirm the 2nd is refused with the rate-limit message relayed by the
-   robot; confirm `stop` still fires during a refusal window. Tilt gate is
-   harder to trigger without a tilted IMU — can lower `tilt_limit_deg` or
-   publish a fake tilted `/imu` to prove it.
-2. **AI Step 6 — Feedback Loop.** Close the loop so the model reacts to
-   what actually happened (e.g. retry/stand_still after a safety denial or
-   a rejected goal). The `denied_by_safety` flag + result dicts already
-   give it the signal to reason over.
+1. **REBOOT (stay on kernel 6.17.0-23) to activate the GPU fix**, then
+   verify: `nvidia-smi` works (no mismatch), `modinfo nvidia | grep version`
+   == 309, `ollama ps` shows GPU not `100% CPU`. The DKMS 309 module is
+   already built + installed for 6.17.0-23 (see GPU note above); only the
+   reboot to load it remains.
+2. **Live-test Steps 5 + 6 through Ollama** (needs GPU from #1). Step 5:
+   ask for two motions in one breath → robot SPEAKS the rate-limit refusal
+   for the 2nd. Step 6: ask to walk while tilted → robot should recover
+   (stand_still) then retry, OR explain. Tilt is hard to trigger without a
+   tilted IMU — lower `tilt_limit_deg` or publish a fake tilted `/imu`. (The
+   recover-then-retry path is ALREADY proven offline via
+   `/tmp/test_step6_loop.py`; this just confirms the real model does it.)
 3. Consider a `command_api.launch.py`-style launch file that brings up
    command_server + llm_dispatcher together (currently two manual terminals).
-4. **Commit.** A lot is still uncommitted (see below) — good time for a
-   clean checkpoint commit of completed AI Steps 3–5.
+4. **AI Step 7 — Web UI** (next roadmap item) once the above is green.
+5. **Commit.** A lot is still uncommitted (see below) — good time for a
+   clean checkpoint commit of completed AI Steps 3–6.
 
-**Not yet committed:** command_server_node.py, command_tools.py,
-llm_dispatcher_node.py, safety_validator.py (new), launch/, pose_definitions.py
-edits, setup.py edits, urdf edits, CLAUDE.md, ai_experiments/. Commit when at
-a clean stopping point.
+**Commit state (2026-05-30):** AI Steps 3–6 are now COMMITTED to `main`
+(Step 6 + the GPU-fix/Step-6 CLAUDE.md updates committed this session; Steps
+3–5 in `2867bf2` and earlier). Working tree clean after that commit. `main`
+is a few commits ahead of `origin/main` (not pushed — push only when you ask).
