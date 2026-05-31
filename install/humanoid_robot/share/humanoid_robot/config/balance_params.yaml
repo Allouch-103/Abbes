@@ -1,0 +1,66 @@
+# ============================================================
+# balance_params.yaml — PID gains for standing balance
+# Node: balance_controller
+# ============================================================
+#
+# TUNING GUIDE (do with robot hanging/supported, not free-standing):
+#
+#   Step 1: enabled: false
+#           Verify robot holds rest position correctly.
+#
+#   Step 2: enabled: true, all gains = 0
+#           Robot should still hold rest (no correction applied).
+#
+#   Step 3: Increase kp_pitch slowly (0.1 increments)
+#           Push robot gently forward — it should resist.
+#           STOP when it starts oscillating, back off 20%.
+#           Typical range: 0.3 - 1.5
+#
+#   Step 4: Add kd_pitch (start at kp/4)
+#           Damps the oscillations from step 3.
+#           Typical range: 0.1 - 0.5
+#
+#   Step 5: Add small ki_pitch (0.01 - 0.05)
+#           Eliminates residual steady-state lean.
+#           WARNING: too high = slow oscillation (integral windup)
+#
+#   Step 6: Repeat steps 3-5 for roll axis.
+#
+#   Step 7: Increase max_correction_deg gradually (5 → 10 → 15)
+#           Only after gains are tuned and stable.
+#
+# LIVE TUNING (no restart needed):
+#   ros2 param set /balance_controller kp_pitch 0.8
+#   ros2 param set /balance_controller enabled false
+
+balance_controller:
+  ros__parameters:
+
+    # ── PID gains — pitch axis (forward/backward) ──────────
+    kp_pitch: 0.5
+    ki_pitch: 0.02
+    kd_pitch: 0.2
+
+    # ── PID gains — roll axis (left/right) ────────────────
+    kp_roll: 0.5
+    ki_roll: 0.02
+    kd_roll: 0.2
+
+    # ── Safety ─────────────────────────────────────────────
+    # Maximum ankle correction in degrees.
+    # PID output is clamped to ±this value.
+    # Start at 5.0, increase to 10-15 after tuning.
+    max_correction_deg: 5.0
+
+    # ── Target tilt (degrees) ──────────────────────────────
+    # Normally 0 for upright. Set non-zero if your robot
+    # has a structural lean that needs to be compensated.
+    # Example: if robot naturally leans 2° forward when
+    # "upright", set target_pitch_deg: 2.0
+    target_pitch_deg: 0.0
+    target_roll_deg:  0.0
+
+    # ── Enable/disable active correction ──────────────────
+    # false: node runs but only publishes rest position
+    # true:  PID correction active
+    enabled: true

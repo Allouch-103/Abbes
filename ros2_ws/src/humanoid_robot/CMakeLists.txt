@@ -15,54 +15,23 @@ find_package(std_msgs REQUIRED)
 find_package(rcl_interfaces REQUIRED)
 # ── imu_filter node ───────────────────────────────────────
 add_executable(imu_filter src/imu_filter.cpp)
-ament_target_dependencies(imu_filter
-  rclcpp
-  sensor_msgs
-  geometry_msgs
-)
+ament_target_dependencies(imu_filter rclcpp sensor_msgs geometry_msgs)
 # ── balance_controller node ───────────────────────────────
 add_executable(balance_controller src/balance_controller.cpp)
-ament_target_dependencies(balance_controller
-  rclcpp
-  sensor_msgs
-  geometry_msgs
-  std_msgs
-  rcl_interfaces
-)
-# ── inverse_kinematics node (original analytical) ─────────
-add_executable(inverse_kinematics
-  src/inverse_kinematics.cpp
-)
-ament_target_dependencies(inverse_kinematics
-  rclcpp
-  std_msgs
-  geometry_msgs
-  rcl_interfaces
-)
+ament_target_dependencies(balance_controller rclcpp sensor_msgs geometry_msgs std_msgs rcl_interfaces)
+# ── inverse_kinematics node ───────────────────────────────
+add_executable(inverse_kinematics src/inverse_kinematics.cpp)
+ament_target_dependencies(inverse_kinematics rclcpp std_msgs geometry_msgs rcl_interfaces)
 target_include_directories(inverse_kinematics PRIVATE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-)
-# ── ik_vectors_DLS node (Wampler 1986 DLS method) ────────
-add_executable(ik_vectors_DLS
-  src/ik_vectors_DLS.cpp
-)
-ament_target_dependencies(ik_vectors_DLS
-  rclcpp
-  std_msgs
-  geometry_msgs
-  rcl_interfaces
-)
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+# ── ik_vectors_DLS node ───────────────────────────────────
+add_executable(ik_vectors_DLS src/ik_vectors_DLS.cpp)
+ament_target_dependencies(ik_vectors_DLS rclcpp std_msgs geometry_msgs rcl_interfaces)
 target_include_directories(ik_vectors_DLS PRIVATE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-)
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 # ── joint_bridge node ─────────────────────────────────────
-add_executable(joint_bridge
-  src/joint_bridge.cpp
-)
-ament_target_dependencies(joint_bridge
-  rclcpp
-  std_msgs
-)
+add_executable(joint_bridge src/joint_bridge.cpp)
+ament_target_dependencies(joint_bridge rclcpp std_msgs)
 # ── Install binaries ──────────────────────────────────────
 install(TARGETS
   imu_filter
@@ -84,3 +53,15 @@ install(DIRECTORY launch/
 install(DIRECTORY include/
   DESTINATION include
 )
+# ── Python scripts ────────────────────────────────────────
+install(PROGRAMS
+  scripts/balance_controller.py
+  scripts/pipeline.py
+  scripts/preview_controller.py
+  scripts/footstep_planner.py
+  scripts/zmp_reference.py
+  scripts/walk_test.py
+  scripts/ik_solver.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+ament_package()

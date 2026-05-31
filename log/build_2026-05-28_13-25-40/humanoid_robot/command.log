@@ -1,0 +1,6 @@
+Invoking command in '/home/zeyneb/Abbes/build/humanoid_robot': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/zeyneb/Abbes/ros2_ws/src/humanoid_robot -DCMAKE_INSTALL_PREFIX=/home/zeyneb/Abbes/install/humanoid_robot
+Invoked command in '/home/zeyneb/Abbes/build/humanoid_robot' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/zeyneb/Abbes/ros2_ws/src/humanoid_robot -DCMAKE_INSTALL_PREFIX=/home/zeyneb/Abbes/install/humanoid_robot
+Invoking command in '/home/zeyneb/Abbes/build/humanoid_robot': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/zeyneb/Abbes/build/humanoid_robot -- -j16 -l16
+Invoked command in '/home/zeyneb/Abbes/build/humanoid_robot' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/zeyneb/Abbes/build/humanoid_robot -- -j16 -l16
+Invoking command in '/home/zeyneb/Abbes/build/humanoid_robot': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/zeyneb/Abbes/build/humanoid_robot
+Invoked command in '/home/zeyneb/Abbes/build/humanoid_robot' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/zeyneb/Abbes/build/humanoid_robot

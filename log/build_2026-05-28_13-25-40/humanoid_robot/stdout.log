@@ -1,0 +1,94 @@
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ament_cmake: 1.3.14 (/opt/ros/humble/share/ament_cmake/cmake)
+-- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+-- Found rclcpp: 16.0.19 (/opt/ros/humble/share/rclcpp/cmake)
+-- Found rosidl_generator_c: 3.1.8 (/opt/ros/humble/share/rosidl_generator_c/cmake)
+-- Found rosidl_adapter: 3.1.8 (/opt/ros/humble/share/rosidl_adapter/cmake)
+-- Found rosidl_generator_cpp: 3.1.8 (/opt/ros/humble/share/rosidl_generator_cpp/cmake)
+-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+-- Found rmw_implementation_cmake: 6.1.2 (/opt/ros/humble/share/rmw_implementation_cmake/cmake)
+-- Found rmw_fastrtps_cpp: 6.2.10 (/opt/ros/humble/share/rmw_fastrtps_cpp/cmake)
+-- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.2")  
+-- Found FastRTPS: /opt/ros/humble/include  
+-- Using RMW implementation 'rmw_fastrtps_cpp' as default
+-- Looking for pthread.h
+-- Looking for pthread.h - found
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE  
+-- Found sensor_msgs: 4.9.1 (/opt/ros/humble/share/sensor_msgs/cmake)
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/zeyneb/Abbes/build/humanoid_robot
+[ 40%] [32mBuilding CXX object CMakeFiles/ik_vectors_DLS.dir/src/ik_vectors_DLS.cpp.o[0m
+[ 40%] [32mBuilding CXX object CMakeFiles/imu_filter.dir/src/imu_filter.cpp.o[0m
+[ 40%] [32mBuilding CXX object CMakeFiles/joint_bridge.dir/src/joint_bridge.cpp.o[0m
+[ 40%] [32mBuilding CXX object CMakeFiles/inverse_kinematics.dir/src/inverse_kinematics.cpp.o[0m
+[ 50%] [32mBuilding CXX object CMakeFiles/balance_controller.dir/src/balance_controller.cpp.o[0m
+[ 60%] [32m[1mLinking CXX executable imu_filter[0m
+[ 70%] [32m[1mLinking CXX executable joint_bridge[0m
+[ 70%] Built target joint_bridge
+[ 70%] Built target imu_filter
+[ 80%] [32m[1mLinking CXX executable inverse_kinematics[0m
+[ 80%] Built target inverse_kinematics
+[ 90%] [32m[1mLinking CXX executable ik_vectors_DLS[0m
+[100%] [32m[1mLinking CXX executable balance_controller[0m
+[100%] Built target ik_vectors_DLS
+[100%] Built target balance_controller
+-- Install configuration: ""
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/imu_filter
+-- Set runtime path of "/home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/imu_filter" to ""
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/balance_controller
+-- Set runtime path of "/home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/balance_controller" to ""
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/inverse_kinematics
+-- Set runtime path of "/home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/inverse_kinematics" to ""
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/ik_vectors_DLS
+-- Set runtime path of "/home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/ik_vectors_DLS" to ""
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/joint_bridge
+-- Set runtime path of "/home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/joint_bridge" to ""
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/config
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/config/ik_params.yaml
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/config/gait_params.yaml
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/config/imu_params.yaml
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/config/balance_params.yaml
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/config/robot_params.yaml
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/launch
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/launch/walking.launch.py
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/launch/balance.launch.py
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/include
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/include/humanoid_robot
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/include/humanoid_robot/joint_table.hpp
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/include/humanoid_robot/wampler_leg.hpp
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/balance_controller.py
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/pipeline.py
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/preview_controller.py
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/footstep_planner.py
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/zmp_reference.py
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/walk_test.py
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/ament_index/resource_index/package_run_dependencies/humanoid_robot
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/ament_index/resource_index/parent_prefix_path/humanoid_robot
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/environment/ament_prefix_path.sh
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/environment/ament_prefix_path.dsv
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/environment/path.sh
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/environment/path.dsv
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/local_setup.bash
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/local_setup.sh
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/local_setup.zsh
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/local_setup.dsv
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/package.dsv
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/ament_index/resource_index/packages/humanoid_robot
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/cmake/humanoid_robotConfig.cmake
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/cmake/humanoid_robotConfig-version.cmake
+-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/package.xml

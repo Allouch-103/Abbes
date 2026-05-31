@@ -1,0 +1,100 @@
+[0.017s] Invoking command in '/home/zeyneb/Abbes/build/humanoid_robot': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/zeyneb/Abbes/ros2_ws/src/humanoid_robot -DCMAKE_INSTALL_PREFIX=/home/zeyneb/Abbes/install/humanoid_robot
+[0.140s] -- The C compiler identification is GNU 11.4.0
+[0.238s] -- The CXX compiler identification is GNU 11.4.0
+[0.250s] -- Detecting C compiler ABI info
+[0.321s] -- Detecting C compiler ABI info - done
+[0.326s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.326s] -- Detecting C compile features
+[0.327s] -- Detecting C compile features - done
+[0.330s] -- Detecting CXX compiler ABI info
+[0.402s] -- Detecting CXX compiler ABI info - done
+[0.409s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.410s] -- Detecting CXX compile features
+[0.410s] -- Detecting CXX compile features - done
+[0.420s] -- Found ament_cmake: 1.3.14 (/opt/ros/humble/share/ament_cmake/cmake)
+[0.538s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[0.632s] -- Found rclcpp: 16.0.19 (/opt/ros/humble/share/rclcpp/cmake)
+[0.686s] -- Found rosidl_generator_c: 3.1.8 (/opt/ros/humble/share/rosidl_generator_c/cmake)
+[0.692s] -- Found rosidl_adapter: 3.1.8 (/opt/ros/humble/share/rosidl_adapter/cmake)
+[0.703s] -- Found rosidl_generator_cpp: 3.1.8 (/opt/ros/humble/share/rosidl_generator_cpp/cmake)
+[0.721s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.740s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[0.794s] -- Found rmw_implementation_cmake: 6.1.2 (/opt/ros/humble/share/rmw_implementation_cmake/cmake)
+[0.797s] -- Found rmw_fastrtps_cpp: 6.2.10 (/opt/ros/humble/share/rmw_fastrtps_cpp/cmake)
+[0.902s] -- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.2")  
+[0.931s] -- Found FastRTPS: /opt/ros/humble/include  
+[0.970s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[0.982s] -- Looking for pthread.h
+[1.062s] -- Looking for pthread.h - found
+[1.062s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+[1.133s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+[1.134s] -- Found Threads: TRUE  
+[1.191s] -- Found sensor_msgs: 4.9.1 (/opt/ros/humble/share/sensor_msgs/cmake)
+[1.280s] -- Configuring done
+[1.296s] -- Generating done
+[1.303s] -- Build files have been written to: /home/zeyneb/Abbes/build/humanoid_robot
+[1.312s] Invoked command in '/home/zeyneb/Abbes/build/humanoid_robot' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/zeyneb/Abbes/ros2_ws/src/humanoid_robot -DCMAKE_INSTALL_PREFIX=/home/zeyneb/Abbes/install/humanoid_robot
+[1.313s] Invoking command in '/home/zeyneb/Abbes/build/humanoid_robot': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/zeyneb/Abbes/build/humanoid_robot -- -j16 -l16
+[1.363s] [ 40%] [32mBuilding CXX object CMakeFiles/ik_vectors_DLS.dir/src/ik_vectors_DLS.cpp.o[0m
+[1.363s] [ 40%] [32mBuilding CXX object CMakeFiles/imu_filter.dir/src/imu_filter.cpp.o[0m
+[1.363s] [ 40%] [32mBuilding CXX object CMakeFiles/joint_bridge.dir/src/joint_bridge.cpp.o[0m
+[1.363s] [ 40%] [32mBuilding CXX object CMakeFiles/inverse_kinematics.dir/src/inverse_kinematics.cpp.o[0m
+[1.363s] [ 50%] [32mBuilding CXX object CMakeFiles/balance_controller.dir/src/balance_controller.cpp.o[0m
+[8.398s] [ 60%] [32m[1mLinking CXX executable imu_filter[0m
+[8.420s] [ 70%] [32m[1mLinking CXX executable joint_bridge[0m
+[8.778s] [ 70%] Built target joint_bridge
+[8.791s] [ 70%] Built target imu_filter
+[10.282s] [ 80%] [32m[1mLinking CXX executable inverse_kinematics[0m
+[10.691s] [ 80%] Built target inverse_kinematics
+[10.826s] [ 90%] [32m[1mLinking CXX executable ik_vectors_DLS[0m
+[10.833s] [100%] [32m[1mLinking CXX executable balance_controller[0m
+[11.235s] [100%] Built target ik_vectors_DLS
+[11.249s] [100%] Built target balance_controller
+[11.260s] Invoked command in '/home/zeyneb/Abbes/build/humanoid_robot' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/zeyneb/Abbes/build/humanoid_robot -- -j16 -l16
+[11.270s] Invoking command in '/home/zeyneb/Abbes/build/humanoid_robot': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/zeyneb/Abbes/build/humanoid_robot
+[11.275s] -- Install configuration: ""
+[11.276s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/imu_filter
+[11.279s] -- Set runtime path of "/home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/imu_filter" to ""
+[11.279s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/balance_controller
+[11.284s] -- Set runtime path of "/home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/balance_controller" to ""
+[11.284s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/inverse_kinematics
+[11.289s] -- Set runtime path of "/home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/inverse_kinematics" to ""
+[11.289s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/ik_vectors_DLS
+[11.293s] -- Set runtime path of "/home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/ik_vectors_DLS" to ""
+[11.293s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/joint_bridge
+[11.296s] -- Set runtime path of "/home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/joint_bridge" to ""
+[11.296s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/config
+[11.297s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/config/ik_params.yaml
+[11.297s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/config/gait_params.yaml
+[11.297s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/config/imu_params.yaml
+[11.297s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/config/balance_params.yaml
+[11.298s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/config/robot_params.yaml
+[11.298s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/launch
+[11.298s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/launch/walking.launch.py
+[11.298s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/launch/balance.launch.py
+[11.299s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/include
+[11.299s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/include/humanoid_robot
+[11.299s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/include/humanoid_robot/joint_table.hpp
+[11.299s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/include/humanoid_robot/wampler_leg.hpp
+[11.299s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/balance_controller.py
+[11.299s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/pipeline.py
+[11.300s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/preview_controller.py
+[11.300s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/footstep_planner.py
+[11.301s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/zmp_reference.py
+[11.301s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/walk_test.py
+[11.301s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/ament_index/resource_index/package_run_dependencies/humanoid_robot
+[11.301s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/ament_index/resource_index/parent_prefix_path/humanoid_robot
+[11.302s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/environment/ament_prefix_path.sh
+[11.302s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/environment/ament_prefix_path.dsv
+[11.302s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/environment/path.sh
+[11.302s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/environment/path.dsv
+[11.302s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/local_setup.bash
+[11.302s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/local_setup.sh
+[11.302s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/local_setup.zsh
+[11.303s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/local_setup.dsv
+[11.303s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/package.dsv
+[11.303s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/ament_index/resource_index/packages/humanoid_robot
+[11.303s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/cmake/humanoid_robotConfig.cmake
+[11.303s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/cmake/humanoid_robotConfig-version.cmake
+[11.303s] -- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/package.xml
+[11.306s] Invoked command in '/home/zeyneb/Abbes/build/humanoid_robot' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/zeyneb/Abbes/build/humanoid_robot

@@ -1,0 +1,80 @@
+# ============================================================
+# gait_params.yaml — Walking gait configuration
+# Node: gait_generator, zmp_preview_controller
+# ============================================================
+#
+# START VERY CONSERVATIVE:
+#   step_length_m: 0.02    (2cm steps to start)
+#   step_duration_s: 0.8   (slow steps)
+#   dsp_ratio: 0.4         (40% double support = safer)
+#
+# Increase step_length gradually ONLY after:
+#   - Standing balance (Phase 3) is solid
+#   - IK (Phase 4) is validated in simulation
+#   - ZMP controller (Phase 5) produces stable sim trajectory
+
+gait_generator:
+  ros__parameters:
+
+    # ── Step geometry ──────────────────────────────────────
+    # Forward step length (meters)
+    # 0.02m = 2cm is very conservative — good for first tests
+    step_length_m: 0.02
+
+    # Lateral step width (meters)
+    # Should be close to hip_width_m from robot_params.yaml
+    step_width_m: 0.08
+
+    # Foot lift height during swing (meters)
+    # Must clear the ground. 1cm is safe for flat surface.
+    step_height_m: 0.01
+
+    # Number of steps to take (0 = walk indefinitely)
+    num_steps: 4
+
+    # ── Timing ─────────────────────────────────────────────
+    # Total duration of one step cycle (seconds)
+    step_duration_s: 0.8
+
+    # Fraction of step_duration spent in double support
+    # 0.3 = 30% DSP (faster, less stable)
+    # 0.5 = 50% DSP (slower, more stable) ← start here
+    dsp_ratio: 0.5
+
+    # Control loop sample time (seconds)
+    # Must match your node timer rate
+    sample_time_s: 0.01
+
+zmp_preview_controller:
+  ros__parameters:
+
+    # ── LIPM parameters ────────────────────────────────────
+    # CoM height — must match robot_params.yaml com_height_m
+    com_height_m: 0.19
+
+    # Gravitational acceleration
+    gravity_m_s2: 9.81
+
+    # Sample time — must match gait_generator sample_time_s
+    sample_time_s: 0.01
+
+    # ── Preview horizon ────────────────────────────────────
+    # How many steps ahead the controller looks (timesteps)
+    # At 100Hz: 160 steps = 1.6 seconds of preview
+    # Minimum recommended: 100 steps (1 second)
+    # More = better tracking but more computation
+    preview_steps: 160
+
+    # ── LQI cost function weights ──────────────────────────
+    # These are the Q and R matrices in scalar form.
+    # q_zmp_error: weight on ZMP tracking error
+    #   Higher = tighter ZMP tracking, more aggressive CoM motion
+    # r_input: weight on control input (jerk)
+    #   Higher = smoother motion, less accurate ZMP tracking
+    #
+    # The ratio q_zmp_error/r_input is what matters:
+    #   Kajita 2003 uses: q=1, r=1e-6 (ratio = 1,000,000)
+    #   This strongly prioritizes ZMP tracking.
+    #   Start here, tune if CoM trajectory looks wrong.
+    q_zmp_error: 1.0
+    r_input: 1.0e-6

@@ -40,7 +40,7 @@ public:
         load_params();
 
         joint_pub_ = create_publisher<std_msgs::msg::Float32MultiArray>(
-            "/joint_commands", rclcpp::QoS(1).reliable());
+            "/joint_commands", rclcpp::QoS(1).best_effort());
 
         auto qos = rclcpp::QoS(1).best_effort();
         com_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>(

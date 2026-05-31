@@ -1,0 +1,224 @@
+[0.000000] (-) TimerEvent: {}
+[0.000262] (-) JobUnselected: {'identifier': 'humanoid_command_api'}
+[0.000317] (-) JobUnselected: {'identifier': 'humanoid_msgs'}
+[0.000330] (-) JobUnselected: {'identifier': 'my_robot_bringup'}
+[0.000343] (-) JobUnselected: {'identifier': 'my_robot_description'}
+[0.000362] (humanoid_robot) JobQueued: {'identifier': 'humanoid_robot', 'dependencies': OrderedDict()}
+[0.000376] (humanoid_robot) JobStarted: {'identifier': 'humanoid_robot'}
+[0.013315] (humanoid_robot) JobProgress: {'identifier': 'humanoid_robot', 'progress': 'cmake'}
+[0.014217] (humanoid_robot) Command: {'cmd': ['/usr/bin/cmake', '/home/zeyneb/Abbes/ros2_ws/src/humanoid_robot', '-DCMAKE_INSTALL_PREFIX=/home/zeyneb/Abbes/install/humanoid_robot'], 'cwd': '/home/zeyneb/Abbes/build/humanoid_robot', 'env': OrderedDict([('LESSOPEN', '| /usr/bin/lesspipe %s'), ('USER', 'zeyneb'), ('FONTCONFIG_PATH', '/etc/fonts'), ('GIO_MODULE_DIR', '/home/zeyneb/snap/code/common/.cache/gio-modules'), ('XDG_SESSION_TYPE', 'wayland'), ('GIT_ASKPASS', '/snap/code/241/usr/share/code/resources/app/extensions/git/dist/askpass.sh'), ('GTK_EXE_PREFIX_VSCODE_SNAP_ORIG', ''), ('GDK_BACKEND_VSCODE_SNAP_ORIG', ''), ('SHLVL', '2'), ('LD_LIBRARY_PATH', '/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib'), ('HOME', '/home/zeyneb'), ('CHROME_DESKTOP', 'code.desktop'), ('LOCPATH_VSCODE_SNAP_ORIG', ''), ('TERM_PROGRAM_VERSION', '1.121.0'), ('DESKTOP_SESSION', 'ubuntu'), ('GTK_PATH', '/snap/code/241/usr/lib/x86_64-linux-gnu/gtk-3.0'), ('XDG_DATA_HOME_VSCODE_SNAP_ORIG', ''), ('GTK_IM_MODULE_FILE', '/home/zeyneb/snap/code/common/.cache/immodules/immodules.cache'), ('ROS_PYTHON_VERSION', '3'), ('GNOME_SHELL_SESSION_MODE', 'ubuntu'), ('GTK_MODULES', 'gail:atk-bridge'), ('GSETTINGS_SCHEMA_DIR_VSCODE_SNAP_ORIG', ''), ('VSCODE_GIT_ASKPASS_MAIN', '/snap/code/241/usr/share/code/resources/app/extensions/git/dist/askpass-main.js'), ('VSCODE_GIT_ASKPASS_NODE', '/snap/code/241/usr/share/code/code'), ('SYSTEMD_EXEC_PID', '1933'), ('VSCODE_PYTHON_AUTOACTIVATE_GUARD', '1'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1000/bus'), ('COLORTERM', 'truecolor'), ('IM_CONFIG_PHASE', '1'), ('WAYLAND_DISPLAY', 'wayland-0'), ('ROS_DISTRO', 'humble'), ('LOGNAME', 'zeyneb'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('XDG_CONFIG_DIRS_VSCODE_SNAP_ORIG', '/etc/xdg/xdg-ubuntu:/etc/xdg'), ('XDG_SESSION_CLASS', 'user'), ('XDG_DATA_DIRS_VSCODE_SNAP_ORIG', '/usr/share/ubuntu:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop'), ('USERNAME', 'zeyneb'), ('TERM', 'xterm-256color'), ('GNOME_DESKTOP_SESSION_ID', 'this-is-deprecated'), ('FC_FONTATIONS', '1'), ('ROS_LOCALHOST_ONLY', '0'), ('PATH', '/home/zeyneb/.config/Code/User/globalStorage/github.copilot-chat/debugCommand:/home/zeyneb/.config/Code/User/globalStorage/github.copilot-chat/copilotCli:/opt/ros/humble/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin'), ('SESSION_MANAGER', 'local/zeyneb-ASUS-TUF:@/tmp/.ICE-unix/1905,unix/zeyneb-ASUS-TUF:/tmp/.ICE-unix/1905'), ('GTK_EXE_PREFIX', '/snap/code/241/usr'), ('XDG_MENU_PREFIX', 'gnome-'), ('GNOME_TERMINAL_SCREEN', '/org/gnome/Terminal/screen/f872ee41_6554_4861_9079_22e6cf9d748b'), ('GNOME_SETUP_DISPLAY', ':1'), ('XDG_RUNTIME_DIR', '/run/user/1000'), ('GDK_BACKEND', 'x11'), ('DISPLAY', ':0'), ('LOCPATH', '/snap/code/241/usr/lib/locale'), ('LANG', 'en_US.UTF-8'), ('XDG_CURRENT_DESKTOP', 'ubuntu:GNOME'), ('GIO_MODULE_DIR_VSCODE_SNAP_ORIG', ''), ('XDG_DATA_HOME', '/home/zeyneb/snap/code/241/.local/share'), ('XMODIFIERS', '@im=ibus'), ('XDG_SESSION_DESKTOP', 'ubuntu'), ('XAUTHORITY', '/run/user/1000/.mutter-Xwaylandauth.WSGQP3'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('VSCODE_GIT_IPC_HANDLE', '/run/user/1000/vscode-git-eaa0069234.sock'), ('GNOME_TERMINAL_SERVICE', ':1.119'), ('TERM_PROGRAM', 'vscode'), ('SSH_AGENT_LAUNCHER', 'gnome-keyring'), ('SSH_AUTH_SOCK', '/run/user/1000/keyring/ssh'), ('GSETTINGS_SCHEMA_DIR', '/home/zeyneb/snap/code/241/.local/share/glib-2.0/schemas'), ('AMENT_PREFIX_PATH', '/opt/ros/humble'), ('SHELL', '/bin/bash'), ('QT_ACCESSIBILITY', '1'), ('GDMSESSION', 'ubuntu'), ('LESSCLOSE', '/usr/bin/lesspipe %s %s'), ('GTK_PATH_VSCODE_SNAP_ORIG', ''), ('FONTCONFIG_FILE', '/etc/fonts/fonts.conf'), ('GTK_IM_MODULE_FILE_VSCODE_SNAP_ORIG', ''), ('VSCODE_GIT_ASKPASS_EXTRA_ARGS', ''), ('QT_IM_MODULE', 'ibus'), ('PWD', '/home/zeyneb/Abbes/build/humanoid_robot'), ('XDG_CONFIG_DIRS', '/etc/xdg/xdg-ubuntu:/etc/xdg'), ('XDG_DATA_DIRS', '/home/zeyneb/snap/code/241/.local/share:/home/zeyneb/snap/code/241:/snap/code/241/usr/share:/usr/share/ubuntu:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop'), ('PYTHONPATH', '/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages'), ('COLCON', '1'), ('VTE_VERSION', '6800'), ('CMAKE_PREFIX_PATH', '/opt/ros/humble')]), 'shell': False}
+[0.099595] (-) TimerEvent: {}
+[0.140415] (humanoid_robot) StdoutLine: {'line': b'-- The C compiler identification is GNU 11.4.0\n'}
+[0.199749] (-) TimerEvent: {}
+[0.238218] (humanoid_robot) StdoutLine: {'line': b'-- The CXX compiler identification is GNU 11.4.0\n'}
+[0.250663] (humanoid_robot) StdoutLine: {'line': b'-- Detecting C compiler ABI info\n'}
+[0.299835] (-) TimerEvent: {}
+[0.320929] (humanoid_robot) StdoutLine: {'line': b'-- Detecting C compiler ABI info - done\n'}
+[0.325934] (humanoid_robot) StdoutLine: {'line': b'-- Check for working C compiler: /usr/bin/cc - skipped\n'}
+[0.326366] (humanoid_robot) StdoutLine: {'line': b'-- Detecting C compile features\n'}
+[0.327102] (humanoid_robot) StdoutLine: {'line': b'-- Detecting C compile features - done\n'}
+[0.330362] (humanoid_robot) StdoutLine: {'line': b'-- Detecting CXX compiler ABI info\n'}
+[0.400008] (-) TimerEvent: {}
+[0.402642] (humanoid_robot) StdoutLine: {'line': b'-- Detecting CXX compiler ABI info - done\n'}
+[0.409153] (humanoid_robot) StdoutLine: {'line': b'-- Check for working CXX compiler: /usr/bin/c++ - skipped\n'}
+[0.410235] (humanoid_robot) StdoutLine: {'line': b'-- Detecting CXX compile features\n'}
+[0.410326] (humanoid_robot) StdoutLine: {'line': b'-- Detecting CXX compile features - done\n'}
+[0.420157] (humanoid_robot) StdoutLine: {'line': b'-- Found ament_cmake: 1.3.14 (/opt/ros/humble/share/ament_cmake/cmake)\n'}
+[0.500127] (-) TimerEvent: {}
+[0.538250] (humanoid_robot) StdoutLine: {'line': b'-- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter \n'}
+[0.600270] (-) TimerEvent: {}
+[0.632626] (humanoid_robot) StdoutLine: {'line': b'-- Found rclcpp: 16.0.19 (/opt/ros/humble/share/rclcpp/cmake)\n'}
+[0.686473] (humanoid_robot) StdoutLine: {'line': b'-- Found rosidl_generator_c: 3.1.8 (/opt/ros/humble/share/rosidl_generator_c/cmake)\n'}
+[0.692308] (humanoid_robot) StdoutLine: {'line': b'-- Found rosidl_adapter: 3.1.8 (/opt/ros/humble/share/rosidl_adapter/cmake)\n'}
+[0.700733] (-) TimerEvent: {}
+[0.703124] (humanoid_robot) StdoutLine: {'line': b'-- Found rosidl_generator_cpp: 3.1.8 (/opt/ros/humble/share/rosidl_generator_cpp/cmake)\n'}
+[0.721220] (humanoid_robot) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c\n'}
+[0.740035] (humanoid_robot) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp\n'}
+[0.794119] (humanoid_robot) StdoutLine: {'line': b'-- Found rmw_implementation_cmake: 6.1.2 (/opt/ros/humble/share/rmw_implementation_cmake/cmake)\n'}
+[0.797589] (humanoid_robot) StdoutLine: {'line': b'-- Found rmw_fastrtps_cpp: 6.2.10 (/opt/ros/humble/share/rmw_fastrtps_cpp/cmake)\n'}
+[0.800807] (-) TimerEvent: {}
+[0.901071] (-) TimerEvent: {}
+[0.902001] (humanoid_robot) StdoutLine: {'line': b'-- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.2")  \n'}
+[0.931683] (humanoid_robot) StdoutLine: {'line': b'-- Found FastRTPS: /opt/ros/humble/include  \n'}
+[0.969775] (humanoid_robot) StdoutLine: {'line': b"-- Using RMW implementation 'rmw_fastrtps_cpp' as default\n"}
+[0.982449] (humanoid_robot) StdoutLine: {'line': b'-- Looking for pthread.h\n'}
+[1.001183] (-) TimerEvent: {}
+[1.062375] (humanoid_robot) StdoutLine: {'line': b'-- Looking for pthread.h - found\n'}
+[1.062764] (humanoid_robot) StdoutLine: {'line': b'-- Performing Test CMAKE_HAVE_LIBC_PTHREAD\n'}
+[1.101226] (-) TimerEvent: {}
+[1.133275] (humanoid_robot) StdoutLine: {'line': b'-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success\n'}
+[1.134130] (humanoid_robot) StdoutLine: {'line': b'-- Found Threads: TRUE  \n'}
+[1.190964] (humanoid_robot) StdoutLine: {'line': b'-- Found sensor_msgs: 4.9.1 (/opt/ros/humble/share/sensor_msgs/cmake)\n'}
+[1.201321] (-) TimerEvent: {}
+[1.279807] (humanoid_robot) StdoutLine: {'line': b'-- Configuring done\n'}
+[1.296749] (humanoid_robot) StdoutLine: {'line': b'-- Generating done\n'}
+[1.301395] (-) TimerEvent: {}
+[1.302926] (humanoid_robot) StdoutLine: {'line': b'-- Build files have been written to: /home/zeyneb/Abbes/build/humanoid_robot\n'}
+[1.311322] (humanoid_robot) CommandEnded: {'returncode': 0}
+[1.313116] (humanoid_robot) JobProgress: {'identifier': 'humanoid_robot', 'progress': 'build'}
+[1.313277] (humanoid_robot) Command: {'cmd': ['/usr/bin/cmake', '--build', '/home/zeyneb/Abbes/build/humanoid_robot', '--', '-j16', '-l16'], 'cwd': '/home/zeyneb/Abbes/build/humanoid_robot', 'env': OrderedDict([('LESSOPEN', '| /usr/bin/lesspipe %s'), ('USER', 'zeyneb'), ('FONTCONFIG_PATH', '/etc/fonts'), ('GIO_MODULE_DIR', '/home/zeyneb/snap/code/common/.cache/gio-modules'), ('XDG_SESSION_TYPE', 'wayland'), ('GIT_ASKPASS', '/snap/code/241/usr/share/code/resources/app/extensions/git/dist/askpass.sh'), ('GTK_EXE_PREFIX_VSCODE_SNAP_ORIG', ''), ('GDK_BACKEND_VSCODE_SNAP_ORIG', ''), ('SHLVL', '2'), ('LD_LIBRARY_PATH', '/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib'), ('HOME', '/home/zeyneb'), ('CHROME_DESKTOP', 'code.desktop'), ('LOCPATH_VSCODE_SNAP_ORIG', ''), ('TERM_PROGRAM_VERSION', '1.121.0'), ('DESKTOP_SESSION', 'ubuntu'), ('GTK_PATH', '/snap/code/241/usr/lib/x86_64-linux-gnu/gtk-3.0'), ('XDG_DATA_HOME_VSCODE_SNAP_ORIG', ''), ('GTK_IM_MODULE_FILE', '/home/zeyneb/snap/code/common/.cache/immodules/immodules.cache'), ('ROS_PYTHON_VERSION', '3'), ('GNOME_SHELL_SESSION_MODE', 'ubuntu'), ('GTK_MODULES', 'gail:atk-bridge'), ('GSETTINGS_SCHEMA_DIR_VSCODE_SNAP_ORIG', ''), ('VSCODE_GIT_ASKPASS_MAIN', '/snap/code/241/usr/share/code/resources/app/extensions/git/dist/askpass-main.js'), ('VSCODE_GIT_ASKPASS_NODE', '/snap/code/241/usr/share/code/code'), ('SYSTEMD_EXEC_PID', '1933'), ('VSCODE_PYTHON_AUTOACTIVATE_GUARD', '1'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1000/bus'), ('COLORTERM', 'truecolor'), ('IM_CONFIG_PHASE', '1'), ('WAYLAND_DISPLAY', 'wayland-0'), ('ROS_DISTRO', 'humble'), ('LOGNAME', 'zeyneb'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('XDG_CONFIG_DIRS_VSCODE_SNAP_ORIG', '/etc/xdg/xdg-ubuntu:/etc/xdg'), ('XDG_SESSION_CLASS', 'user'), ('XDG_DATA_DIRS_VSCODE_SNAP_ORIG', '/usr/share/ubuntu:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop'), ('USERNAME', 'zeyneb'), ('TERM', 'xterm-256color'), ('GNOME_DESKTOP_SESSION_ID', 'this-is-deprecated'), ('FC_FONTATIONS', '1'), ('ROS_LOCALHOST_ONLY', '0'), ('PATH', '/home/zeyneb/.config/Code/User/globalStorage/github.copilot-chat/debugCommand:/home/zeyneb/.config/Code/User/globalStorage/github.copilot-chat/copilotCli:/opt/ros/humble/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin'), ('SESSION_MANAGER', 'local/zeyneb-ASUS-TUF:@/tmp/.ICE-unix/1905,unix/zeyneb-ASUS-TUF:/tmp/.ICE-unix/1905'), ('GTK_EXE_PREFIX', '/snap/code/241/usr'), ('XDG_MENU_PREFIX', 'gnome-'), ('GNOME_TERMINAL_SCREEN', '/org/gnome/Terminal/screen/f872ee41_6554_4861_9079_22e6cf9d748b'), ('GNOME_SETUP_DISPLAY', ':1'), ('XDG_RUNTIME_DIR', '/run/user/1000'), ('GDK_BACKEND', 'x11'), ('DISPLAY', ':0'), ('LOCPATH', '/snap/code/241/usr/lib/locale'), ('LANG', 'en_US.UTF-8'), ('XDG_CURRENT_DESKTOP', 'ubuntu:GNOME'), ('GIO_MODULE_DIR_VSCODE_SNAP_ORIG', ''), ('XDG_DATA_HOME', '/home/zeyneb/snap/code/241/.local/share'), ('XMODIFIERS', '@im=ibus'), ('XDG_SESSION_DESKTOP', 'ubuntu'), ('XAUTHORITY', '/run/user/1000/.mutter-Xwaylandauth.WSGQP3'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('VSCODE_GIT_IPC_HANDLE', '/run/user/1000/vscode-git-eaa0069234.sock'), ('GNOME_TERMINAL_SERVICE', ':1.119'), ('TERM_PROGRAM', 'vscode'), ('SSH_AGENT_LAUNCHER', 'gnome-keyring'), ('SSH_AUTH_SOCK', '/run/user/1000/keyring/ssh'), ('GSETTINGS_SCHEMA_DIR', '/home/zeyneb/snap/code/241/.local/share/glib-2.0/schemas'), ('AMENT_PREFIX_PATH', '/opt/ros/humble'), ('SHELL', '/bin/bash'), ('QT_ACCESSIBILITY', '1'), ('GDMSESSION', 'ubuntu'), ('LESSCLOSE', '/usr/bin/lesspipe %s %s'), ('GTK_PATH_VSCODE_SNAP_ORIG', ''), ('FONTCONFIG_FILE', '/etc/fonts/fonts.conf'), ('GTK_IM_MODULE_FILE_VSCODE_SNAP_ORIG', ''), ('VSCODE_GIT_ASKPASS_EXTRA_ARGS', ''), ('QT_IM_MODULE', 'ibus'), ('PWD', '/home/zeyneb/Abbes/build/humanoid_robot'), ('XDG_CONFIG_DIRS', '/etc/xdg/xdg-ubuntu:/etc/xdg'), ('XDG_DATA_DIRS', '/home/zeyneb/snap/code/241/.local/share:/home/zeyneb/snap/code/241:/snap/code/241/usr/share:/usr/share/ubuntu:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop'), ('PYTHONPATH', '/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages'), ('COLCON', '1'), ('VTE_VERSION', '6800'), ('CMAKE_PREFIX_PATH', '/opt/ros/humble')]), 'shell': False}
+[1.363233] (humanoid_robot) StdoutLine: {'line': b'[ 40%] \x1b[32mBuilding CXX object CMakeFiles/ik_vectors_DLS.dir/src/ik_vectors_DLS.cpp.o\x1b[0m\n'}
+[1.363413] (humanoid_robot) StdoutLine: {'line': b'[ 40%] \x1b[32mBuilding CXX object CMakeFiles/imu_filter.dir/src/imu_filter.cpp.o\x1b[0m\n'}
+[1.363475] (humanoid_robot) StdoutLine: {'line': b'[ 40%] \x1b[32mBuilding CXX object CMakeFiles/joint_bridge.dir/src/joint_bridge.cpp.o\x1b[0m\n'}
+[1.363533] (humanoid_robot) StdoutLine: {'line': b'[ 40%] \x1b[32mBuilding CXX object CMakeFiles/inverse_kinematics.dir/src/inverse_kinematics.cpp.o\x1b[0m\n'}
+[1.363629] (humanoid_robot) StdoutLine: {'line': b'[ 50%] \x1b[32mBuilding CXX object CMakeFiles/balance_controller.dir/src/balance_controller.cpp.o\x1b[0m\n'}
+[1.401508] (-) TimerEvent: {}
+[1.501807] (-) TimerEvent: {}
+[1.602051] (-) TimerEvent: {}
+[1.702311] (-) TimerEvent: {}
+[1.802596] (-) TimerEvent: {}
+[1.902849] (-) TimerEvent: {}
+[2.003138] (-) TimerEvent: {}
+[2.103501] (-) TimerEvent: {}
+[2.203846] (-) TimerEvent: {}
+[2.304201] (-) TimerEvent: {}
+[2.404541] (-) TimerEvent: {}
+[2.504856] (-) TimerEvent: {}
+[2.605171] (-) TimerEvent: {}
+[2.705515] (-) TimerEvent: {}
+[2.805899] (-) TimerEvent: {}
+[2.906343] (-) TimerEvent: {}
+[3.006668] (-) TimerEvent: {}
+[3.106977] (-) TimerEvent: {}
+[3.207258] (-) TimerEvent: {}
+[3.307600] (-) TimerEvent: {}
+[3.407965] (-) TimerEvent: {}
+[3.508308] (-) TimerEvent: {}
+[3.608632] (-) TimerEvent: {}
+[3.708978] (-) TimerEvent: {}
+[3.809334] (-) TimerEvent: {}
+[3.909658] (-) TimerEvent: {}
+[4.010006] (-) TimerEvent: {}
+[4.110341] (-) TimerEvent: {}
+[4.210661] (-) TimerEvent: {}
+[4.310998] (-) TimerEvent: {}
+[4.411360] (-) TimerEvent: {}
+[4.511710] (-) TimerEvent: {}
+[4.612044] (-) TimerEvent: {}
+[4.712389] (-) TimerEvent: {}
+[4.812735] (-) TimerEvent: {}
+[4.913199] (-) TimerEvent: {}
+[5.013548] (-) TimerEvent: {}
+[5.113907] (-) TimerEvent: {}
+[5.214266] (-) TimerEvent: {}
+[5.314605] (-) TimerEvent: {}
+[5.414953] (-) TimerEvent: {}
+[5.515264] (-) TimerEvent: {}
+[5.615600] (-) TimerEvent: {}
+[5.715968] (-) TimerEvent: {}
+[5.816329] (-) TimerEvent: {}
+[5.916673] (-) TimerEvent: {}
+[6.017003] (-) TimerEvent: {}
+[6.117386] (-) TimerEvent: {}
+[6.217703] (-) TimerEvent: {}
+[6.318044] (-) TimerEvent: {}
+[6.418413] (-) TimerEvent: {}
+[6.518730] (-) TimerEvent: {}
+[6.619034] (-) TimerEvent: {}
+[6.719372] (-) TimerEvent: {}
+[6.819712] (-) TimerEvent: {}
+[6.920174] (-) TimerEvent: {}
+[7.020513] (-) TimerEvent: {}
+[7.120825] (-) TimerEvent: {}
+[7.221143] (-) TimerEvent: {}
+[7.321494] (-) TimerEvent: {}
+[7.421826] (-) TimerEvent: {}
+[7.522143] (-) TimerEvent: {}
+[7.622486] (-) TimerEvent: {}
+[7.722792] (-) TimerEvent: {}
+[7.823098] (-) TimerEvent: {}
+[7.923416] (-) TimerEvent: {}
+[8.023730] (-) TimerEvent: {}
+[8.124039] (-) TimerEvent: {}
+[8.224402] (-) TimerEvent: {}
+[8.324744] (-) TimerEvent: {}
+[8.398772] (humanoid_robot) StdoutLine: {'line': b'[ 60%] \x1b[32m\x1b[1mLinking CXX executable imu_filter\x1b[0m\n'}
+[8.420713] (humanoid_robot) StdoutLine: {'line': b'[ 70%] \x1b[32m\x1b[1mLinking CXX executable joint_bridge\x1b[0m\n'}
+[8.424824] (-) TimerEvent: {}
+[8.525105] (-) TimerEvent: {}
+[8.625459] (-) TimerEvent: {}
+[8.725855] (-) TimerEvent: {}
+[8.777873] (humanoid_robot) StdoutLine: {'line': b'[ 70%] Built target joint_bridge\n'}
+[8.790849] (humanoid_robot) StdoutLine: {'line': b'[ 70%] Built target imu_filter\n'}
+[8.825982] (-) TimerEvent: {}
+[8.926292] (-) TimerEvent: {}
+[9.026597] (-) TimerEvent: {}
+[9.126915] (-) TimerEvent: {}
+[9.227209] (-) TimerEvent: {}
+[9.327516] (-) TimerEvent: {}
+[9.427845] (-) TimerEvent: {}
+[9.528210] (-) TimerEvent: {}
+[9.628511] (-) TimerEvent: {}
+[9.728844] (-) TimerEvent: {}
+[9.829200] (-) TimerEvent: {}
+[9.929526] (-) TimerEvent: {}
+[10.029829] (-) TimerEvent: {}
+[10.130133] (-) TimerEvent: {}
+[10.230558] (-) TimerEvent: {}
+[10.281976] (humanoid_robot) StdoutLine: {'line': b'[ 80%] \x1b[32m\x1b[1mLinking CXX executable inverse_kinematics\x1b[0m\n'}
+[10.330687] (-) TimerEvent: {}
+[10.431004] (-) TimerEvent: {}
+[10.531376] (-) TimerEvent: {}
+[10.631726] (-) TimerEvent: {}
+[10.691471] (humanoid_robot) StdoutLine: {'line': b'[ 80%] Built target inverse_kinematics\n'}
+[10.732286] (-) TimerEvent: {}
+[10.825930] (humanoid_robot) StdoutLine: {'line': b'[ 90%] \x1b[32m\x1b[1mLinking CXX executable ik_vectors_DLS\x1b[0m\n'}
+[10.832371] (-) TimerEvent: {}
+[10.833324] (humanoid_robot) StdoutLine: {'line': b'[100%] \x1b[32m\x1b[1mLinking CXX executable balance_controller\x1b[0m\n'}
+[10.932479] (-) TimerEvent: {}
+[11.032811] (-) TimerEvent: {}
+[11.133144] (-) TimerEvent: {}
+[11.233471] (-) TimerEvent: {}
+[11.234765] (humanoid_robot) StdoutLine: {'line': b'[100%] Built target ik_vectors_DLS\n'}
+[11.249682] (humanoid_robot) StdoutLine: {'line': b'[100%] Built target balance_controller\n'}
+[11.260596] (humanoid_robot) CommandEnded: {'returncode': 0}
+[11.261446] (humanoid_robot) JobProgress: {'identifier': 'humanoid_robot', 'progress': 'install'}
+[11.269538] (humanoid_robot) Command: {'cmd': ['/usr/bin/cmake', '--install', '/home/zeyneb/Abbes/build/humanoid_robot'], 'cwd': '/home/zeyneb/Abbes/build/humanoid_robot', 'env': OrderedDict([('LESSOPEN', '| /usr/bin/lesspipe %s'), ('USER', 'zeyneb'), ('FONTCONFIG_PATH', '/etc/fonts'), ('GIO_MODULE_DIR', '/home/zeyneb/snap/code/common/.cache/gio-modules'), ('XDG_SESSION_TYPE', 'wayland'), ('GIT_ASKPASS', '/snap/code/241/usr/share/code/resources/app/extensions/git/dist/askpass.sh'), ('GTK_EXE_PREFIX_VSCODE_SNAP_ORIG', ''), ('GDK_BACKEND_VSCODE_SNAP_ORIG', ''), ('SHLVL', '2'), ('LD_LIBRARY_PATH', '/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib'), ('HOME', '/home/zeyneb'), ('CHROME_DESKTOP', 'code.desktop'), ('LOCPATH_VSCODE_SNAP_ORIG', ''), ('TERM_PROGRAM_VERSION', '1.121.0'), ('DESKTOP_SESSION', 'ubuntu'), ('GTK_PATH', '/snap/code/241/usr/lib/x86_64-linux-gnu/gtk-3.0'), ('XDG_DATA_HOME_VSCODE_SNAP_ORIG', ''), ('GTK_IM_MODULE_FILE', '/home/zeyneb/snap/code/common/.cache/immodules/immodules.cache'), ('ROS_PYTHON_VERSION', '3'), ('GNOME_SHELL_SESSION_MODE', 'ubuntu'), ('GTK_MODULES', 'gail:atk-bridge'), ('GSETTINGS_SCHEMA_DIR_VSCODE_SNAP_ORIG', ''), ('VSCODE_GIT_ASKPASS_MAIN', '/snap/code/241/usr/share/code/resources/app/extensions/git/dist/askpass-main.js'), ('VSCODE_GIT_ASKPASS_NODE', '/snap/code/241/usr/share/code/code'), ('SYSTEMD_EXEC_PID', '1933'), ('VSCODE_PYTHON_AUTOACTIVATE_GUARD', '1'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1000/bus'), ('COLORTERM', 'truecolor'), ('IM_CONFIG_PHASE', '1'), ('WAYLAND_DISPLAY', 'wayland-0'), ('ROS_DISTRO', 'humble'), ('LOGNAME', 'zeyneb'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('XDG_CONFIG_DIRS_VSCODE_SNAP_ORIG', '/etc/xdg/xdg-ubuntu:/etc/xdg'), ('XDG_SESSION_CLASS', 'user'), ('XDG_DATA_DIRS_VSCODE_SNAP_ORIG', '/usr/share/ubuntu:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop'), ('USERNAME', 'zeyneb'), ('TERM', 'xterm-256color'), ('GNOME_DESKTOP_SESSION_ID', 'this-is-deprecated'), ('FC_FONTATIONS', '1'), ('ROS_LOCALHOST_ONLY', '0'), ('PATH', '/home/zeyneb/.config/Code/User/globalStorage/github.copilot-chat/debugCommand:/home/zeyneb/.config/Code/User/globalStorage/github.copilot-chat/copilotCli:/opt/ros/humble/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin'), ('SESSION_MANAGER', 'local/zeyneb-ASUS-TUF:@/tmp/.ICE-unix/1905,unix/zeyneb-ASUS-TUF:/tmp/.ICE-unix/1905'), ('GTK_EXE_PREFIX', '/snap/code/241/usr'), ('XDG_MENU_PREFIX', 'gnome-'), ('GNOME_TERMINAL_SCREEN', '/org/gnome/Terminal/screen/f872ee41_6554_4861_9079_22e6cf9d748b'), ('GNOME_SETUP_DISPLAY', ':1'), ('XDG_RUNTIME_DIR', '/run/user/1000'), ('GDK_BACKEND', 'x11'), ('DISPLAY', ':0'), ('LOCPATH', '/snap/code/241/usr/lib/locale'), ('LANG', 'en_US.UTF-8'), ('XDG_CURRENT_DESKTOP', 'ubuntu:GNOME'), ('GIO_MODULE_DIR_VSCODE_SNAP_ORIG', ''), ('XDG_DATA_HOME', '/home/zeyneb/snap/code/241/.local/share'), ('XMODIFIERS', '@im=ibus'), ('XDG_SESSION_DESKTOP', 'ubuntu'), ('XAUTHORITY', '/run/user/1000/.mutter-Xwaylandauth.WSGQP3'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('VSCODE_GIT_IPC_HANDLE', '/run/user/1000/vscode-git-eaa0069234.sock'), ('GNOME_TERMINAL_SERVICE', ':1.119'), ('TERM_PROGRAM', 'vscode'), ('SSH_AGENT_LAUNCHER', 'gnome-keyring'), ('SSH_AUTH_SOCK', '/run/user/1000/keyring/ssh'), ('GSETTINGS_SCHEMA_DIR', '/home/zeyneb/snap/code/241/.local/share/glib-2.0/schemas'), ('AMENT_PREFIX_PATH', '/opt/ros/humble'), ('SHELL', '/bin/bash'), ('QT_ACCESSIBILITY', '1'), ('GDMSESSION', 'ubuntu'), ('LESSCLOSE', '/usr/bin/lesspipe %s %s'), ('GTK_PATH_VSCODE_SNAP_ORIG', ''), ('FONTCONFIG_FILE', '/etc/fonts/fonts.conf'), ('GTK_IM_MODULE_FILE_VSCODE_SNAP_ORIG', ''), ('VSCODE_GIT_ASKPASS_EXTRA_ARGS', ''), ('QT_IM_MODULE', 'ibus'), ('PWD', '/home/zeyneb/Abbes/build/humanoid_robot'), ('XDG_CONFIG_DIRS', '/etc/xdg/xdg-ubuntu:/etc/xdg'), ('XDG_DATA_DIRS', '/home/zeyneb/snap/code/241/.local/share:/home/zeyneb/snap/code/241:/snap/code/241/usr/share:/usr/share/ubuntu:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop'), ('PYTHONPATH', '/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages'), ('COLCON', '1'), ('VTE_VERSION', '6800'), ('CMAKE_PREFIX_PATH', '/opt/ros/humble')]), 'shell': False}
+[11.275769] (humanoid_robot) StdoutLine: {'line': b'-- Install configuration: ""\n'}
+[11.275925] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/imu_filter\n'}
+[11.278997] (humanoid_robot) StdoutLine: {'line': b'-- Set runtime path of "/home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/imu_filter" to ""\n'}
+[11.279126] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/balance_controller\n'}
+[11.283949] (humanoid_robot) StdoutLine: {'line': b'-- Set runtime path of "/home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/balance_controller" to ""\n'}
+[11.284089] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/inverse_kinematics\n'}
+[11.288812] (humanoid_robot) StdoutLine: {'line': b'-- Set runtime path of "/home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/inverse_kinematics" to ""\n'}
+[11.288918] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/ik_vectors_DLS\n'}
+[11.293546] (humanoid_robot) StdoutLine: {'line': b'-- Set runtime path of "/home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/ik_vectors_DLS" to ""\n'}
+[11.293716] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/joint_bridge\n'}
+[11.296641] (humanoid_robot) StdoutLine: {'line': b'-- Set runtime path of "/home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/joint_bridge" to ""\n'}
+[11.296796] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/config\n'}
+[11.296936] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/config/ik_params.yaml\n'}
+[11.297215] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/config/gait_params.yaml\n'}
+[11.297450] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/config/imu_params.yaml\n'}
+[11.297722] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/config/balance_params.yaml\n'}
+[11.297992] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/config/robot_params.yaml\n'}
+[11.298287] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/launch\n'}
+[11.298358] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/launch/walking.launch.py\n'}
+[11.298723] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/launch/balance.launch.py\n'}
+[11.299010] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/include\n'}
+[11.299080] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/include/humanoid_robot\n'}
+[11.299144] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/include/humanoid_robot/joint_table.hpp\n'}
+[11.299305] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/include/humanoid_robot/wampler_leg.hpp\n'}
+[11.299452] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/balance_controller.py\n'}
+[11.299589] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/pipeline.py\n'}
+[11.300035] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/preview_controller.py\n'}
+[11.300452] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/footstep_planner.py\n'}
+[11.300797] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/zmp_reference.py\n'}
+[11.301077] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/lib/humanoid_robot/walk_test.py\n'}
+[11.301593] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/ament_index/resource_index/package_run_dependencies/humanoid_robot\n'}
+[11.301774] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/ament_index/resource_index/parent_prefix_path/humanoid_robot\n'}
+[11.301964] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/environment/ament_prefix_path.sh\n'}
+[11.302110] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/environment/ament_prefix_path.dsv\n'}
+[11.302243] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/environment/path.sh\n'}
+[11.302374] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/environment/path.dsv\n'}
+[11.302505] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/local_setup.bash\n'}
+[11.302636] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/local_setup.sh\n'}
+[11.302769] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/local_setup.zsh\n'}
+[11.302900] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/local_setup.dsv\n'}
+[11.303030] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/package.dsv\n'}
+[11.303215] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/ament_index/resource_index/packages/humanoid_robot\n'}
+[11.303384] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/cmake/humanoid_robotConfig.cmake\n'}
+[11.303499] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/cmake/humanoid_robotConfig-version.cmake\n'}
+[11.303629] (humanoid_robot) StdoutLine: {'line': b'-- Installing: /home/zeyneb/Abbes/install/humanoid_robot/share/humanoid_robot/package.xml\n'}
+[11.305623] (humanoid_robot) CommandEnded: {'returncode': 0}
+[11.324701] (humanoid_robot) JobEnded: {'identifier': 'humanoid_robot', 'rc': 0}
+[11.325281] (-) EventReactorShutdown: {}
