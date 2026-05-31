@@ -12,7 +12,8 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
-    DeclareLaunchArgument, IncludeLaunchDescription, RegisterEventHandler, TimerAction
+    DeclareLaunchArgument, IncludeLaunchDescription, RegisterEventHandler, TimerAction,
+    UnsetEnvironmentVariable
 )
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
@@ -63,12 +64,15 @@ def generate_launch_description():
     )
 
     # ── Gazebo Harmonic ───────────────────────────────────
+    # Set env GZ_HEADLESS=1 to run the server only (no GUI) — used for
+    # automated / CI tests where we judge balance from the IMU, not the screen.
+    gz_flags = '-s -r -v 4' if os.environ.get('GZ_HEADLESS') == '1' else '-r -v 4'
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(gz_pkg, 'launch', 'gz_sim.launch.py')
         ),
         launch_arguments={
-            'gz_args': f'-r -v 4 {world_file}'    # -r = run immediately (with GUI client)
+            'gz_args': f'{gz_flags} {world_file}'    # -r run immediately; -s server-only (headless)
            # 'on_exit_shutdown': 'true',
         }.items()
     )
@@ -189,6 +193,12 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        # Stop Qt GUIs (Gazebo GUI client + RViz) from registering with the
+        # GNOME session manager. A flaky Qt<->session-manager ICE connection
+        # was firing "ICE default IO error handler doing an exit()", crashing
+        # the GUI client which in turn killed the gz server (so controllers
+        # never spawned). Unsetting it skips that fragile path. Verified fix.
+        UnsetEnvironmentVariable('SESSION_MANAGER'),
         DeclareLaunchArgument(
             'use_rviz',
             default_value='true',

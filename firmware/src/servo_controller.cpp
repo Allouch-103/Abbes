@@ -5,10 +5,10 @@
 #include "servo_controller.h"
 
 // ── Hardware ───────────────────────────────────────────────
-static Adafruit_PWMServoDriver pca[2] = {
-    Adafruit_PWMServoDriver(PCA_ADDR_BOARD0, Wire),
-    Adafruit_PWMServoDriver(PCA_ADDR_BOARD1, Wire),
-};
+// Only ONE PCA9685 is wired (board 0 @ 0x40), 16 channels.
+// All connected joints (legs + arms) live on this board; head_yaw and
+// camera_pitch have no servo (JointConfig.connected == false).
+static Adafruit_PWMServoDriver pca0(PCA_ADDR_BOARD0, Wire);
 
 // ── Servo state ────────────────────────────────────────────
 float current_deg[NUM_JOINTS];
@@ -34,23 +34,21 @@ static uint16_t angleToPWM(float angle, bool inverted) {
 
 void servo_set(uint8_t joint_idx, float angle_deg) {
     const JointConfig& j = JOINT_CONFIG[joint_idx];
+    // Skip joints with no physical servo (head_yaw, camera_pitch). They
+    // still exist in the 18-joint /joint_commands contract; we just don't
+    // drive any PWM for them.
+    if (!j.connected) return;
     angle_deg = constrain(angle_deg, j.min_deg, j.max_deg);
     uint16_t pwm = angleToPWM(angle_deg, j.inverted);
-    pca[j.pca_board].setPWM(j.pca_channel, 0, pwm);
+    pca0.setPWM(j.pca_channel, 0, pwm);
 }
 
 void servos_init() {
-    Serial.println("[PCA9685] Initializing board 0 (0x40)...");
-    pca[0].begin();
-    pca[0].setPWMFreq(SERVO_FREQ_HZ);
+    Serial.println("[PCA9685] Initializing board 0 (0x40), 16 channels...");
+    pca0.begin();
+    pca0.setPWMFreq(SERVO_FREQ_HZ);
     delay(10);
-
-    /*Serial.println("[PCA9685] Initializing board 1 (0x41)...");
-    pca[1].begin();
-    pca[1].setPWMFreq(SERVO_FREQ_HZ);
-    delay(10);
-
-    Serial.println("[PCA9685] Both boards ready");*/
+    Serial.println("[PCA9685] Board 0 ready (legs ch0-9, arms ch10-15)");
 }
 
 void servos_move_to_rest_blocking() {

@@ -67,8 +67,13 @@ one 18-vector in THIS file's order and (b) converts radians→degrees. Not built
 16 l_ankle_pitch     17 l_ankle_roll
 ```
 
-- Indices **0–9 → PCA board 0 (0x40)**, **10–17 → PCA board 1 (0x41)**
-  (`pca_channel` = the slot on that board).
+- **SINGLE-BOARD build (2026-05-31):** only ONE PCA9685 (board 0 @ 0x40, 16
+  channels) is wired. The 18-joint `/joint_commands` contract is UNCHANGED, but
+  only 16 joints have a servo: **legs → channels 0–9, arms → channels 10–15**;
+  **`head_yaw` (idx 3) and `camera_pitch` (idx 4) are NOT connected**
+  (`JointConfig.connected=false`, `pca_channel=255`). `servo_set()` early-returns
+  for unconnected joints. `JointConfig` gained a `connected` field;
+  `servo_controller.cpp` now uses a single `pca0` driver (no `pca[2]` array).
 - Each joint has `min_deg / max_deg / rest_deg` (from report Table 3.1) and an
   `inverted` flag (flips PWM for mirror-mounted left-side servos; all currently
   `false`). `servo_set()` clamps to [min,max] before driving.
@@ -96,10 +101,10 @@ a sim→hardware bridge is built — they are currently grouped differently.**
   DLPF)`; if not found, firmware continues without IMU (sets `imu_available=false`).
 - **LED (`PIN_LED`):** ON when agent CONNECTED, OFF otherwise.
 
-⚠️ **CURRENT-STATE GOTCHA:** in `servos_init()` the **board-1 (0x41) init is
-commented out** — so right now only board 0 / **joints 0–9 are actually driven**;
-left-side joints 10–17 won't move until that block is re-enabled. (Likely a
-single-board bench-test leftover.)
+✅ **RESOLVED (2026-05-31):** the firmware is now an intentional SINGLE-board
+build (board 0 only, 16 servos). The old board-1 init block is gone, and ALL 16
+connected joints (legs + arms) are driven via `pca0`. Head/camera are
+deliberately unactuated (no servo). See §3.
 
 ---
 
@@ -142,10 +147,17 @@ for the `WAITING_WIFI → WAITING_AGENT → CONNECTED` progression.
 **Last updated:** 2026-05-30 (initial scaffold by Claude from reading the code;
 NOT yet verified on hardware this session).
 
+**Last touched:** 2026-05-31 — converted to a SINGLE-PCA (16-servo) build and
+verified it compiles (`pio run` → SUCCESS, RAM 23% / Flash 27%). Changes:
+`joint_definitions.h` (added `connected` field; legs→ch0-9, arms→ch10-15;
+head_yaw/camera_pitch `connected=false`), `servo_controller.cpp` (single `pca0`
+driver; `servo_set()` skips unconnected). `NUM_JOINTS` stays 18 so the ROS2
+`/joint_commands` contract + the new `servo_bridge` are unchanged. NOT yet
+flashed/verified on hardware.
+
 **State:** Firmware is written and structured (Phase 3 ✅ in the roadmap). Known
 items to confirm / address when firmware work resumes:
-1. **Re-enable PCA board 1** in `servos_init()` (only board 0 active now) →
-   needed for the left side to move.
+1. ~~Re-enable PCA board 1~~ → DONE differently: single-board build (above).
 2. **Remove the stale `micro_ros_transport.cpp`** if confirmed unused (the live
    one is `microros_transport.cpp`).
 3. **WiFi secret in git** (`robot_config.h`) — decide on template + gitignore.

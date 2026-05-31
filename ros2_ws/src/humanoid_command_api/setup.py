@@ -26,6 +26,7 @@ setup(
             'command_server = humanoid_command_api.command_server_node:main',
             'llm_dispatcher = humanoid_command_api.llm_dispatcher_node:main',
             'web_ui         = humanoid_command_api.web_ui_node:main',
+            'servo_bridge   = humanoid_command_api.controller_to_servo_bridge:main',
         ],
     },
 )

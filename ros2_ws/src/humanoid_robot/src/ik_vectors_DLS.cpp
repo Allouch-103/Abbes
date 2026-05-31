@@ -29,7 +29,7 @@ public:
         declare_parameter("L1",          0.1225);
         declare_parameter("L2",          0.1230);
         declare_parameter("hip_width",   0.0800);
-        declare_parameter("com_height",  0.1900);
+        declare_parameter("com_height",  0.2698);   // single source: robot_params.yaml com_height_m
         declare_parameter("enabled",     true);
         declare_parameter("alpha",       0.01);
         declare_parameter("alpha_max",   0.15);
@@ -126,22 +126,25 @@ private:
     {
         constexpr double R2D = 180.0/M_PI;
         const Vec5& q = leg_r_.q;
-        a[J::R_HIP_ROLL]    = clamp_joint(J::R_HIP_ROLL,     50.0 + q[0]*R2D);
-        a[J::R_HIP_PITCH]   = clamp_joint(J::R_HIP_PITCH,    80.0 + q[1]*R2D);
-        a[J::R_KNEE_PITCH]  = clamp_joint(J::R_KNEE_PITCH,  100.0 - q[2]*R2D);
-        a[J::R_ANKLE_PITCH] = clamp_joint(J::R_ANKLE_PITCH, 100.0 + q[3]*R2D);
-        a[J::R_ANKLE_ROLL]  = clamp_joint(J::R_ANKLE_ROLL,   90.0 + q[4]*R2D);
+        // 90-centred: servo = 90 + sign*q. Signs preserved from the original
+        // mapping (verify in Gazebo, flip a sign if a joint turns the wrong way).
+        a[J::R_HIP_ROLL]    = clamp_joint(J::R_HIP_ROLL,    90.0 + q[0]*R2D);
+        a[J::R_HIP_PITCH]   = clamp_joint(J::R_HIP_PITCH,   90.0 + q[1]*R2D);
+        a[J::R_KNEE_PITCH]  = clamp_joint(J::R_KNEE_PITCH,  90.0 - q[2]*R2D);
+        a[J::R_ANKLE_PITCH] = clamp_joint(J::R_ANKLE_PITCH, 90.0 + q[3]*R2D);
+        a[J::R_ANKLE_ROLL]  = clamp_joint(J::R_ANKLE_ROLL,  90.0 + q[4]*R2D);
     }
 
     void apply_left(std::array<float,18>& a) const
     {
         constexpr double R2D = 180.0/M_PI;
         const Vec5& q = leg_l_.q;
-        a[J::L_HIP_ROLL]    = clamp_joint(J::L_HIP_ROLL,     50.0 - q[0]*R2D);
-        a[J::L_HIP_PITCH]   = clamp_joint(J::L_HIP_PITCH,    80.0 + q[1]*R2D);
-        a[J::L_KNEE_PITCH]  = clamp_joint(J::L_KNEE_PITCH,   100.0 - q[2]*R2D);
-        a[J::L_ANKLE_PITCH] = clamp_joint(J::L_ANKLE_PITCH,  90.0 + q[3]*R2D);
-        a[J::L_ANKLE_ROLL]  = clamp_joint(J::L_ANKLE_ROLL,   90.0 - q[4]*R2D);
+        // 90-centred, mirror signs preserved from the original mapping.
+        a[J::L_HIP_ROLL]    = clamp_joint(J::L_HIP_ROLL,    90.0 - q[0]*R2D);
+        a[J::L_HIP_PITCH]   = clamp_joint(J::L_HIP_PITCH,   90.0 + q[1]*R2D);
+        a[J::L_KNEE_PITCH]  = clamp_joint(J::L_KNEE_PITCH,  90.0 - q[2]*R2D);
+        a[J::L_ANKLE_PITCH] = clamp_joint(J::L_ANKLE_PITCH, 90.0 + q[3]*R2D);
+        a[J::L_ANKLE_ROLL]  = clamp_joint(J::L_ANKLE_ROLL,  90.0 - q[4]*R2D);
     }
 
     void tick()

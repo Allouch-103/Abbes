@@ -50,7 +50,7 @@ zmp_preview_controller:
 
     # ── LIPM parameters ────────────────────────────────────
     # CoM height — must match robot_params.yaml com_height_m
-    com_height_m: 0.19
+    com_height_m: 0.2698
 
     # Gravitational acceleration
     gravity_m_s2: 9.81

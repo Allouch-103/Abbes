@@ -26,16 +26,20 @@ constexpr int COUNT            = 18;
 }
 
 struct JointLimit { float min, max, rest; };
+// rest = 90 for ALL joints: URDF-zero (straight/neutral) maps to servo 90,
+// the mechanical centre of a 0..180 servo. Matches firmware joint_definitions.h
+// and the servo_bridge convention. min/max stay as the per-joint mechanical
+// safety clamp (recalibrate on the mounted robot).
 constexpr std::array<JointLimit, J::COUNT> LIMITS = {{
   //  min    max   rest    index  name
-  {   0,   170,  50 },  //  0   r_hip_roll
-  {   0,   170,  80 },  //  1   r_hip_pitch
-  {   0,   170, 100 },  //  2   r_knee_pitch
-  {  10,   180, 100 },  //  3   r_ankle_pitch
+  {   0,   170,  90 },  //  0   r_hip_roll
+  {   0,   170,  90 },  //  1   r_hip_pitch
+  {   0,   170,  90 },  //  2   r_knee_pitch
+  {  10,   180,  90 },  //  3   r_ankle_pitch
   {  20,   150,  90 },  //  4   r_ankle_roll
-  {   0,   170,  50 },  //  5   l_hip_roll
-  {   0,   170,  80 },  //  6   l_hip_pitch
-  {   0,   170,  70 },  //  7   l_knee_pitch
+  {   0,   170,  90 },  //  5   l_hip_roll
+  {   0,   170,  90 },  //  6   l_hip_pitch
+  {   0,   170,  90 },  //  7   l_knee_pitch
   {  10,   180,  90 },  //  8   l_ankle_pitch
   {  20,   150,  90 },  //  9   l_ankle_roll
   {   0,   180,  90 },  // 10   r_shoulder_pitch

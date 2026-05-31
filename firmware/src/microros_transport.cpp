@@ -8,6 +8,7 @@
 #include <rcl/error_handling.h>
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
+#include <uxr/client/profile/transport/custom/custom_transport.h>
 #include <std_msgs/msg/float32_multi_array.h>
 #include <sensor_msgs/msg/imu.h>
 
@@ -23,6 +24,13 @@
     if (_ret != RCL_RET_OK) { \
         Serial.printf("[micro-ROS WARN] %s returned %d\n", #fn, (int)_ret); \
     } \
+}
+
+extern "C" {
+bool platformio_transport_open(struct uxrCustomTransport * transport);
+bool platformio_transport_close(struct uxrCustomTransport * transport);
+size_t platformio_transport_write(struct uxrCustomTransport * transport, const uint8_t *buf, size_t len, uint8_t *errcode);
+size_t platformio_transport_read(struct uxrCustomTransport * transport, uint8_t *buf, size_t len, int timeout, uint8_t *errcode);
 }
 
 // ── Shared state ───────────────────────────────────────────
@@ -46,6 +54,53 @@ static sensor_msgs__msg__Imu     imu_msg;
 
 static rcl_timer_t  servo_timer;
 static rcl_timer_t  imu_timer;
+
+static bool wifi_and_transport_init() {
+    WiFi.mode(WIFI_STA);
+    WiFi.setSleep(false);
+    WiFi.setAutoReconnect(true);
+    WiFi.persistent(false);
+
+    Serial.printf("[WiFi] Connecting to SSID \"%s\"...\n", WIFI_SSID);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+    const uint32_t timeout_ms = 20000;
+    const uint32_t start_ms = millis();
+    wl_status_t last_status = WL_IDLE_STATUS;
+
+    while (WiFi.status() != WL_CONNECTED && (millis() - start_ms) < timeout_ms) {
+        wl_status_t status = WiFi.status();
+        if (status != last_status) {
+            Serial.printf("[WiFi] status=%d\n", (int)status);
+            last_status = status;
+        }
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.printf("[WiFi] FAILED to connect to \"%s\"\n", WIFI_SSID);
+        Serial.println("[WiFi] Phone hotspots usually need 2.4 GHz + WPA2, not WPA3-only or 5 GHz-only mode.");
+        return false;
+    }
+
+    Serial.printf("[WiFi] Connected! IP: %s\n", WiFi.localIP().toString().c_str());
+
+    static micro_ros_agent_locator locator;
+    locator.address.fromString(AGENT_IP);
+    locator.port = AGENT_PORT;
+
+    rmw_uros_set_custom_transport(
+        false,
+        (void*)&locator,
+        platformio_transport_open,
+        platformio_transport_close,
+        platformio_transport_write,
+        platformio_transport_read
+    );
+
+    Serial.println("[WiFi] micro-ROS transport configured");
+    return true;
+}
 
 // ── Callbacks ──────────────────────────────────────────────
 
@@ -217,34 +272,11 @@ static void microros_destroy() {
 
 static void microROSTask(void* param) {
     Serial.println("[Task] microROSTask started on Core 1"); 
-    IPAddress agent_ip;
-    agent_ip.fromString(AGENT_IP);
-    Serial.println("[WiFi] Calling set_microros_wifi_transports...");
-    set_microros_wifi_transports(
-        (char*)WIFI_SSID,
-        (char*)WIFI_PASSWORD,
-        agent_ip,
-        AGENT_PORT
-    );
-    Serial.println("[WiFi] Transport configured, waiting for connection...");
-
-    Serial.println("[WiFi] Connecting...");
-    int wifi_timeout = 0;
-    while (WiFi.status() != WL_CONNECTED && wifi_timeout < 30) {
-        vTaskDelay(pdMS_TO_TICKS(500));
-        Serial.printf("  WiFi status: %d (timeout %d/30)\n", WiFi.status(), wifi_timeout);
-        Serial.print(".");
-        wifi_timeout++;
+    while (!wifi_and_transport_init()) {
+        vTaskDelay(pdMS_TO_TICKS(5000));
     }
 
-
-    if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("\n[WiFi] FAILED to connect. Check credentials!");
-    } else {
-        Serial.printf("\n[WiFi] Connected! IP: %s\n",
-                      WiFi.localIP().toString().c_str());
-        agent_state = AgentState::WAITING_AGENT;
-    }
+    agent_state = AgentState::WAITING_AGENT;
 
     while (true) {
         switch (agent_state) {

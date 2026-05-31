@@ -15,7 +15,7 @@ WHAT THIS NODE DOES
     /joint_commands (std_msgs/Float32MultiArray)    — θ_nominal from ZMP planner
 
   Publishes:
-    /joint_commands (std_msgs/Float32MultiArray)   — θ_nominal + Δθ_ankle
+    /joint_commands_corrected (std_msgs/Float32MultiArray) — θ_nominal + Δθ_ankle
 
 WHY LQR INSTEAD OF PID
 ───────────────────────
@@ -64,8 +64,8 @@ ZMP RE-PLANNING HOOK
 TOPICS (identical to old PID node):
   IN:  /tilt_degrees  geometry_msgs/Vector3Stamped
   IN:  /imu           sensor_msgs/Imu
-  IN:  /joint_commands std_msgs/Float32MultiArray   ← NEW (from ZMP planner)
-  OUT: /joint_commands std_msgs/Float32MultiArray
+  IN:  /joint_commands std_msgs/Float32MultiArray   ← NOMINAL (from ik_vectors_DLS)
+  OUT: /joint_commands_corrected std_msgs/Float32MultiArray  ← nominal + Δθ
   OUT: /balance_alert  std_msgs/Bool               ← NEW
 
 LIVE TUNING (no recompile — same as before):
@@ -90,6 +90,7 @@ from std_msgs.msg import Float32MultiArray, Bool
 
 import numpy as np
 from scipy.linalg import solve_continuous_are
+from rclpy.qos import QoSProfile, ReliabilityPolicy
 
 
 # ── Hardware constants (tune to your robot) ──────────────────────────────────
@@ -99,7 +100,7 @@ ANKLE_ROLL_IDX     = 4       # index in the 18-float array — left ankle roll
 ANKLE_PITCH_IDX_R  = 8      # right ankle pitch
 ANKLE_ROLL_IDX_R   = 9      # right ankle roll
 
-Z_C                = 0.30    # CoM height above ankle (m) — measure on your robot
+Z_C                = 0.2698  # CoM height above ankle (m) — single source: robot_params.yaml com_height_m
 I_PITCH            = 0.08    # approx moment of inertia about ankle pitch axis (kg·m²)
 I_ROLL             = 0.06    # approx moment of inertia about ankle roll  axis (kg·m²)
 G                  = 9.81
@@ -169,22 +170,35 @@ class BalanceController(Node):
         self._tilt_roll  = 0.0        # deg
         self._rate_pitch = 0.0        # rad/s (from /imu gyro)
         self._rate_roll  = 0.0        # rad/s
-        self._nominal    = np.zeros(N_JOINTS)   # from ZMP planner
+        # Default the nominal to 90° (neutral) — NOT zeros. If the nominal
+        # hasn't arrived yet, 90 maps to URDF-zero (straight) at joint_bridge;
+        # zeros would map to ~-90 rad and fold the robot.
+        self._nominal    = np.full(N_JOINTS, 90.0)   # from ZMP planner (servo deg)
         self._alert_count = 0
 
         # ── Subscriptions ─────────────────────────────────────────────────
+        # /joint_commands and /imu come from BEST_EFFORT publishers
+        # (ik_vectors_DLS, ESP32/sim IMU), so subscribe BEST_EFFORT or DDS
+        # won't deliver (this was the "incompatible QoS" warning).
+        be = QoSProfile(depth=10)
+        be.reliability = ReliabilityPolicy.BEST_EFFORT
         self.create_subscription(
             Vector3Stamped, '/tilt_degrees',
             self._tilt_cb, 10)
         self.create_subscription(
             Imu, '/imu',
-            self._imu_cb, 10)
+            self._imu_cb, be)
         self.create_subscription(
             Float32MultiArray, '/joint_commands',
-            self._nominal_cb, 10)
+            self._nominal_cb, be)
 
         # ── Publishers ────────────────────────────────────────────────────
-        self._cmd_pub = self.create_publisher(Float32MultiArray, '/joint_commands', 10)        
+        # Subscribe to /joint_commands (NOMINAL, from ik_vectors_DLS) and
+        # publish to /joint_commands_corrected (nominal + ankle Δθ). Publishing
+        # to a DIFFERENT topic than we subscribe avoids feeding our own output
+        # back as the next nominal, and feeds joint_bridge (which listens on
+        # /joint_commands_corrected).
+        self._cmd_pub = self.create_publisher(Float32MultiArray, '/joint_commands_corrected', 10)
         self._alert_pub = self.create_publisher(Bool, '/balance_alert', 10)
         # ── Control timer (200 Hz) ────────────────────────────────────────
         self.create_timer(0.005, self._control_loop)
@@ -220,9 +234,17 @@ class BalanceController(Node):
         if len(msg.data) == N_JOINTS:
             self._nominal = np.array(msg.data)
 
+    def _is_enabled(self) -> bool:
+        """Robustly read the 'enabled' flag. A launch arg may arrive as the
+        STRING 'false', which Python treats as truthy — so coerce explicitly."""
+        v = self.get_parameter('enabled').value
+        if isinstance(v, bool):
+            return v
+        return str(v).strip().lower() in ('true', '1', 'yes', 'on')
+
     # ── Main control loop (200 Hz) ────────────────────────────────────────
     def _control_loop(self):
-        enabled = self.get_parameter('enabled').value
+        enabled = self._is_enabled()
 
         # ── Build state vector ────────────────────────────────────────────
         x = np.array([

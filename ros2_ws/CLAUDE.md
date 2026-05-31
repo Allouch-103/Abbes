@@ -19,11 +19,19 @@ that handoff current whenever a meaningful chunk of work finishes.
   geometric standing (straight legs, arms down).
 - **`my_robot_bringup`** — Gazebo launch files, `controllers.yaml`,
   RViz configs.
-- **`my_robot_control`** — C++ nodes for real-time work:
-    - `imu_filter` — complementary filter on raw IMU
-    - `balance_controller` — ankle/hip strategy for standing
-    - `inverse_kinematics` — leg IK for given CoM position
-    - `joint_fusion` — combines IK output with balance corrections
+- **`humanoid_robot`** — C++ nodes for real-time work (NOTE: this is the
+  actual package name; an older note said `my_robot_control`):
+    - `imu_filter` — complementary filter on raw IMU → `/tilt`, `/tilt_degrees`
+    - `balance_controller` — ankle PID for standing → publishes `/joint_commands`
+    - `inverse_kinematics` — analytical leg IK → publishes `/joint_commands`
+    - `ik_vectors_DLS` — alternative DLS (Wampler) IK node
+    - `joint_bridge` — `/joint_commands`(deg)→controllers(rad). ⚠️ BROKEN: it
+      does a flat `deg*π/180` and does NOT remove the servo rest offsets, so it
+      commands garbage poses. Unused (not in any launch). Superseded by the
+      reverse bridge below; delete when convenient.
+    - ⚠️ `joint_fusion` (combine IK + balance) was PLANNED but **never written**.
+      So during "walking" both `inverse_kinematics` and `balance_controller`
+      publish to `/joint_commands` and overwrite each other.
 - **`humanoid_msgs`** — action and service interface definitions.
 - **`humanoid_command_api`** — Python action/service server node
   exposing the 7-command vocabulary to higher layers.
@@ -188,9 +196,81 @@ and abandoned. Free-form. Update over time.)
 **Always keep this section current (see section 8 rule).** This is the
 first thing to read at the start of a new session.
 
-**Last updated:** 2026-05-30 (evening)
+**Last updated:** 2026-05-31 (later — foundation reconcile complete + validated)
 
-**Just done (THIS SESSION, 2026-05-30 evening):**
+**FOUNDATION RECONCILE COMPLETE & COMMITTED (2026-05-31).** After pulling the
+colleague's outer-loop work (commit `de91ebd`: footstep_planner/zmp_reference/
+preview_controller/pipeline.py + LQR balance_controller.py + rewritten
+joint_bridge — a WIP that did NOT run), reconciled the whole walking stack onto
+ONE convention and verified it in Gazebo:
+- **P8** untracked `install/`,`log/`,`scripts/install`,`scripts/log` (~84 files) + gitignored.
+- **P4/P5** ONE joint order (controller-grouped, `joint_table.hpp`) + **90-centred**
+  convention everywhere (ik_vectors_DLS apply_*, joint_table rests, firmware,
+  servo_bridge). `joint_bridge` now does `(servo−90)·π/180`. Unit-tested.
+- **P1/P2/P3** topic graph fixed: `ik→/joint_commands` (nominal),
+  `balance_controller.py→/joint_commands_corrected`, `joint_bridge` reads
+  corrected; launch runs the LQR `.py` not the C++ PID; best-effort QoS on
+  balance's subs; **joint_bridge controller pubs RELIABLE** (forward_command_controller
+  needs it or commands never arrive).
+- **P6** one CoM height = **0.2698** everywhere (pipeline/balance/ik/robot_params/gait_params).
+- Gazebo launch: `GZ_HEADLESS=1` env → server-only; **`UnsetEnvironmentVariable('SESSION_MANAGER')`**
+  fixes the Qt/ICE crash that killed the GUI (`ICE default IO error handler`).
+- **balance_controller.py**: robust `_is_enabled()` (string "false" was truthy);
+  **default OFF** in launch (`balance_enabled:=false`) until its math is fixed.
+
+**VERIFIED IN GAZEBO (headless, IMU-tilt judged):** bare robot stands (tilt ~0.5°);
+**full chain with ik OFF + balance OFF → STANDS** (foundation good end-to-end).
+- **ik ON + balance OFF → FALLS** — open-loop gait execution destabilizes (suspect
+  a leg joint SIGN flip and/or the trajectory; needs visual check in the GUI).
+- **balance ON → FALLS** — rails ankles to ±12°: wrong sign + roll adds the SAME
+  Δθ to both ankle_rolls (must be antisymmetric L/R) + gain too high.
+
+**NEXT (the actual "make it walk" work — needs the GUI for sign verification):**
+1. Gait: watch `ros2 launch humanoid_robot walking.launch.py` (balance off) in the
+   GUI, find which leg joint moves the wrong way, flip its sign in `ik_vectors_DLS`.
+2. Balance: fix pitch sign, make roll antisymmetric (left ankle_roll `-=`),
+   lower gain/`MAX_ANKLE_CORRECTION_DEG`, then re-enable and tune.
+P7 (wire AI `walk` action → ZMP pipeline) still deferred.
+
+**Earlier THIS SESSION (2026-05-31) — deep dive + sim→real bridge:**
+- **DEEP DIVE finding — two stacks, two incompatible joint conventions.**
+  (A) AI/command path: radians, URDF-zero, published straight to
+  `/leg|arm|head_controller/commands` → Gazebo. Consistent → robot moves. ✅
+  (B) walking/balance/firmware path: SERVO DEGREES with rest offsets on
+  `/joint_commands`. Correct for the ESP32, but never reconciled with (A).
+- **Why the robot can't walk (4 independent causes):** (1) there is NO gait —
+  `gait_generator`/`zmp_preview_controller` in `gait_params.yaml` are NOT
+  implemented (not in CMakeLists, no source); the AI `walk` = `traj_march_in_place`
+  = marches in place with ZERO weight shift (its own docstring says it tips over);
+  `walk_test.py` is a crude open-loop sinusoid. (2) `joint_bridge` math is wrong
+  (see §4). (3) `walking.launch.py` never launches a bridge AND IK+balance both
+  publish `/joint_commands` (no `joint_fusion`) → they fight. (4) foot
+  friction/contact (`mu1/mu2/kp/kd`) is COMMENTED OUT in the URDF + tiny feet.
+  Net: open-loop position streaming on a free biped with no ZMP → must fall.
+- **ESP32 gap:** the AI/sim path can't drive the ESP32 as-is (3 topics vs 1,
+  Float64 vs Float32, radians-URDF vs servo-deg, different order). Firmware also
+  has board-1 (0x41) init commented out (left side dead) and reads
+  `imu.orientation` which the ESP32 never fills (tilt always 0 on real HW).
+- **BUILT + VERIFIED the real bridge** (the highest-value fix): new node
+  `humanoid_command_api/controller_to_servo_bridge.py` (entry point
+  `servo_bridge`). Subscribes the 3 controller topics (rad, URDF), republishes
+  `/joint_commands` (Float32, 18, servo deg, firmware order). Conversion
+  `servo_deg = rest + dir*deg(rad)`, clamp [0,180]. Imports joint orderings from
+  `pose_definitions` (DRY). Per-joint `CALIBRATION` table defaults `rest=90`
+  (servo center), `dir=+1` — the SAFE placeholder for the un-mounted robot
+  (HOME → all servos 90). User will calibrate `rest`/`dir` per joint after
+  mounting. VERIFIED with no hardware: idle → all 90.0; `r_hip_pitch=0.5 rad` →
+  ONLY firmware index 6 = 118.65 (=90+deg(0.5)), all others 90. Rebuilt OK.
+  To drive the ESP32 from the working AI poses: run command_server + this bridge,
+  with the micro-ROS agent up.
+- **NOT yet done (recommended next, in order):** (1) re-enable foot
+  friction/contact in the URDF + verify standing under motion; (2) test the
+  bridge → micro-ROS agent → ESP32 with real servos (wave/bow/sit first);
+  (3) write `joint_fusion` or make balance emit ankle-deltas only; (4) implement
+  a minimal static-walk (full weight-shift) gait before attempting ZMP preview;
+  (5) firmware: re-enable board-1, fix the `imu.orientation` tilt read.
+
+**Just done (PREVIOUS SESSION, 2026-05-30 evening):**
 - **AI Steps 4–7 LIVE-verified end-to-end through Ollama for the FIRST time.**
   GPU fix activated by the reboot (§9). Browser → dispatcher → Ollama tool pick
   → real ROS2 action all proven: wave/bow/sit/stand fire and report (`Waved with

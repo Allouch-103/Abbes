@@ -19,13 +19,17 @@
 // ── Joint configuration structure ─────────────────────────
 struct JointConfig {
     const char* name;       // human-readable name for debug logging
-    uint8_t  pca_board;     // 0 = board at 0x40, 1 = board at 0x41
+    uint8_t  pca_board;     // 0 = board at 0x40 (only board 0 is wired now)
     uint8_t  pca_channel;   // 0-15 on that board
     float    min_deg;       // minimum allowed angle (from Table 3.1)
     float    max_deg;       // maximum allowed angle (from Table 3.1)
     float    rest_deg;      // resting/safe position (from Table 3.1)
     bool     inverted;      // true if servo is mounted upside-down/mirrored
                             // inverted means 0° in code = 180° on physical servo
+    bool     connected;     // false = no physical servo for this joint.
+                            // We still keep the 18-joint /joint_commands
+                            // contract with ROS2, but skip driving any joint
+                            // that has no servo (servo_set() returns early).
 };
 
 // ── Joint table ───────────────────────────────────────────
@@ -43,26 +47,40 @@ struct JointConfig {
 // servo is mounted in the opposite orientation. Check physically
 // and set inverted=true if needed, then set rest_deg to match.
 //
+// ── ONE PCA9685 (16 channels) — channel assignment ───────────────────────
+// Only board 0 (0x40) is wired. 18 logical joints, but a single board has
+// only 16 channels, so 2 joints have no servo. Priority (per build):
+//   LEGS  (10) → channels 0–9
+//   ARMS  (6)  → channels 10–15
+//   HEAD_YAW + CAMERA_PITCH → NOT connected (no channel left)
+//
+// The array INDEX (the // N comment) is the /joint_commands index and must
+// NOT change — it is the ROS2 contract. Only pca_channel / connected change.
+//
+// rest_deg is the BOOT/neutral position. Set to 90° (servo center) for ALL
+// joints so it matches the ROS2 bridge's runtime default (CALIBRATION rest=90)
+// — the robot powers on centered and the first /joint_commands causes no jump.
+// min_deg/max_deg are kept as the per-joint safety clamp (recalibrate on mount).
 const JointConfig JOINT_CONFIG[NUM_JOINTS] = {
-    //  name                  board  ch   min    max    rest   inverted
-    { "r_shoulder_pitch",     0,     0,   0.0f,  180.0f, 90.0f, false },  // 0
-    { "r_shoulder_roll",      0,     1,   0.0f,  180.0f, 90.0f, false },  // 1
-    { "r_elbow_roll",         0,     2,   0.0f,  180.0f, 90.0f, false },  // 2
-    { "head_yaw",             0,     3,   0.0f,  180.0f, 90.0f, false },  // 3
-    { "camera_pitch",         0,     4,   0.0f,  180.0f, 90.0f, false },  // 4
-    { "r_hip_roll",           0,     5,   0.0f,  170.0f, 50.0f, false },  // 5
-    { "r_hip_pitch",          0,     6,   0.0f,  170.0f, 80.0f, false },  // 6
-    { "r_knee_pitch",         0,     7,   0.0f,  170.0f,100.0f, false },  // 7
-    { "r_ankle_pitch",        0,     8,  10.0f,  180.0f,100.0f, false },  // 8
-    { "r_ankle_roll",         0,     9,  20.0f,  150.0f, 90.0f, false },  // 9
-    { "l_shoulder_pitch",     1,     0,   0.0f,  180.0f, 90.0f, false },  // 10
-    { "l_shoulder_roll",      1,     1,   0.0f,  180.0f, 90.0f, false },  // 11
-    { "l_elbow_roll",         1,     2,   0.0f,  180.0f, 90.0f, false },  // 12
-    { "l_hip_roll",           1,     3,   0.0f,  170.0f, 50.0f, false },  // 13
-    { "l_hip_pitch",          1,     4,   0.0f,  170.0f, 80.0f, false },  // 14
-    { "l_knee_pitch",         1,     5,   0.0f,  170.0f, 70.0f, false },  // 15  ← note 70°
-    { "l_ankle_pitch",        1,     6,  10.0f,  180.0f, 90.0f, false },  // 16
-    { "l_ankle_roll",         1,     7,  20.0f,  150.0f, 90.0f, false },  // 17
+    //  name                  board  ch   min    max    rest   inverted connected
+    { "r_shoulder_pitch",     0,    10,   0.0f,  180.0f, 90.0f, false,  true  },  // 0
+    { "r_shoulder_roll",      0,    11,   0.0f,  180.0f, 90.0f, false,  true  },  // 1
+    { "r_elbow_roll",         0,    12,   0.0f,  180.0f, 90.0f, false,  true  },  // 2
+    { "head_yaw",             0,   255,   0.0f,  180.0f, 90.0f, false,  false },  // 3  (no servo)
+    { "camera_pitch",         0,   255,   0.0f,  180.0f, 90.0f, false,  false },  // 4  (no servo)
+    { "r_hip_roll",           0,     0,   0.0f,  170.0f, 90.0f, false,  true  },  // 5
+    { "r_hip_pitch",          0,     1,   0.0f,  170.0f, 90.0f, false,  true  },  // 6
+    { "r_knee_pitch",         0,     2,   0.0f,  170.0f, 90.0f, false,  true  },  // 7
+    { "r_ankle_pitch",        0,     3,  10.0f,  180.0f, 90.0f, false,  true  },  // 8
+    { "r_ankle_roll",         0,     4,  20.0f,  150.0f, 90.0f, false,  true  },  // 9
+    { "l_shoulder_pitch",     0,    13,   0.0f,  180.0f, 90.0f, false,  true  },  // 10
+    { "l_shoulder_roll",      0,    14,   0.0f,  180.0f, 90.0f, false,  true  },  // 11
+    { "l_elbow_roll",         0,    15,   0.0f,  180.0f, 90.0f, false,  true  },  // 12
+    { "l_hip_roll",           0,     5,   0.0f,  170.0f, 90.0f, false,  true  },  // 13
+    { "l_hip_pitch",          0,     6,   0.0f,  170.0f, 90.0f, false,  true  },  // 14
+    { "l_knee_pitch",         0,     7,   0.0f,  170.0f, 90.0f, false,  true  },  // 15
+    { "l_ankle_pitch",        0,     8,  10.0f,  180.0f, 90.0f, false,  true  },  // 16
+    { "l_ankle_roll",         0,     9,  20.0f,  150.0f, 90.0f, false,  true  },  // 17
 };
 
 // ── Convenience index names ───────────────────────────────

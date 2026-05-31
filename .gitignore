@@ -10,6 +10,13 @@ ros2_ws/install/
 ros2_ws/log/
 ros2_ws/src/humanoid_robot/humanoid_robot.egg-info/
 
+# colcon artifacts committed by mistake (built from the repo ROOT, not ros2_ws)
+/install/
+/log/
+# stray colcon build dirs created inside the scripts/ folder
+ros2_ws/src/humanoid_robot/scripts/install/
+ros2_ws/src/humanoid_robot/scripts/log/
+
 # Python
 __pycache__/
 *.py[cod]

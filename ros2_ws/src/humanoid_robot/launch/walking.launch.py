@@ -12,6 +12,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
+from launch_ros.parameter_descriptions import ParameterValue
 
 def generate_launch_description():
     pkg = FindPackageShare("humanoid_robot")
@@ -24,8 +25,8 @@ def generate_launch_description():
     )
     balance_enabled_arg = DeclareLaunchArgument(
         "balance_enabled",
-        default_value="true",
-        description="Enable/disable the PID balance controller",
+        default_value="false",   # OFF by default: balance still needs sign/gain work.
+        description="Enable the LQR ankle balance correction (default off until tuned)",
     )
 
     # ── Config paths ──────────────────────────────────────
@@ -44,15 +45,22 @@ def generate_launch_description():
         output="screen",
     )
 
-    # ── Balance controller node ───────────────────────────
+    # ── Balance controller node (LQR, Python) ─────────────
+    # Use the LQR balance_controller.py: subscribes /joint_commands (NOMINAL
+    # from ik_vectors_DLS), publishes /joint_commands_corrected (nominal + Δθ).
+    # NOT the old C++ PID binary (old side-grouped order, publishes raw
+    # /joint_commands) — that one is retired from this path.
     balance_node = Node(
         package="humanoid_robot",
-        executable="balance_controller",
+        executable="balance_controller.py",
         name="balance_controller",
         parameters=[
             robot_params,
-            balance_params,
-            {"enabled": LaunchConfiguration("balance_enabled")},
+            # NOTE: balance_params.yaml is the OLD PID config (kp_pitch…) and is
+            # irrelevant to the LQR node — and its `enabled: true` was overriding
+            # the launch arg. Dropped. LQR gains come from q_angle/q_rate/r_torque
+            # defaults (or set them live with `ros2 param set`).
+            {"enabled": ParameterValue(LaunchConfiguration("balance_enabled"), value_type=bool)},
         ],
         output="screen",
     )
@@ -65,7 +73,7 @@ def generate_launch_description():
         parameters=[
             robot_params,
             ik_params,
-            {"enabled": LaunchConfiguration("ik_enabled")},
+            {"enabled": ParameterValue(LaunchConfiguration("ik_enabled"), value_type=bool)},
         ],
         output="screen",
     )

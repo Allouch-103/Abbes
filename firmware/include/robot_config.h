@@ -4,11 +4,11 @@
 // ============================================================
 
 // ── WiFi Configuration ���───────────────────────────────────
-#define WIFI_SSID        "OTA"
-#define WIFI_PASSWORD    "123456789"
+#define WIFI_SSID        "Redmi Note 14 Pro"
+#define WIFI_PASSWORD    "lou12345678"
 
 // ── micro-ROS Agent Configuration ─────────────────────────
-#define AGENT_IP         "10.82.42.50"
+#define AGENT_IP         "10.37.88.50"
 #define AGENT_PORT       8888
 
 // ── Hardware Pins ─────────────────────────────────────────
