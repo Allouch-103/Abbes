@@ -29,7 +29,7 @@ public:
         declare_parameter("L1",          0.1225);
         declare_parameter("L2",          0.1230);
         declare_parameter("hip_width",   0.0800);
-        declare_parameter("com_height",  0.2698);
+        declare_parameter("com_height",  0.30);
         declare_parameter("enabled",     true);
         declare_parameter("alpha",       0.01);
         declare_parameter("alpha_max",   0.15);
@@ -79,8 +79,7 @@ public:
     }
 
 private:
-    double L1_, L2_, hip_width_, com_height_;
-
+    double L1_, L2_, hip_width_, com_height_, torso_height_, foot_height_;
     WamplerLeg leg_r_, leg_l_;
 
     double com_x_{0}, com_y_{0}, com_z_{0};
@@ -102,6 +101,8 @@ private:
         L2_         = get_parameter("L2").as_double();
         hip_width_  = get_parameter("hip_width").as_double();
         com_height_ = get_parameter("com_height").as_double();
+        torso_height_ = get_parameter("torso_height").as_double();  // ADD
+        foot_height_  = get_parameter("foot_height").as_double();
         for (auto* leg : {&leg_r_, &leg_l_}) {
             leg->L1        = L1_;
             leg->L2        = L2_;
@@ -116,10 +117,10 @@ private:
     void reset_to_rest()
     {
         for (auto* leg : {&leg_r_, &leg_l_})
-            leg->q = {0.0, 10*D2R, 20*D2R, -10*D2R, 0.0};
+            leg->q = {0.0, 15*D2R, 30*D2R, -45*D2R, 0.0};
         com_x_=0; com_y_=0; com_z_=com_height_;
-        fr_ = {0,  hip_width_/2.0, 0};
-        fl_ = {0, -hip_width_/2.0, 0};
+        fr_ = {0,  hip_width_/2.0, foot_height_};
+        fl_ = {0, -hip_width_/2.0, foot_height_};
     }
 
     void apply_right(std::array<float,18>& a) const
@@ -151,13 +152,15 @@ private:
 
         if (!get_parameter("enabled").as_bool()) { publish(angles); return; }
 
-        Vec3 hip_r = {com_x_, com_y_ + hip_width_/2.0, com_z_};
-        leg_r_.solve(hip_r, fr_, Q_LO, Q_HI);
+        double hip_z = com_z_ - torso_height_ / 2.0;
+        Vec3 hip_r = {com_x_, com_y_ + hip_width_/2.0, hip_z};
+        Vec3 fr_clamped = {fr_[0], fr_[1], std::max(fr_[2], foot_height_)};
+        leg_r_.solve(hip_r, fr_clamped, Q_LO, Q_HI);
         leg_r_.q[3] = std::clamp(-(leg_r_.q[1]+leg_r_.q[2]), Q_LO[3], Q_HI[3]);
         apply_right(angles);
-
-        Vec3 hip_l = {com_x_, com_y_ - hip_width_/2.0, com_z_};
-        leg_l_.solve(hip_l, fl_, Q_LO, Q_HI);
+        Vec3 hip_l = {com_x_, com_y_ - hip_width_/2.0, hip_z};
+        Vec3 fl_clamped = {fl_[0], fl_[1], std::max(fl_[2], foot_height_)};
+        leg_l_.solve(hip_l, fl_clamped, Q_LO, Q_HI);
         leg_l_.q[3] = std::clamp(-(leg_l_.q[1]+leg_l_.q[2]), Q_LO[3], Q_HI[3]);
         apply_left(angles);
 

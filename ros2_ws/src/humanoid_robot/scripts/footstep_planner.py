@@ -59,7 +59,7 @@ def generate_footsteps(
         y_off = (step_width / 2) * (1 if side == 'L' else -1)
         # shorter first two steps to ramp from rest
         sx = stride * (0.5 if i < 2 else 1.0)
-        pos = np.array([i * sx, y_off, 0.0])
+        pos = np.array([i * sx, y_off, 0.05])
         steps.append(Footstep(
             pos=pos, yaw=yaw, side=side,
             t_start=t, t_lift=t + dt_single,

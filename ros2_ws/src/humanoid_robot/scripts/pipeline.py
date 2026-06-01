@@ -13,8 +13,9 @@ from footstep_planner   import generate_footsteps
 from zmp_reference      import build_zmp_reference
 from preview_controller import compute_preview_gains, run_preview_controller
 
-DT       = 0.005
-Z_C      = 0.2698
+DT          = 0.005
+Z_C         = 0.30    # CoM height above ground -- must match Gazebo spawn z
+FOOT_HEIGHT = 0.05    # ankle joint height above ground (= URDF foot_height)
 N_PREV   = 300
 N_JOINTS = 18
 
@@ -91,8 +92,8 @@ class ZmpTrajectoryNode(Node):
             feet_msg = PoseArray()
             feet_msg.header.frame_id = 'world'
             r, l = Pose(), Pose()
-            r.position.y =  0.04
-            l.position.y = -0.04
+            r.position.y =  0.04;  r.position.z = FOOT_HEIGHT
+            l.position.y = -0.04;  l.position.z = FOOT_HEIGHT
             feet_msg.poses = [r, l]
             self._foot_pub.publish(feet_msg)
             if self._init_counter >= int(2.0 / DT):
@@ -121,7 +122,7 @@ class ZmpTrajectoryNode(Node):
         feet_msg.header.frame_id = 'world'
         r, l = Pose(), Pose()
         r.position.x = sw_x;  r.position.y =  0.04;  r.position.z = sw_z
-        l.position.x = 0.0;   l.position.y = -0.04;  l.position.z = 0.0
+        l.position.x = 0.0;   l.position.y = -0.04;  l.position.z = FOOT_HEIGHT
         feet_msg.poses = [r, l]
         self._foot_pub.publish(feet_msg)
 
