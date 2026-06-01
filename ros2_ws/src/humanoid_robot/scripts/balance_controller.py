@@ -164,6 +164,10 @@ class BalanceController(Node):
         # and raise it with `ros2 param set /balance_controller correction_gain X`
         # until the robot just holds, then back off before it oscillates.
         self.declare_parameter('correction_gain', 0.0)
+        # Integral gain: removes the steady-state lean P/D leaves. 0 = pure PD
+        # (the verified crouch-hold config). Live-tunable; didn't crack the
+        # single-support step tip, so off by default.
+        self.declare_parameter('ki', 0.0)
         self.add_on_set_parameters_callback(self._on_param_change)
 
         # ── Compute initial LQR gains ─────────────────────────────────────
@@ -174,6 +178,8 @@ class BalanceController(Node):
         self._tilt_roll  = 0.0        # deg
         self._rate_pitch = 0.0        # rad/s (from /imu gyro)
         self._rate_roll  = 0.0        # rad/s
+        self._i_pitch    = 0.0        # integral accumulators (rad·s)
+        self._i_roll     = 0.0
         # Default the nominal to 90° (neutral) — NOT zeros. If the nominal
         # hasn't arrived yet, 90 maps to URDF-zero (straight) at joint_bridge;
         # zeros would map to ~-90 rad and fold the robot.
@@ -271,9 +277,20 @@ class BalanceController(Node):
         # body back. u=-K·x decreases it (positive feedback -> tipped). Negate so
         # the ankle correction opposes the tilt (true negative feedback).
         gain = float(self.get_parameter('correction_gain').value)   # live knob
-        u = -self._K @ x                         # (2,): LQR torque signal
+        u = -self._K @ x                         # (2,): LQR torque signal (PD)
         delta_pitch_rad = -gain * u[0] / K_STIFFNESS    # ankle pitch correction (rad)
         delta_roll_rad  = -gain * u[1] / K_STIFFNESS    # ankle roll  correction (rad)
+
+        # ── Integral term — kills the steady-state lean ──────────────────────
+        # Accumulate tilt (rad·s) with anti-windup, add a correction in the SAME
+        # direction as the P term. Only integrates while enabled.
+        ki = float(self.get_parameter('ki').value)
+        if enabled and ki > 0.0:
+            I_MAX = 0.30   # rad·s anti-windup clamp
+            self._i_pitch = float(np.clip(self._i_pitch + x[0] * 0.005, -I_MAX, I_MAX))
+            self._i_roll  = float(np.clip(self._i_roll  + x[1] * 0.005, -I_MAX, I_MAX))
+            delta_pitch_rad += gain * ki * self._i_pitch
+            delta_roll_rad  += gain * ki * self._i_roll
 
         # ── Clamp corrections ─────────────────────────────────────────────
         max_rad = np.deg2rad(MAX_ANKLE_CORRECTION_DEG)

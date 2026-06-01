@@ -235,7 +235,19 @@ the crouch is an INVERTED PENDULUM (unlike the rigid straight-leg stand) and is
 fundamentally unstable open-loop; **it needs the balance controller**, no static
 offset will hold it. The offset is now correct (+0.005); balance is the job.
 
-**GAIT: alternation fixed, now tips FORWARD on single support (2026-06-01).**
+**SINGLE-SUPPORT IS THE WALL (ankle-only balance insufficient) (2026-06-01).**
+Tried, all FAILED to hold a foot-lift step: more ankle authority (MAX 15/gain
+1.5 — over-corrects, worse), an integral term (`ki`, kills steady lean but no
+help on the step), and a gentle gait (soft sin² touchdown, 2cm lift, short
+0.4s single / long 0.5s double support). The robot consistently tips FORWARD the
+moment a foot lifts: one stance ankle can't hold fore-aft balance, and cranking
+it destabilizes. CONCLUSION: ankle-only strategy on position-servos can hold a
+2-foot crouch but NOT single support. A real walk needs hip/angular-momentum
+strategy, tighter CoM/ZMP tracking, or RL (Phase 7) — a new effort, not a tweak.
+Defaults kept at the verified-stable config (gain 1.0, MAX 8, ki 0). Gentle gait
+params + soft-landing + ki are in but off/conservative.
+
+**(earlier) GAIT: alternation fixed, now tips FORWARD on single support:**
 Rewrote pipeline.py foot bookkeeping to alternate both feet correctly (each foot
 planted during its own stance, swings during the other's; matched to IK
 y-convention). Result: the SIDEWAYS tip is GONE (y stays small). But when a foot

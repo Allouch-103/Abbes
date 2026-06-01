@@ -21,7 +21,7 @@ from preview_controller import compute_preview_gains, run_preview_controller
 DT       = 0.005
 Z_C      = 0.22          # hip height the IK tracks (< leg reach so knees bend)
 N_PREV   = 300
-SWING_H  = 0.03          # swing-foot apex lift (m)
+SWING_H  = 0.02          # swing-foot apex lift (m) — small for gentle stepping
 
 
 def _foot_at(t, steps, apex):
@@ -40,7 +40,8 @@ def _foot_at(t, steps, apex):
             a = (t - s.t_lift) / (nxt.t_start - s.t_lift)
             h = 10*a**3 - 15*a**4 + 6*a**5            # quintic horizontal ease
             p = (s.pos + (nxt.pos - s.pos) * h).astype(float)
-            p[2] = apex * 4.0 * a * (1.0 - a)         # parabolic lift, 0 at ends
+            p[2] = apex * np.sin(np.pi * a) ** 2      # lift: 0 + ZERO velocity at
+                                                      # both ends → soft touchdown
             return p
     p = steps[-1].pos.astype(float).copy(); p[2] = 0.0; return p
 
@@ -93,8 +94,10 @@ class ZmpTrajectoryNode(Node):
 
     def _plan(self, conservative=False):
         speed     = self._v_forward * (0.6 if conservative else 1.0)
-        dt_double = 0.25 if conservative else 0.20   # longer double-support = more
-        dt_single = 0.90 if conservative else 0.80   # time to shift weight = safer
+        # SHORT single-support (less time on one foot) + LONG double-support
+        # (both feet down = stable) → minimise the unstable single-support window.
+        dt_double = 0.60 if conservative else 0.50
+        dt_single = 0.45 if conservative else 0.40
         footsteps = generate_footsteps(
             v_forward=speed, n_steps=self._n_steps,
             dt_single=dt_single, dt_double=dt_double)
