@@ -24,40 +24,49 @@ N_PREV   = 300
 SWING_H  = 0.02          # swing-foot apex lift (m) — small for gentle stepping
 
 
-def _foot_at(t, steps, apex):
-    """Position [x,y,z] of one foot at time t. `steps` = that foot's footsteps,
-    time-ordered. Planted (z=0) during [t_start,t_lift]; smooth swing with a
-    parabolic lift during the gap to the next same-foot placement."""
-    if not steps:
-        return np.zeros(3)
-    if t <= steps[0].t_start:
-        p = steps[0].pos.astype(float).copy(); p[2] = 0.0; return p
-    for j, s in enumerate(steps):
-        if s.t_start <= t <= s.t_lift:
-            p = s.pos.astype(float).copy(); p[2] = 0.0; return p          # stance
-        if j + 1 < len(steps) and s.t_lift < t < steps[j + 1].t_start:    # swing
-            nxt = steps[j + 1]
-            a = (t - s.t_lift) / (nxt.t_start - s.t_lift)
-            h = 10*a**3 - 15*a**4 + 6*a**5            # quintic horizontal ease
-            p = (s.pos + (nxt.pos - s.pos) * h).astype(float)
-            p[2] = apex * np.sin(np.pi * a) ** 2      # lift: 0 + ZERO velocity at
-                                                      # both ends → soft touchdown
-            return p
-    p = steps[-1].pos.astype(float).copy(); p[2] = 0.0; return p
-
-
 def _build_foot_trajs(footsteps, N, dt, apex):
-    """Return (f_plus, f_minus): foot trajectories for the +y foot (ik poses[0])
-    and the -y foot (ik poses[1])."""
-    plus  = sorted([fs for fs in footsteps if fs.pos[1] > 0], key=lambda s: s.t_start)
-    minus = sorted([fs for fs in footsteps if fs.pos[1] < 0], key=lambda s: s.t_start)
-    f_plus  = np.zeros((N, 3))
-    f_minus = np.zeros((N, 3))
+    """Return (f_plus, f_minus): trajectories for the +y foot (ik poses[0]) and
+    the -y foot (ik poses[1]).
+
+    CORRECT timing: a footstep is the STANCE during its [t_start, t_lift] (the
+    ZMP/CoM is over it then). The OTHER foot SWINGS during that window — so the
+    swing foot lifts only while the CoM is fully over the stance foot. (The old
+    code swung a foot during the double-support transition, while the CoM was
+    still over it → tipped toward the lifting side.)
+    """
+    L = sorted([fs for fs in footsteps if fs.pos[1] > 0], key=lambda s: s.t_start)  # +y
+    R = sorted([fs for fs in footsteps if fs.pos[1] < 0], key=lambda s: s.t_start)  # -y
+    fL = np.zeros((N, 3)); fR = np.zeros((N, 3))
+    # current planted positions (updated as each foot lands)
+    curL = L[0].pos.astype(float).copy(); curL[2] = 0.0
+    curR = R[0].pos.astype(float).copy(); curR[2] = 0.0
+    stances = sorted(footsteps, key=lambda s: s.t_start)
     for k in range(N):
         t = k * dt
-        f_plus[k]  = _foot_at(t, plus,  apex)
-        f_minus[k] = _foot_at(t, minus, apex)
-    return f_plus, f_minus
+        stance = next((s for s in stances if s.t_start <= t <= s.t_lift), None)
+        if stance is None:                       # double support: hold both
+            fL[k] = curL; fR[k] = curR
+            continue
+        stance_plus = stance.pos[1] > 0          # is the +y(L) foot the stance?
+        own = L if stance_plus else R
+        oth = R if stance_plus else L
+        # swing foot goes from its placement BEFORE this stance to the one AFTER
+        prev = [p for p in oth if p.t_lift <= stance.t_start]
+        nxt  = [p for p in oth if p.t_start >= stance.t_lift]
+        p0 = (prev[-1].pos if prev else (curR if stance_plus else curL)).astype(float)
+        p1 = (nxt[0].pos if nxt else p0).astype(float)
+        a  = (t - stance.t_start) / (stance.t_lift - stance.t_start)
+        h  = 10*a**3 - 15*a**4 + 6*a**5
+        sw = (p0 + (p1 - p0) * h); sw = sw.astype(float).copy()
+        sw[2] = apex * np.sin(np.pi * a) ** 2
+        st = stance.pos.astype(float).copy(); st[2] = 0.0
+        if stance_plus:
+            fL[k] = st; fR[k] = sw
+            curL = st.copy(); curR = sw.copy(); curR[2] = 0.0
+        else:
+            fR[k] = st; fL[k] = sw
+            curR = st.copy(); curL = sw.copy(); curL[2] = 0.0
+    return fL, fR
 
 
 class ZmpTrajectoryNode(Node):
@@ -136,9 +145,12 @@ class ZmpTrajectoryNode(Node):
             self._step_idx = 0
         k = self._step_idx
 
+        # com_traj columns are [x, ẋ, ẍ, y, ẏ, ÿ] — the lateral CoM is col 3,
+        # NOT col 1 (that's ẋ). Reading col 1 gave ZERO weight-shift → the robot
+        # never got its CoM over the stance foot and always tipped sideways.
         com = PoseStamped(); com.header.frame_id = 'world'
-        com.pose.position.x = float(self._com_traj[k, 0])
-        com.pose.position.y = float(self._com_traj[k, 1])
+        com.pose.position.x = float(self._com_traj[k, 0])   # forward
+        com.pose.position.y = float(self._com_traj[k, 3])   # lateral (FIX: was [k,1])
         com.pose.position.z = Z_C
         self._com_pub.publish(com)
 
