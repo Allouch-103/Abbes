@@ -33,6 +33,11 @@ def generate_launch_description():
         default_value="1.0",
         description="balance correction_gain (1.0 holds the crouch)",
     )
+    balance_hip_gain_arg = DeclareLaunchArgument(
+        "balance_hip_gain",
+        default_value="1.0",   # pitch hip-strategy on (recovers from step tips)
+        description="hip-strategy pitch gain (0 = ankle-only)",
+    )
 
     # ── Config paths ──────────────────────────────────────
     robot_params   = PathJoinSubstitution([pkg, "config", "robot_params.yaml"])
@@ -65,6 +70,7 @@ def generate_launch_description():
             # node — so it's dropped. correction_gain is the live balance strength.
             {"enabled": ParameterValue(LaunchConfiguration("balance_enabled"), value_type=bool)},
             {"correction_gain": ParameterValue(LaunchConfiguration("balance_gain"), value_type=float)},
+            {"hip_gain": ParameterValue(LaunchConfiguration("balance_hip_gain"), value_type=float)},
         ],
         output="screen",
     )
@@ -103,6 +109,7 @@ def generate_launch_description():
         ik_enabled_arg,
         balance_enabled_arg,
         balance_gain_arg,
+        balance_hip_gain_arg,
         imu_filter_node,
         balance_node,
         ik_node,

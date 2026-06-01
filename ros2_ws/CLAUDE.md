@@ -235,7 +235,19 @@ the crouch is an INVERTED PENDULUM (unlike the rigid straight-leg stand) and is
 fundamentally unstable open-loop; **it needs the balance controller**, no static
 offset will hold it. The offset is now correct (+0.005); balance is the job.
 
-**SINGLE-SUPPORT IS THE WALL (ankle-only balance insufficient) (2026-06-01).**
+**HIP STRATEGY → MULTIPLE STEPS (2026-06-01).** Added hip strategy to the
+balancer (params `hip_gain` pitch, `hip_roll_gain` lateral; nudge the hip joints
+= big upper-body lever, on top of the ankle). With pitch `hip_gain=1.0` (default
+in walking.launch) the robot now MARCHES IN PLACE for ~5 steps / ~10s holding
+~5° fore-aft tilt, recovering from step perturbations (was falling in 2s with
+ankle-only) — then falls SIDEWAYS. Lateral (roll) is the weak axis: `hip_roll_gain`
+is sign-sensitive (− made it worse, + helped but violent foot-impacts z~30+) and
+is OFF by default. So: fore-aft dynamic balance during stepping WORKS; lateral
+hip-strategy tuning + reducing foot-landing impacts are the next steps; a robust
+walk likely needs RL (Phase 7). Marginal/sensitive nonlinear tuning. ankle gain
+1.0 / MAX 8, hip pitch 1.0 are the current sweet spots.
+
+**(earlier) SINGLE-SUPPORT WAS THE WALL (ankle-only insufficient):**
 Tried, all FAILED to hold a foot-lift step: more ankle authority (MAX 15/gain
 1.5 — over-corrects, worse), an integral term (`ki`, kills steady lean but no
 help on the step), and a gentle gait (soft sin² touchdown, 2cm lift, short
