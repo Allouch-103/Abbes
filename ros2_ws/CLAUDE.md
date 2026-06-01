@@ -215,7 +215,21 @@ VERIFIED:
   BENT crouch), `balance_test.launch.py` (`gain:=` arg), balance live
   `correction_gain` param + robust `_is_enabled()`, GZ_HEADLESS + ICE/SESSION_MANAGER fix.
 
+**IK NOW CORRECT + DETERMINISTIC (2026-06-01, commit `7dcea69`).** The Wampler
+DLS solve was non-deterministic about the knee branch (warm-start drift →
+randomly barely-bent/straight legs; same code gave +52° or −5° between runs).
+Replaced it with a **closed-form 2-link leg IK** (`solve_leg_closed_form` in
+ik_vectors_DLS.cpp): law-of-cosines knee flexion, atan2 hip pitch, foot-flat
+ankle, atan2 roll. Deterministic, branch-controlled. **User VISUALLY CONFIRMED
+(side view): knees now bend FORWARD (human), reliably.** (The old analytical
+inverse_kinematics.cpp has the right method but an interior-vs-flexion knee
+convention bug — don't reuse as-is.)
+
 **STILL FALLS — the frontier (NOT yet solved):**
+- `com_x_offset` needs to scale with crouch DEPTH: -0.015 balances a ~52° crouch
+  (z=0.22) but a deeper 70° crouch (z=0.20) tips forward. The closed-form pose
+  tips more than the old DLS pose did. Static offset is a stopgap; balance should
+  handle the residual.
 - **Dynamic gait** tips even with the crouch+offset (open-loop ZMP, CoM sweep +
   single-support swing). Static crouch stable ≠ dynamic walk stable.
 - **Balance controller**: BENIGN/stable at low gain (0.3 holds the crouch), but
