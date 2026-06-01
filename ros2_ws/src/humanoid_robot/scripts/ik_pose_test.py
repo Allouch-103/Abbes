@@ -33,6 +33,10 @@ POSES = [
     ("STAND",
      (0.0, 0.0, Z), (0.0, +HW, 0.0), (0.0, -HW, 0.0),
      "straight standing, feet flat on ground"),
+    ("BENT",
+     (0.0, 0.0, 0.22), (0.0, +HW, 0.0), (0.0, -HW, 0.0),
+     "a knee bend (CoM lowered to 0.22, within leg reach) — used to tune "
+     "balance: with balance on it should hold this without tipping forward"),
     ("SQUAT",
      (0.0, 0.0, 0.21), (0.0, +HW, 0.0), (0.0, -HW, 0.0),
      "both knees BEND and hips sink straight down, feet stay flat "
@@ -59,8 +63,17 @@ class IKPoseTest(Node):
         self.foot_pub = self.create_publisher(PoseArray, '/foot_trajectory', qos)
         self.i = -1
         self.create_timer(0.02, self._publish)      # 50 Hz stream of current pose
-        self.create_timer(HOLD_S, self._next)        # advance every HOLD_S
-        self._next()
+        # 'hold' param: if set to a pose name (e.g. BENT), publish ONLY that pose
+        # forever (no cycling) — used as a static stance to tune balance against.
+        self.declare_parameter('hold', '')
+        hold = str(self.get_parameter('hold').value).strip().upper()
+        names = [p[0] for p in POSES]
+        if hold in names:
+            self.i = names.index(hold)
+            self.get_logger().info(f"HOLDING pose: {hold} — {POSES[self.i][4]}")
+        else:
+            self.create_timer(HOLD_S, self._next)   # cycle every HOLD_S
+            self._next()
 
     def _next(self):
         self.i = (self.i + 1) % len(POSES)
