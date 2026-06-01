@@ -21,6 +21,52 @@
 #include <cmath>
 #include <array>
 
+// ============================================================================
+//  Closed-form leg IK (replaces the fragile iterative DLS solve).
+//
+//  Deterministic, branch-controlled: given the hip and foot positions it always
+//  returns the SAME human (knee-forward) solution — no warm-start drift, no
+//  branch flips. Geometric convention: 0 = straight leg, matching apply_*().
+//    q[0] hip_roll   q[1] hip_pitch   q[2] knee (flexion, + = forward bend)
+//    q[3] ankle_pitch (foot-flat)     q[4] ankle_roll (foot-flat)
+// ============================================================================
+static Vec5 solve_leg_closed_form(const Vec3& hip, const Vec3& foot,
+                                  double L1, double L2)
+{
+    const double xf = foot[0] - hip[0];     // forward  (+ = foot ahead of hip)
+    const double yf = foot[1] - hip[1];     // lateral
+    const double zf = hip[2]  - foot[2];    // downward (+ = foot below hip)
+
+    // ── Frontal plane (roll): lean the leg toward the lateral offset; the
+    //    ankle counter-rolls so the foot stays flat.
+    const double q_hip_roll   = std::atan2(yf, zf);
+    const double q_ankle_roll = -q_hip_roll;
+
+    // ── Hip→foot distance. Lpd = in-plane downward distance after the roll.
+    const double Lpd = std::hypot(yf, zf);
+    double d = std::hypot(xf, Lpd);
+    const double reach = (L1 + L2) * 0.999;          // 0.1% off full extension
+    d = std::clamp(d, 0.02, reach);                  // reachable, non-singular
+
+    // ── Knee FLEXION via law of cosines. D=1 → straight (acos=0);
+    //    D=-1 → fully folded (acos=π). Always ≥ 0 → the forward-bend branch.
+    double D = (d*d - L1*L1 - L2*L2) / (2.0 * L1 * L2);
+    D = std::clamp(D, -1.0, 1.0);
+    const double q_knee = std::acos(D);
+
+    // ── Hip pitch = angle to the foot (from vertical) minus the thigh's
+    //    offset (β) from the hip→foot line.
+    const double gamma = std::atan2(xf, Lpd);
+    const double beta  = std::atan2(L2 * std::sin(q_knee),
+                                    L1 + L2 * std::cos(q_knee));
+    const double q_hip_pitch = gamma - beta;
+
+    // ── Ankle pitch keeps the foot flat: hip + knee + ankle = 0.
+    const double q_ankle_pitch = -(q_hip_pitch + q_knee);
+
+    return { q_hip_roll, q_hip_pitch, q_knee, q_ankle_pitch, q_ankle_roll };
+}
+
 class IKVectorsDLS : public rclcpp::Node
 {
 public:
@@ -34,7 +80,7 @@ public:
         // sits ~1.5cm forward of the hip in a knee-bend (bent knees + torso), so
         // the robot tips forward. Shift the hip target back by this offset to put
         // the real CoM over the feet. Calibrated in sim; verify on hardware.
-        declare_parameter("com_x_offset", -0.015);
+        declare_parameter("com_x_offset", -0.015);   // CoM-back compensation; co-tune with balance per crouch depth
         declare_parameter("enabled",     true);
         declare_parameter("alpha",       0.01);
         declare_parameter("alpha_max",   0.15);
@@ -167,13 +213,11 @@ private:
         const double hip_x = com_x_ + get_parameter("com_x_offset").as_double();
 
         Vec3 hip_r = {hip_x, com_y_ + hip_width_/2.0, com_z_};
-        leg_r_.solve(hip_r, fr_, Q_LO, Q_HI);
-        leg_r_.q[3] = std::clamp(-(leg_r_.q[1]+leg_r_.q[2]), Q_LO[3], Q_HI[3]);
+        leg_r_.q = solve_leg_closed_form(hip_r, fr_, L1_, L2_);
         apply_right(angles);
 
         Vec3 hip_l = {hip_x, com_y_ - hip_width_/2.0, com_z_};
-        leg_l_.solve(hip_l, fl_, Q_LO, Q_HI);
-        leg_l_.q[3] = std::clamp(-(leg_l_.q[1]+leg_l_.q[2]), Q_LO[3], Q_HI[3]);
+        leg_l_.q = solve_leg_closed_form(hip_l, fl_, L1_, L2_);
         apply_left(angles);
 
         publish(angles);

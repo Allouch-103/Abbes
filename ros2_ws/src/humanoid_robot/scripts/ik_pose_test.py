@@ -34,8 +34,10 @@ POSES = [
      (0.0, 0.0, Z), (0.0, +HW, 0.0), (0.0, -HW, 0.0),
      "straight standing, feet flat on ground"),
     ("BENT",
-     (0.0, 0.0, 0.22), (0.0, +HW, 0.0), (0.0, -HW, 0.0),
-     "a stable knee-bend crouch (ik applies com_x_offset to center the CoM)"),
+     (0.0, 0.0, 0.20), (0.0, +HW, 0.0), (0.0, -HW, 0.0),
+     "a DEEP ~70deg knee-bend crouch (closed-form IK = deterministic, reliable). "
+     "May wobble/slowly tip (CoM offset not perfectly tuned for this depth) but "
+     "the KNEE SHAPE is reliable — view from the side to judge fwd/back."),
     ("SQUAT",
      (0.0, 0.0, 0.21), (0.0, +HW, 0.0), (0.0, -HW, 0.0),
      "both knees BEND and hips sink straight down, feet stay flat "

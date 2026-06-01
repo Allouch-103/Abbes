@@ -36,3 +36,7 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# stray screenshots pasted into the repo root
+/Pasted image.png
+*.pasted.png
