@@ -22,25 +22,32 @@ Run:
    if it starts shaking/oscillating, back off ~30%.)
 """
 from launch import LaunchDescription
-from launch.substitutions import PathJoinSubstitution
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
     pkg = FindPackageShare("humanoid_robot")
+    # Start with a non-zero balance gain so the robot doesn't tip before you can
+    # set it: ros2 launch humanoid_robot balance_test.launch.py gain:=0.5
+    gain = ParameterValue(LaunchConfiguration("gain"), value_type=float)
     robot_params = PathJoinSubstitution([pkg, "config", "robot_params.yaml"])
     imu_params = PathJoinSubstitution([pkg, "config", "imu_params.yaml"])
     ik_params = PathJoinSubstitution([pkg, "config", "ik_params.yaml"])
 
     return LaunchDescription([
+        DeclareLaunchArgument("gain", default_value="0.0",
+                              description="initial balance correction_gain"),
         Node(package="humanoid_robot", executable="imu_filter", name="imu_filter",
              parameters=[robot_params, imu_params], output="screen"),
         Node(package="humanoid_robot", executable="ik_vectors_DLS", name="ik_vectors_dls",
              parameters=[robot_params, ik_params, {"enabled": True}], output="screen"),
         Node(package="humanoid_robot", executable="balance_controller.py",
              name="balance_controller",
-             parameters=[{"enabled": True}, {"correction_gain": 0.0}], output="screen"),
+             parameters=[{"enabled": True}, {"correction_gain": gain}], output="screen"),
         Node(package="humanoid_robot", executable="joint_bridge", name="joint_bridge",
              output="screen"),
         Node(package="humanoid_robot", executable="ik_pose_test.py", name="ik_pose_test",

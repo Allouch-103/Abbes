@@ -35,8 +35,7 @@ POSES = [
      "straight standing, feet flat on ground"),
     ("BENT",
      (0.0, 0.0, 0.22), (0.0, +HW, 0.0), (0.0, -HW, 0.0),
-     "a knee bend (CoM lowered to 0.22, within leg reach) — used to tune "
-     "balance: with balance on it should hold this without tipping forward"),
+     "a knee bend (CoM x=0; ik applies its own com_x_offset to center the CoM)"),
     ("SQUAT",
      (0.0, 0.0, 0.21), (0.0, +HW, 0.0), (0.0, -HW, 0.0),
      "both knees BEND and hips sink straight down, feet stay flat "

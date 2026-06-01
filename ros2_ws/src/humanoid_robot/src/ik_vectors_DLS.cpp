@@ -30,6 +30,11 @@ public:
         declare_parameter("L2",          0.1230);
         declare_parameter("hip_width",   0.0800);
         declare_parameter("com_height",  0.2698);   // single source: robot_params.yaml com_height_m
+        // The IK places the HIP at the commanded CoM x, but the true body CoM
+        // sits ~1.5cm forward of the hip in a knee-bend (bent knees + torso), so
+        // the robot tips forward. Shift the hip target back by this offset to put
+        // the real CoM over the feet. Calibrated in sim; verify on hardware.
+        declare_parameter("com_x_offset", -0.015);
         declare_parameter("enabled",     true);
         declare_parameter("alpha",       0.01);
         declare_parameter("alpha_max",   0.15);
@@ -157,12 +162,16 @@ private:
 
         if (!get_parameter("enabled").as_bool()) { publish(angles); return; }
 
-        Vec3 hip_r = {com_x_, com_y_ + hip_width_/2.0, com_z_};
+        // Shift the hip target back by com_x_offset so the true CoM sits over
+        // the feet (the hip is not the CoM in a knee-bend).
+        const double hip_x = com_x_ + get_parameter("com_x_offset").as_double();
+
+        Vec3 hip_r = {hip_x, com_y_ + hip_width_/2.0, com_z_};
         leg_r_.solve(hip_r, fr_, Q_LO, Q_HI);
         leg_r_.q[3] = std::clamp(-(leg_r_.q[1]+leg_r_.q[2]), Q_LO[3], Q_HI[3]);
         apply_right(angles);
 
-        Vec3 hip_l = {com_x_, com_y_ - hip_width_/2.0, com_z_};
+        Vec3 hip_l = {hip_x, com_y_ - hip_width_/2.0, com_z_};
         leg_l_.solve(hip_l, fl_, Q_LO, Q_HI);
         leg_l_.q[3] = std::clamp(-(leg_l_.q[1]+leg_l_.q[2]), Q_LO[3], Q_HI[3]);
         apply_left(angles);
