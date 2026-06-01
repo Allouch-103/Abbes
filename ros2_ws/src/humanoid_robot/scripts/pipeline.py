@@ -14,7 +14,10 @@ from zmp_reference      import build_zmp_reference
 from preview_controller import compute_preview_gains, run_preview_controller
 
 DT       = 0.005
-Z_C      = 0.2698
+# Z_C is the hip height the IK tracks. Must be < leg reach (0.2455) so the knees
+# actually bend — 0.2698 clamped the legs straight. 0.22 = the stable crouch the
+# robot holds (see com_x_offset work). (It also serves as the LIPM CoM height.)
+Z_C      = 0.22
 N_PREV   = 300
 N_JOINTS = 18
 
