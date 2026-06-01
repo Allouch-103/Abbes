@@ -123,11 +123,20 @@ class ZmpTrajectoryNode(Node):
     def _publish_step(self):
         if not self._init_done:
             self._init_counter += 1
-            # EASE into the crouch (sim snaps joints): ramp CoM 0.27→Z_C over 3s,
-            # then hold ~1.5s so balance settles, before stepping.
+            # Phase 1 (0–3s): ease into the crouch (ramp CoM height 0.27→Z_C).
+            # Phase 2 (3–5s): ease the CoM SIDEWAYS to the first step's lateral
+            #   position, both feet planted — so stepping doesn't START with a
+            #   lateral snap (the gait's CoM begins shifted to the stance foot;
+            #   jumping there from centre tipped the robot sideways before any
+            #   foot lifted).
             STAND_Z = 0.27
-            a = min(1.0, self._init_counter / float(int(3.0 / DT)))
+            ramp_h  = int(3.0 / DT)
+            shift_n = int(2.0 / DT)
+            a = min(1.0, self._init_counter / float(ramp_h))
+            b = max(0.0, min(1.0, (self._init_counter - ramp_h) / float(shift_n)))
             com = PoseStamped(); com.header.frame_id = 'world'
+            com.pose.position.x = b * float(self._com_traj[0, 0])
+            com.pose.position.y = b * float(self._com_traj[0, 3])   # ease onto 1st stance foot
             com.pose.position.z = STAND_Z + a * (Z_C - STAND_Z)
             self._com_pub.publish(com)
             feet = PoseArray(); feet.header.frame_id = 'world'
@@ -136,9 +145,9 @@ class ZmpTrajectoryNode(Node):
             l.position.y = -0.04
             feet.poses = [r, l]
             self._foot_pub.publish(feet)
-            if self._init_counter >= int(4.5 / DT):
+            if self._init_counter >= ramp_h + shift_n:
                 self._init_done = True
-                self.get_logger().info('Init complete (eased into crouch) — stepping')
+                self.get_logger().info('Init complete (crouch + weight-shift) — stepping')
             return
 
         if self._step_idx >= self._n_samples:

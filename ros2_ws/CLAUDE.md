@@ -235,7 +235,19 @@ the crouch is an INVERTED PENDULUM (unlike the rigid straight-leg stand) and is
 fundamentally unstable open-loop; **it needs the balance controller**, no static
 offset will hold it. The offset is now correct (+0.005); balance is the job.
 
-**MARCH IN PLACE WORKS (~12-16s); forward still marginal (2026-06-01, latest).**
+**MARGINAL & VARIABLE — not robust (2026-06-01, honest bottom line).** After all
+fixes (IK, CoM, ease-in, hip strategy, weight-shift col-3, swing phasing, lateral
+pre-shift) the walk is MARGINALLY stable and varies run-to-run: a good run
+marches several steps in place (~12-16s), but other runs tip during the crouch
+init (forward) or at the first step (sideways) — same code, different outcome
+(knife-edge). So there is NO robust march/walk; forward is worse. This is the
+genuine ceiling of PD-ankle + hip-strategy + open-loop-ZMP on stiff position
+servos. ROBUST walking needs a different method: capture-point / step-adjustment
+feedback (place the next foot to catch the fall) or RL (Phase 7). Not a tuning
+knob. All correctness bugs are fixed and committed; the remaining gap is method,
+not parameters.
+
+**(detail) MARCH IN PLACE on good runs (~12-16s); forward marginal:**
 Found+fixed TWO gait bugs: (1) pipeline read com_traj[k,1] (ẋ) as lateral CoM —
 it's col 3 (y); the robot had ZERO weight-shift. (2) swing timing — a foot lifted
 during double-support (CoM still over it); rewrote _build_foot_trajs so a foot
