@@ -235,7 +235,19 @@ the crouch is an INVERTED PENDULUM (unlike the rigid straight-leg stand) and is
 fundamentally unstable open-loop; **it needs the balance controller**, no static
 offset will hold it. The offset is now correct (+0.005); balance is the job.
 
-**FORWARD WALKING: several steps, then falls sideways (2026-06-01).** Wired
+**MARCH IN PLACE WORKS (~12-16s); forward still marginal (2026-06-01, latest).**
+Found+fixed TWO gait bugs: (1) pipeline read com_traj[k,1] (ẋ) as lateral CoM —
+it's col 3 (y); the robot had ZERO weight-shift. (2) swing timing — a foot lifted
+during double-support (CoM still over it); rewrote _build_foot_trajs so a foot
+swings during the OTHER foot's single-support (CoM fully over stance). With both,
+the robot MARCHES IN PLACE ~12-16s / several balanced steps at 3-7° tilt (real
+ZMP stepping). FORWARD walking (forward_speed>0) still tips within a few steps —
+forward motion stresses the marginal lateral balance. So: march = solid;
+forward + robust lateral = remaining (capture-point footstep adjustment / RL).
+Default: forward_speed 0 (march). Foot landings still impact hard (z~30) —
+softening them may extend it.
+
+**(earlier) FORWARD WALKING: several steps then sideways (before gait fixes):** Wired
 forward speed (pipeline `v_forward` param ← launch `forward_speed`, default 0) +
 lateral hip arg (`balance_hip_roll_gain`). With `forward_speed:=0.05` + pitch hip
 1.0 the robot takes SEVERAL forward steps (recovering from step perturbations,
