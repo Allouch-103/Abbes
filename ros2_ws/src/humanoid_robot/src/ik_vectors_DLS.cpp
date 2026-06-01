@@ -80,7 +80,7 @@ public:
         // sits ~1.5cm forward of the hip in a knee-bend (bent knees + torso), so
         // the robot tips forward. Shift the hip target back by this offset to put
         // the real CoM over the feet. Calibrated in sim; verify on hardware.
-        declare_parameter("com_x_offset", -0.015);   // CoM-back compensation; co-tune with balance per crouch depth
+        declare_parameter("com_x_offset", 0.005);   // measured: foot_x tracks this; +0.005 puts the feet under the CoM
         declare_parameter("enabled",     true);
         declare_parameter("alpha",       0.01);
         declare_parameter("alpha_max",   0.15);

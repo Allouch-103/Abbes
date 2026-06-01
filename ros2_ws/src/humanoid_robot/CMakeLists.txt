@@ -63,6 +63,7 @@ install(PROGRAMS
   scripts/walk_test.py
   scripts/ik_solver.py
   scripts/ik_pose_test.py
+  scripts/com_calc.py
   DESTINATION lib/${PROJECT_NAME}
 )
 ament_package()

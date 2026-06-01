@@ -225,11 +225,24 @@ ankle, atan2 roll. Deterministic, branch-controlled. **User VISUALLY CONFIRMED
 inverse_kinematics.cpp has the right method but an interior-vs-flexion knee
 convention bug — don't reuse as-is.)
 
-**STILL FALLS — the frontier (NOT yet solved):**
-- `com_x_offset` needs to scale with crouch DEPTH: -0.015 balances a ~52° crouch
-  (z=0.22) but a deeper 70° crouch (z=0.20) tips forward. The closed-form pose
-  tips more than the old DLS pose did. Static offset is a stopgap; balance should
-  handle the residual.
+**CoM CENTERED, but crouch needs ACTIVE BALANCE (2026-06-01).** Built a CoM
+calibration tool (`scripts/com_calc.py`: reads /tf + URDF masses → CoM x vs foot
+center). Measured: `com_x_offset` actually moves the FEET (support), not the CoM
+(CoM ≈ +0.005 rel base_link, ~constant). So the centering value is `+0.005`
+(was using wrong-signed negatives). With +0.005 the CoM sits only 5mm forward of
+the feet — WELL within the ±45mm foot support — and it STILL tips. Conclusion:
+the crouch is an INVERTED PENDULUM (unlike the rigid straight-leg stand) and is
+fundamentally unstable open-loop; **it needs the balance controller**, no static
+offset will hold it. The offset is now correct (+0.005); balance is the job.
+
+**NEXT = balance the crouch (best done INTERACTIVELY in the GUI, can reset+push):**
+balance now has ideal conditions (reliable closed-form IK + centered CoM). Tune
+`balance_test.launch.py gain:=…` / `ros2 param set /balance_controller
+correction_gain X`. Open questions: correct sign + gain (benign at 0.3, diverged
+at 2.0 earlier — retest now that the CoM is centered), and whether ankle-only
+authority (±8°) can catch the snap into the crouch (may need to EASE into the
+pose — the sim forward_command_controller snaps, unlike the firmware's velocity
+limit). Then the gait.
 - **Dynamic gait** tips even with the crouch+offset (open-loop ZMP, CoM sweep +
   single-support swing). Static crouch stable ≠ dynamic walk stable.
 - **Balance controller**: BENIGN/stable at low gain (0.3 holds the crouch), but
