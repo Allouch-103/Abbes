@@ -1,26 +1,23 @@
-# config/ik_params.yaml
-# Parameters for the inverse_kinematics node.
-# Node name must match exactly: Node("inverse_kinematics")
-# Load with: ros2_param_file=ik_params.yaml in launch file.
-
+# Parameters for inverse_kinematics (legacy)
 inverse_kinematics:
   ros__parameters:
-
-    # ── Robot geometry ────────────────────────────────────────────────────────
-    # From Table: Winter (2009) scaled to H = 500mm
-    L1: 0.1225          # thigh length [m]  (ratio 0.245 × 0.500)
-    L2: 0.1230          # shank length [m]  (ratio 0.246 × 0.500)
-    hip_width: 0.0800   # left-hip to right-hip distance [m]
-    com_height: 0.1900  # LIPM z_c — CoM height used in ZMP controller [m]
-
-    # ── Safety ────────────────────────────────────────────────────────────────
-    # Minimum knee bend in degrees.
-    # Prevents near-singular fully-extended leg pose (q_knee → 0°).
-    # At q_knee = 0° the Jacobian is rank-deficient: infinite hip/ankle combos
-    # produce the same foot position. Keep at least 5° of bend.
+    L1: 0.1225
+    L2: 0.1230
+    hip_width: 0.0800
+    com_height: 0.2698
     knee_min_deg: 5.0
+    enabled: true
 
-    # ── Enable flag ───────────────────────────────────────────────────────────
-    # Set to false to send rest pose without computing IK.
-    # Useful for safe testing before connecting trajectories.
+# Parameters for ik_vectors_DLS (active IK node)
+ik_vectors_dls:
+  ros__parameters:
+    L1: 0.1225
+    L2: 0.1230
+    hip_width: 0.0800
+    com_height: 0.2698
+    alpha: 0.01
+    alpha_max: 0.15
+    w_thresh: 0.005
+    max_iter: 6
+    tol: 0.001
     enabled: true
