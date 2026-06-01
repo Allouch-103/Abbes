@@ -731,7 +731,25 @@
     <kd>100</kd>
   </gazebo>
   -->
-  
+
+  <!-- FOOT FRICTION (re-enabled, sensor removed). With no hip_yaw joint, the
+       ONLY thing resisting the torso twisting on the planted foot is ground
+       friction — without it the foot slips and the robot pirouettes (yaw drift
+       to ~80° then falls). High mu + firm contact (kp/kd) locks the foot so the
+       stance foot resists yaw. mu raised 0.8→1.2 for extra yaw grip. -->
+  <gazebo reference="r_foot">
+    <mu1>1.2</mu1>
+    <mu2>1.2</mu2>
+    <kp>1e5</kp>
+    <kd>50</kd>
+  </gazebo>
+  <gazebo reference="l_foot">
+    <mu1>1.2</mu1>
+    <mu2>1.2</mu2>
+    <kp>1e5</kp>
+    <kd>50</kd>
+  </gazebo>
+
   <!-- IMU sensor on base_link — matches real MPU6050 location -->
   <gazebo reference="base_link">
     <sensor name="imu_sensor" type="imu">
