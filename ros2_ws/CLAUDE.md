@@ -196,7 +196,46 @@ and abandoned. Free-form. Update over time.)
 **Always keep this section current (see section 8 rule).** This is the
 first thing to read at the start of a new session.
 
-**Last updated:** 2026-05-31 (later — foundation reconcile complete + validated)
+**Last updated:** 2026-06-01 (walking debug — IK fixed, stable crouch; balance/gait = frontier)
+
+**WALKING PROGRESS (2026-06-01) — committed `ccca321`→`a70d657`+.**
+Debugged the open-loop gait in Gazebo (headless, IMU-tilt judged). Fixed and
+VERIFIED:
+- **IK knee sign** was inverted (hyperextended, broke foot-flat) → `90+q`. Squat
+  now matches AI SIT convention (hip-, knee+, ankle-), sum=0.
+- **IK left-roll** was negated assuming mirrored mounting, but URDF uses SAME
+  axes both legs → legs splayed on weight shift. Left now mirrors right exactly.
+- **`com_x_offset` (-0.015)** in ik_vectors_DLS: the hip ≠ CoM in a knee-bend
+  (CoM ~1.5cm fwd) so any bent stance tipped fwd. Shifting the hip target back
+  makes a **50° knee-bend crouch STAND at ~0.5° tilt, balance OFF** — the key
+  unlock (robot can now hold a crouch; gait has a stable equilibrium).
+- **Gait Z_C 0.2698→0.22**: 0.2698 > leg reach (0.2455) so knees were clamped
+  straight; 0.22 lets them bend.
+- Tooling: `ik_test.launch.py` + `ik_pose_test.py` (pose stepper, `hold` param,
+  BENT crouch), `balance_test.launch.py` (`gain:=` arg), balance live
+  `correction_gain` param + robust `_is_enabled()`, GZ_HEADLESS + ICE/SESSION_MANAGER fix.
+
+**STILL FALLS — the frontier (NOT yet solved):**
+- **Dynamic gait** tips even with the crouch+offset (open-loop ZMP, CoM sweep +
+  single-support swing). Static crouch stable ≠ dynamic walk stable.
+- **Balance controller**: BENIGN/stable at low gain (0.3 holds the crouch), but
+  DESTABILIZES at high gain (2.0 drives it over). It fights a small steady torso
+  pitch at the crouch (its "0 tilt" target ≠ the crouch's natural torso angle).
+  Disturbance-rejection unproven (headless can't reset the robot between trials).
+
+**HOW TO CONTINUE (best done INTERACTIVELY in the GUI — reset with Ctrl-R, push
+the robot, tune live):**
+1. `ros2 launch my_robot_bringup my_robot_gazebo.launch.py` (GUI; SESSION_MANAGER
+   fix is baked in).
+2. `ros2 launch humanoid_robot balance_test.launch.py gain:=0.3` → robot holds a
+   crouch. Push it in the GUI; raise `correction_gain` (ros2 param set) until it
+   resists a push but before it oscillates (>~1 destabilizes).
+3. Likely needed: give balance a `target_pitch`/`target_roll` = the crouch's
+   actual torso angle (not 0), and/or rate-damping; then move onto the gait
+   (lower gait CoM, weight-shift timing so CoM stays over the stance foot).
+P7 (AI `walk` → ZMP pipeline) still deferred.
+
+**Earlier (2026-05-31) — foundation reconcile complete + validated**
 
 **FOUNDATION RECONCILE COMPLETE & COMMITTED (2026-05-31).** After pulling the
 colleague's outer-loop work (commit `de91ebd`: footstep_planner/zmp_reference/
