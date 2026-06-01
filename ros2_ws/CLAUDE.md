@@ -235,7 +235,18 @@ the crouch is an INVERTED PENDULUM (unlike the rigid straight-leg stand) and is
 fundamentally unstable open-loop; **it needs the balance controller**, no static
 offset will hold it. The offset is now correct (+0.005); balance is the job.
 
-**HIP STRATEGY → MULTIPLE STEPS (2026-06-01).** Added hip strategy to the
+**FORWARD WALKING: several steps, then falls sideways (2026-06-01).** Wired
+forward speed (pipeline `v_forward` param ← launch `forward_speed`, default 0) +
+lateral hip arg (`balance_hip_roll_gain`). With `forward_speed:=0.05` + pitch hip
+1.0 the robot takes SEVERAL forward steps (recovering from step perturbations,
+even a violent foot-impact) before falling SIDEWAYS ~t=12. LATERAL is the
+definitive wall: ankle-roll too weak, hip-roll DESTABILIZES at any gain/sign
+(0.5 tipped it during the crouch hold). Fore-aft dynamic balance works (hip
+pitch); lateral needs step-placement/capture-point control or RL — a different
+method, not tuning. Foot landings still spike hard (z up to 60). Defaults: pitch
+hip 1.0, roll 0, forward 0 (march). Set forward_speed:=0.05 to walk forward.
+
+**(earlier) HIP STRATEGY → MULTIPLE STEPS (march in place):** Added hip strategy to the
 balancer (params `hip_gain` pitch, `hip_roll_gain` lateral; nudge the hip joints
 = big upper-body lever, on top of the ankle). With pitch `hip_gain=1.0` (default
 in walking.launch) the robot now MARCHES IN PLACE for ~5 steps / ~10s holding

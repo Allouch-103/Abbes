@@ -38,6 +38,16 @@ def generate_launch_description():
         default_value="1.0",   # pitch hip-strategy on (recovers from step tips)
         description="hip-strategy pitch gain (0 = ankle-only)",
     )
+    balance_hip_roll_gain_arg = DeclareLaunchArgument(
+        "balance_hip_roll_gain",
+        default_value="0.0",   # lateral hip-strategy (sign-sensitive); tune up
+        description="hip-strategy lateral (roll) gain",
+    )
+    forward_speed_arg = DeclareLaunchArgument(
+        "forward_speed",
+        default_value="0.0",   # 0 = march in place; >0 = walk forward
+        description="gait forward speed (m/s)",
+    )
 
     # ── Config paths ──────────────────────────────────────
     robot_params   = PathJoinSubstitution([pkg, "config", "robot_params.yaml"])
@@ -71,6 +81,7 @@ def generate_launch_description():
             {"enabled": ParameterValue(LaunchConfiguration("balance_enabled"), value_type=bool)},
             {"correction_gain": ParameterValue(LaunchConfiguration("balance_gain"), value_type=float)},
             {"hip_gain": ParameterValue(LaunchConfiguration("balance_hip_gain"), value_type=float)},
+            {"hip_roll_gain": ParameterValue(LaunchConfiguration("balance_hip_roll_gain"), value_type=float)},
         ],
         output="screen",
     )
@@ -102,7 +113,8 @@ def generate_launch_description():
         executable="pipeline.py",
         name="zmp_trajectory_node",
         output="screen",
-        parameters=[gait_params],
+        parameters=[gait_params,
+            {"v_forward": ParameterValue(LaunchConfiguration("forward_speed"), value_type=float)}],
     )
 
     return LaunchDescription([
@@ -110,6 +122,8 @@ def generate_launch_description():
         balance_enabled_arg,
         balance_gain_arg,
         balance_hip_gain_arg,
+        balance_hip_roll_gain_arg,
+        forward_speed_arg,
         imu_filter_node,
         balance_node,
         ik_node,

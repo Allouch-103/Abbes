@@ -64,8 +64,11 @@ class ZmpTrajectoryNode(Node):
     # v_forward=0 → march in place (isolates lateral balance). Raise to walk fwd.
     def __init__(self, v_forward=0.0, n_steps=8):
         super().__init__('zmp_trajectory_node')
-        self._v_forward    = v_forward
-        self._n_steps      = n_steps
+        # v_forward as a ROS param: 0 = march in place, >0 = walk forward (m/s).
+        self.declare_parameter('v_forward', v_forward)
+        self.declare_parameter('n_steps', n_steps)
+        self._v_forward    = float(self.get_parameter('v_forward').value)
+        self._n_steps      = int(self.get_parameter('n_steps').value)
         self._step_idx     = 0
         self._init_counter = 0
         self._init_done    = False
