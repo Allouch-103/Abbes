@@ -235,7 +235,19 @@ the crouch is an INVERTED PENDULUM (unlike the rigid straight-leg stand) and is
 fundamentally unstable open-loop; **it needs the balance controller**, no static
 offset will hold it. The offset is now correct (+0.005); balance is the job.
 
-**NEXT = balance the crouch (best done INTERACTIVELY in the GUI, can reset+push):**
+**✅ BALANCE HOLDS THE CROUCH (2026-06-01).** Root issue was the sim's
+forward_command_controller SNAPS joints to the commanded pose (no velocity limit
+like the firmware) → the robot lurched into the crouch and tipped before balance
+engaged. FIX: ease into the pose (ik_pose_test now RAMPS CoM/feet from standing
+to the target over RAMP_S=3s). With ease-in + balance `gain:=1.0` the robot
+HOLDS a deep crouch, stable at ~4° tilt for 20s+ (was tipping to 85° in 2s).
+balance correction is right-signed and effective once it's not fighting a snap;
+it does saturate (±8°) so it can't catch a violent lurch, only hold a settled
+stance. Small steady ~4° lean remains (P-control steady-state error vs residual
+CoM offset; could add an I-term). NEXT: apply the same ease-in to the GAIT and
+get walking.
+
+**(older) NEXT = balance the crouch (best done INTERACTIVELY in the GUI):**
 balance now has ideal conditions (reliable closed-form IK + centered CoM). Tune
 `balance_test.launch.py gain:=…` / `ros2 param set /balance_controller
 correction_gain X`. Open questions: correct sign + gain (benign at 0.3, diverged
