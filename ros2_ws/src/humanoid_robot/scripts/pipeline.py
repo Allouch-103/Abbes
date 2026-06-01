@@ -8,11 +8,14 @@ intervals and SWINGS (with a lift) during the OTHER foot's stance — properly
 alternating, matched to the IK's y-convention (poses[0] = +y foot, poses[1] =
 -y foot, same as ik_vectors_DLS hip_r at +y / hip_l at -y).
 """
+import math
 import numpy as np
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Bool
-from geometry_msgs.msg import PoseStamped, PoseArray, Pose
+from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Vector3Stamped
+from sensor_msgs.msg import Imu
+from rclpy.qos import QoSProfile, ReliabilityPolicy
 
 from footstep_planner   import generate_footsteps
 from zmp_reference      import build_zmp_reference
@@ -22,6 +25,10 @@ DT       = 0.005
 Z_C      = 0.22          # hip height the IK tracks (< leg reach so knees bend)
 N_PREV   = 300
 SWING_H  = 0.02          # swing-foot apex lift (m) — small for gentle stepping
+STANCE_W = 0.08          # foot lateral separation (m) = hip width (legs vertical).
+                         # Tried 0.12 (splayed, wider base) — it broke the balance
+                         # tuning that's calibrated to this geometry (tipped fwd).
+                         # The balance gains would need re-tuning for a wider base.
 
 
 def _build_foot_trajs(footsteps, N, dt, apex):
@@ -76,20 +83,48 @@ class ZmpTrajectoryNode(Node):
         # v_forward as a ROS param: 0 = march in place, >0 = walk forward (m/s).
         self.declare_parameter('v_forward', v_forward)
         self.declare_parameter('n_steps', n_steps)
+        # CAPTURE-POINT step adjustment: scale on how far the swing foot is steered
+        # toward the capture point (where we'd step to STOP the fall). 0 = pure
+        # open-loop ZMP gait (old behaviour). ~1.0 = step fully to the CP. Live knob.
+        self.declare_parameter('cp_gain', 1.0)
+        # SEPARATE fore-aft gain. Lateral (roll) is the unstable axis CP fixes; the
+        # ankle/hip pitch loop already handles fore-aft, and reactive fore-aft
+        # stepping during an in-place march just pumps the pitch axis → keep 0.
+        self.declare_parameter('cp_gain_x', 0.0)
+        # clamp on the CP foot shift (m) — don't let one noisy IMU sample fling the
+        # foot across the floor; legs can only reach so far anyway.
+        self.declare_parameter('cp_max', 0.06)
         self._v_forward    = float(self.get_parameter('v_forward').value)
         self._n_steps      = int(self.get_parameter('n_steps').value)
         self._step_idx     = 0
         self._init_counter = 0
         self._init_done    = False
 
+        # CAPTURE-POINT feedback state (filled from the IMU). omega = sqrt(g/z_c)
+        # is the inverted-pendulum natural frequency; the capture point is
+        # xi = x_com + xdot_com/omega, estimated from tilt + tilt-rate.
+        self._omega      = math.sqrt(9.81 / Z_C)
+        self._roll_rad   = 0.0   # lateral lean  (from /tilt_degrees .x, deg→rad)
+        self._pitch_rad  = 0.0   # fore-aft lean (from /tilt_degrees .y)
+        self._roll_rate  = 0.0   # rad/s (from /imu gyro .x)
+        self._pitch_rate = 0.0   # rad/s (from /imu gyro .y)
+
         qos = rclpy.qos.QoSProfile(depth=1,
             reliability=rclpy.qos.ReliabilityPolicy.BEST_EFFORT)
         self._com_pub  = self.create_publisher(PoseStamped, '/com_trajectory', qos)
         self._foot_pub = self.create_publisher(PoseArray,   '/foot_trajectory', qos)
         self.create_subscription(Bool, '/balance_alert', self._alert_cb, 10)
+        # IMU feedback for the capture point. /tilt_degrees is RELIABLE (default),
+        # /imu is BEST_EFFORT (sim/ESP32 publisher) — match each or DDS drops it.
+        be = QoSProfile(depth=10); be.reliability = ReliabilityPolicy.BEST_EFFORT
+        self.create_subscription(Vector3Stamped, '/tilt_degrees', self._tilt_cb, 10)
+        self.create_subscription(Imu, '/imu', self._imu_cb, be)
 
         self._com_traj, self._fplus, self._fminus, self._footsteps = self._plan()
         self._n_samples = len(self._com_traj)
+        # current planted foot positions (for online stepping + double-support hold)
+        self._curL = self._fplus[0].copy();  self._curL[2] = 0.0
+        self._curR = self._fminus[0].copy(); self._curR[2] = 0.0
 
         self.create_timer(DT, self._publish_step)
         self.get_logger().info(
@@ -104,6 +139,64 @@ class ZmpTrajectoryNode(Node):
             self._n_samples = len(self._com_traj)
             self._step_idx  = 0
 
+    def _tilt_cb(self, msg: Vector3Stamped):
+        self._roll_rad  = math.radians(msg.vector.x)   # lateral lean
+        self._pitch_rad = math.radians(msg.vector.y)   # fore-aft lean
+
+    def _imu_cb(self, msg: Imu):
+        self._roll_rate  = msg.angular_velocity.x
+        self._pitch_rate = msg.angular_velocity.y
+
+    def _capture_point(self):
+        """Capture point offset (dx, dy) from the IMU, in metres, relative to the
+        stance foot. xi = z_c·(lean) + z_c·(lean_rate)/omega — i.e. where the CoM
+        is, plus where its velocity is carrying it. Stepping the swing foot to this
+        point is what arrests the fall. Clamped + scaled by cp_gain."""
+        g   = float(self.get_parameter('cp_gain').value)
+        gx  = float(self.get_parameter('cp_gain_x').value)
+        lim = float(self.get_parameter('cp_max').value)
+        # x = fore-aft (pitch), y = lateral (roll). Positive lean → CoM moving that
+        # way → step that way to catch it (sign verified empirically in test).
+        dx = gx * Z_C * (self._pitch_rad + self._pitch_rate / self._omega)
+        dy = g  * Z_C * (self._roll_rad  + self._roll_rate  / self._omega)
+        dx = float(np.clip(dx, -lim, lim))
+        dy = float(np.clip(dy, -lim, lim))
+        return dx, dy
+
+    def _feet_online(self, t):
+        """Compute (fL, fR) at gait-time t, steering the SWING foot's landing toward
+        the capture point (CLOSED-LOOP foot placement). Same stance/swing phasing as
+        the precomputed _build_foot_trajs, but the landing target is adjusted live by
+        the IMU each tick so the foot lands where it catches the fall."""
+        stances = self._footsteps
+        stance = next((s for s in stances if s.t_start <= t <= s.t_lift), None)
+        if stance is None:                       # double support: hold both planted
+            return self._curL.copy(), self._curR.copy()
+        stance_plus = stance.pos[1] > 0          # +y(L) foot is the stance?
+        oth = ([f for f in stances if f.pos[1] < 0] if stance_plus
+               else [f for f in stances if f.pos[1] > 0])
+        prev = [p for p in oth if p.t_lift  <= stance.t_start]
+        nxt  = [p for p in oth if p.t_start >= stance.t_lift]
+        p0 = (prev[-1].pos if prev else (self._curR if stance_plus else self._curL))
+        p1 = (nxt[0].pos  if nxt  else p0).astype(float).copy()
+        p0 = p0.astype(float).copy()
+        a  = (t - stance.t_start) / (stance.t_lift - stance.t_start)
+        # CAPTURE POINT: shift the landing toward where the CoM is heading. Ease the
+        # shift in over the swing (·a) so the foot doesn't jump at lift-off.
+        dx, dy = self._capture_point()
+        p1[0] += dx * a
+        p1[1] += dy * a
+        h  = 10*a**3 - 15*a**4 + 6*a**5          # quintic ease (zero vel/acc ends)
+        sw = (p0 + (p1 - p0) * h).astype(float)
+        sw[2] = SWING_H * np.sin(np.pi * a) ** 2
+        st = stance.pos.astype(float).copy(); st[2] = 0.0
+        if stance_plus:
+            self._curL = st.copy(); self._curR = sw.copy(); self._curR[2] = 0.0
+            return st, sw
+        else:
+            self._curR = st.copy(); self._curL = sw.copy(); self._curL[2] = 0.0
+            return sw, st
+
     def _plan(self, conservative=False):
         speed     = self._v_forward * (0.6 if conservative else 1.0)
         # SHORT single-support (less time on one foot) + LONG double-support
@@ -112,7 +205,7 @@ class ZmpTrajectoryNode(Node):
         dt_single = 0.45 if conservative else 0.40
         footsteps = generate_footsteps(
             v_forward=speed, n_steps=self._n_steps,
-            dt_single=dt_single, dt_double=dt_double)
+            dt_single=dt_single, dt_double=dt_double, step_width=STANCE_W)
         zmp_ref  = build_zmp_reference(footsteps, dt=DT)
         G_I, G_x, G_p, A, B, C = compute_preview_gains(DT, Z_C, N_preview=N_PREV)
         com_traj = run_preview_controller(zmp_ref, G_I, G_x, G_p, A, B, C, DT)
@@ -141,8 +234,8 @@ class ZmpTrajectoryNode(Node):
             self._com_pub.publish(com)
             feet = PoseArray(); feet.header.frame_id = 'world'
             r, l = Pose(), Pose()
-            r.position.y = +0.04
-            l.position.y = -0.04
+            r.position.y = +STANCE_W / 2.0
+            l.position.y = -STANCE_W / 2.0
             feet.poses = [r, l]
             self._foot_pub.publish(feet)
             if self._init_counter >= ramp_h + shift_n:
@@ -163,10 +256,13 @@ class ZmpTrajectoryNode(Node):
         com.pose.position.z = Z_C
         self._com_pub.publish(com)
 
+        # CLOSED-LOOP foot placement: compute the feet online with the capture-point
+        # adjustment (replaces the precomputed open-loop self._fplus/_fminus lookup).
+        fL, fR = self._feet_online(k * DT)
         feet = PoseArray(); feet.header.frame_id = 'world'
         r, l = Pose(), Pose()    # r = +y foot (poses[0]), l = -y foot (poses[1])
-        r.position.x, r.position.y, r.position.z = map(float, self._fplus[k])
-        l.position.x, l.position.y, l.position.z = map(float, self._fminus[k])
+        r.position.x, r.position.y, r.position.z = map(float, fL)
+        l.position.x, l.position.y, l.position.z = map(float, fR)
         feet.poses = [r, l]
         self._foot_pub.publish(feet)
 

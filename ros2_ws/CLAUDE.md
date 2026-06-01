@@ -235,6 +235,23 @@ the crouch is an INVERTED PENDULUM (unlike the rigid straight-leg stand) and is
 fundamentally unstable open-loop; **it needs the balance controller**, no static
 offset will hold it. The offset is now correct (+0.005); balance is the job.
 
+**CAPTURE-POINT STEP ADJUSTMENT added (2026-06-01).** pipeline.py now closes the
+loop on FOOT PLACEMENT: it subscribes /tilt_degrees + /imu, computes the capture
+point xi = z_c·(lean + lean_rate/omega) from the IMU, and steers the SWING foot's
+landing toward it (`_feet_online` replaces the open-loop `_build_foot_trajs`
+lookup). Knobs: `cp_gain` (lateral, default 1.0 = best), `cp_gain_x` (fore-aft,
+default 0 — reactive fore-aft stepping pumps the pitch axis during an in-place
+march), `cp_max` (0.06 m clamp). RESULT: clearly the best balance we've reached —
+rock-steady crouch + first steps at sub-4° tilt for ~6-8s, and it DEMONSTRABLY
+catches near-falls (tilt spikes to 40-70° then recovers to <10°). BUT marching
+still isn't sustained: a lateral limit-cycle grows and tips it after several
+steps (~8-14s, high run-to-run variance, usually to -y). Tried & rejected:
+cp_gain>1 (over-steps, falls earlier); wider stance 0.12m (breaks the balance
+tuning calibrated to the 0.08m/vertical-leg geometry — tips fwd). To close the
+gap: co-design CoM-sway amplitude + stance width + step timing as a stable
+lateral limit cycle (and re-tune balance for a wider base), or RL. CP is the
+right method and is in; sustained lateral is the remaining research-grade gap.
+
 **MARGINAL & VARIABLE — not robust (2026-06-01, honest bottom line).** After all
 fixes (IK, CoM, ease-in, hip strategy, weight-shift col-3, swing phasing, lateral
 pre-shift) the walk is MARGINALLY stable and varies run-to-run: a good run
