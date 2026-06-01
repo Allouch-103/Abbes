@@ -106,7 +106,7 @@ I_ROLL             = 0.06    # approx moment of inertia about ankle roll  axis (
 G                  = 9.81
 
 # Safety limits
-MAX_ANKLE_CORRECTION_DEG = 8.0
+MAX_ANKLE_CORRECTION_DEG = 8.0   # higher destabilizes (over-correction); 8 is the stable sweet spot
 REPLANNING_THRESHOLD_DEG = 8.0    # tilt above this triggers ZMP re-plan
 REPLANNING_HOLD_CYCLES   = 10     # must hold for N cycles to avoid false triggers
 

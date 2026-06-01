@@ -235,7 +235,20 @@ the crouch is an INVERTED PENDULUM (unlike the rigid straight-leg stand) and is
 fundamentally unstable open-loop; **it needs the balance controller**, no static
 offset will hold it. The offset is now correct (+0.005); balance is the job.
 
-**✅ GAIT HOLDS THE STARTING CROUCH; tips on the STEP (2026-06-01).** Applied
+**GAIT: alternation fixed, now tips FORWARD on single support (2026-06-01).**
+Rewrote pipeline.py foot bookkeeping to alternate both feet correctly (each foot
+planted during its own stance, swings during the other's; matched to IK
+y-convention). Result: the SIDEWAYS tip is GONE (y stays small). But when a foot
+lifts (single support) the robot tips FORWARD: on one foot the support is smaller
+and only the stance ankle can correct (half authority). Cranking balance
+(gain 1.5, MAX 15) made it WORSE — over-correction destabilizes; gain 1.0 / MAX 8
+is the stable sweet spot (holds the crouch, gets ~1 step). So single-support
+fore-aft balance is the frontier — needs: an I-term to kill the ~4° steady lean,
+precise CoM-over-stance-foot timing (ZMP/preview tuning), gentler/slower steps,
+possibly hip strategy. This is genuine dynamic-walking research (Phase 7 RL
+territory). Marching-in-place (v_forward=0) is the current test in pipeline.
+
+**(earlier) GAIT HOLDS THE STARTING CROUCH; tips on the STEP:** Applied
 ease-in + balance to the gait: pipeline.py now RAMPS the CoM from 0.27→Z_C over
 3s (+1.5s settle) in its init before stepping; walking.launch.py defaults
 balance ON with correction_gain=1.0 (args balance_enabled, balance_gain). Result:
