@@ -68,7 +68,12 @@ class ZmpTrajectoryNode(Node):
             dt_single=dt_single, dt_double=dt_double)
         zmp_ref = build_zmp_reference(footsteps, dt=DT)
         G_I, G_x, G_p, A, B, C = compute_preview_gains(DT, Z_C, N_preview=N_PREV)
-        com_traj = run_preview_controller(zmp_ref, G_I, G_x, G_p, A, B, C, DT)
+        # Prepend a rest phase (ZMP at origin) matching the 2 s init window.
+        N_init = int(2.0 / DT)
+        zmp_ref_full = np.vstack([np.zeros((N_init, 2)), zmp_ref])
+        com_traj_full = run_preview_controller(zmp_ref_full, G_I, G_x, G_p, A, B, C, DT)
+        # Drop the init samples — the trajectory loop starts after the init window
+        com_traj = com_traj_full[N_init:]
 
         N = len(com_traj)
         swing_traj = np.zeros((N, 3))
@@ -109,8 +114,7 @@ class ZmpTrajectoryNode(Node):
         com_y = self._com_traj[k, 1]
         com_z = Z_C
         sw_x  = self._swing_traj[k, 0]
-        sw_z  = self._swing_traj[k, 2]
-
+        sw_z  = max(self._swing_traj[k, 2], FOOT_HEIGHT)
         com_msg = PoseStamped()
         com_msg.header.frame_id = 'world'
         com_msg.pose.position.x = com_x
