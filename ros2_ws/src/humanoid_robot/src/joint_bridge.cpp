@@ -19,8 +19,9 @@ public:
     arm_pub_  = create_publisher<std_msgs::msg::Float64MultiArray>("/arm_controller/commands",  pub_qos);
     head_pub_ = create_publisher<std_msgs::msg::Float64MultiArray>("/head_controller/commands", pub_qos);
 
-    // Subscribe to the corrected stream from balance_controller (reliable pub).
-    rclcpp::QoS sub_qos(10);   // reliable — matches balance_controller's publisher
+    // Subscribe BEST_EFFORT: compatible with both balance_controller's reliable
+    // publisher AND a best_effort one (e.g. ik remapped directly in ik_test).
+    rclcpp::QoS sub_qos = rclcpp::QoS(10).best_effort();
     sub_ = create_subscription<std_msgs::msg::Float32MultiArray>(
       "/joint_commands_corrected", sub_qos,
       [this](std_msgs::msg::Float32MultiArray::SharedPtr msg) {

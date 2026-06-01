@@ -106,7 +106,7 @@ I_ROLL             = 0.06    # approx moment of inertia about ankle roll  axis (
 G                  = 9.81
 
 # Safety limits
-MAX_ANKLE_CORRECTION_DEG = 12.0
+MAX_ANKLE_CORRECTION_DEG = 8.0
 REPLANNING_THRESHOLD_DEG = 8.0    # tilt above this triggers ZMP re-plan
 REPLANNING_HOLD_CYCLES   = 10     # must hold for N cycles to avoid false triggers
 
@@ -259,10 +259,16 @@ class BalanceController(Node):
         # Convert to ankle angle corrections (rad) by dividing by stiffness.
         # For position-controlled servos, treat the torque as a proportional
         # angle increment: Δθ = u / k_stiffness.
-        K_STIFFNESS = 5.0   # approximate servo stiffness (N·m/rad) — tune this
-        u = -self._K @ x                         # (2,): [Δτ_pitch, Δτ_roll]
-        delta_pitch_rad = u[0] / K_STIFFNESS     # ankle pitch correction (rad)
-        delta_roll_rad  = u[1] / K_STIFFNESS     # ankle roll  correction (rad)
+        # K_STIFFNESS scales torque->angle. Higher = gentler ankle response.
+        # Was 5.0 which railed to the ±limit on a few degrees of tilt; 30 gives
+        # a tame ~0.4° ankle per 1° tilt.
+        K_STIFFNESS = 30.0
+        # SIGN: a forward lean (pitch>0) must INCREASE ankle_pitch to rotate the
+        # body back. u=-K·x decreases it (positive feedback -> tipped). Negate so
+        # the ankle correction opposes the tilt (true negative feedback).
+        u = -self._K @ x                         # (2,): LQR torque signal
+        delta_pitch_rad = -u[0] / K_STIFFNESS    # ankle pitch correction (rad)
+        delta_roll_rad  = -u[1] / K_STIFFNESS    # ankle roll  correction (rad)
 
         # ── Clamp corrections ─────────────────────────────────────────────
         max_rad = np.deg2rad(MAX_ANKLE_CORRECTION_DEG)

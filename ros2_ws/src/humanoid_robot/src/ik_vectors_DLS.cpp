@@ -130,7 +130,7 @@ private:
         // mapping (verify in Gazebo, flip a sign if a joint turns the wrong way).
         a[J::R_HIP_ROLL]    = clamp_joint(J::R_HIP_ROLL,    90.0 + q[0]*R2D);
         a[J::R_HIP_PITCH]   = clamp_joint(J::R_HIP_PITCH,   90.0 + q[1]*R2D);
-        a[J::R_KNEE_PITCH]  = clamp_joint(J::R_KNEE_PITCH,  90.0 - q[2]*R2D);
+        a[J::R_KNEE_PITCH]  = clamp_joint(J::R_KNEE_PITCH,  90.0 + q[2]*R2D);  // +: q_knee>0 = flexion (URDF knee_pitch +)
         a[J::R_ANKLE_PITCH] = clamp_joint(J::R_ANKLE_PITCH, 90.0 + q[3]*R2D);
         a[J::R_ANKLE_ROLL]  = clamp_joint(J::R_ANKLE_ROLL,  90.0 + q[4]*R2D);
     }
@@ -140,11 +140,14 @@ private:
         constexpr double R2D = 180.0/M_PI;
         const Vec5& q = leg_l_.q;
         // 90-centred, mirror signs preserved from the original mapping.
-        a[J::L_HIP_ROLL]    = clamp_joint(J::L_HIP_ROLL,    90.0 - q[0]*R2D);
+        // Left leg uses the SAME joint axes as the right in the URDF (no mirror),
+        // so the mapping is identical to apply_right — do NOT negate roll, or the
+        // legs splay apart on a lateral weight shift instead of leaning together.
+        a[J::L_HIP_ROLL]    = clamp_joint(J::L_HIP_ROLL,    90.0 + q[0]*R2D);
         a[J::L_HIP_PITCH]   = clamp_joint(J::L_HIP_PITCH,   90.0 + q[1]*R2D);
-        a[J::L_KNEE_PITCH]  = clamp_joint(J::L_KNEE_PITCH,  90.0 - q[2]*R2D);
+        a[J::L_KNEE_PITCH]  = clamp_joint(J::L_KNEE_PITCH,  90.0 + q[2]*R2D);  // +: q_knee>0 = flexion
         a[J::L_ANKLE_PITCH] = clamp_joint(J::L_ANKLE_PITCH, 90.0 + q[3]*R2D);
-        a[J::L_ANKLE_ROLL]  = clamp_joint(J::L_ANKLE_ROLL,  90.0 - q[4]*R2D);
+        a[J::L_ANKLE_ROLL]  = clamp_joint(J::L_ANKLE_ROLL,  90.0 + q[4]*R2D);
     }
 
     void tick()

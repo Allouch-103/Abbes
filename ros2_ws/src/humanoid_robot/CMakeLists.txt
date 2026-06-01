@@ -62,6 +62,7 @@ install(PROGRAMS
   scripts/zmp_reference.py
   scripts/walk_test.py
   scripts/ik_solver.py
+  scripts/ik_pose_test.py
   DESTINATION lib/${PROJECT_NAME}
 )
 ament_package()
