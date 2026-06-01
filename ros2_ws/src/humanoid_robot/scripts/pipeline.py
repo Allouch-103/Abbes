@@ -85,11 +85,18 @@ class ZmpTrajectoryNode(Node):
     def _publish_step(self):
         if not self._init_done:
             self._init_counter += 1
+            # EASE into the crouch: the sim snaps joints to the commanded pose, so
+            # ramp the CoM height from standing (0.27) down to Z_C over 3s, then
+            # hold ~1.5s so balance settles, BEFORE starting to step. Snapping
+            # straight to Z_C tips the robot before balance can engage.
+            STAND_Z = 0.27
+            ramp_n  = int(3.0 / DT)
+            a = min(1.0, self._init_counter / float(ramp_n))
             com_msg = PoseStamped()
             com_msg.header.frame_id = 'world'
             com_msg.pose.position.x = 0.0
             com_msg.pose.position.y = 0.0
-            com_msg.pose.position.z = Z_C
+            com_msg.pose.position.z = STAND_Z + a * (Z_C - STAND_Z)
             self._com_pub.publish(com_msg)
             feet_msg = PoseArray()
             feet_msg.header.frame_id = 'world'
@@ -98,9 +105,9 @@ class ZmpTrajectoryNode(Node):
             l.position.y = -0.04
             feet_msg.poses = [r, l]
             self._foot_pub.publish(feet_msg)
-            if self._init_counter >= int(2.0 / DT):
+            if self._init_counter >= int(4.5 / DT):   # 3s ramp + 1.5s settle
                 self._init_done = True
-                self.get_logger().info('Init complete — starting trajectory')
+                self.get_logger().info('Init complete (eased into crouch) — starting trajectory')
             return
 
         if self._step_idx >= self._n_samples:

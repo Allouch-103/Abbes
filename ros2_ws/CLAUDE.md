@@ -235,6 +235,17 @@ the crouch is an INVERTED PENDULUM (unlike the rigid straight-leg stand) and is
 fundamentally unstable open-loop; **it needs the balance controller**, no static
 offset will hold it. The offset is now correct (+0.005); balance is the job.
 
+**✅ GAIT HOLDS THE STARTING CROUCH; tips on the STEP (2026-06-01).** Applied
+ease-in + balance to the gait: pipeline.py now RAMPS the CoM from 0.27→Z_C over
+3s (+1.5s settle) in its init before stepping; walking.launch.py defaults
+balance ON with correction_gain=1.0 (args balance_enabled, balance_gain). Result:
+the robot HOLDS the gait's initial crouch at ~0.6° tilt, then **tips SIDEWAYS
+(roll/y-axis) the moment stepping starts** → the dynamic LATERAL WEIGHT-SHIFT is
+insufficient: when the swing foot lifts, the CoM isn't over the stance foot.
+That's the remaining frontier — tune the pipeline's lateral com sway (footstep_
+planner/zmp_reference: wider/longer weight shift so CoM is fully over the stance
+foot before lift) + step timing. IK/balance/ease-in are all working.
+
 **✅ BALANCE HOLDS THE CROUCH (2026-06-01).** Root issue was the sim's
 forward_command_controller SNAPS joints to the commanded pose (no velocity limit
 like the firmware) → the robot lurched into the crouch and tipped before balance

@@ -25,8 +25,13 @@ def generate_launch_description():
     )
     balance_enabled_arg = DeclareLaunchArgument(
         "balance_enabled",
-        default_value="false",   # OFF by default: balance still needs sign/gain work.
-        description="Enable the LQR ankle balance correction (default off until tuned)",
+        default_value="true",   # balance now holds the crouch (ease-in + gain)
+        description="Enable the LQR ankle balance correction",
+    )
+    balance_gain_arg = DeclareLaunchArgument(
+        "balance_gain",
+        default_value="1.0",
+        description="balance correction_gain (1.0 holds the crouch)",
     )
 
     # ── Config paths ──────────────────────────────────────
@@ -56,11 +61,10 @@ def generate_launch_description():
         name="balance_controller",
         parameters=[
             robot_params,
-            # NOTE: balance_params.yaml is the OLD PID config (kp_pitch…) and is
-            # irrelevant to the LQR node — and its `enabled: true` was overriding
-            # the launch arg. Dropped. LQR gains come from q_angle/q_rate/r_torque
-            # defaults (or set them live with `ros2 param set`).
+            # balance_params.yaml is the OLD PID config — irrelevant to the LQR
+            # node — so it's dropped. correction_gain is the live balance strength.
             {"enabled": ParameterValue(LaunchConfiguration("balance_enabled"), value_type=bool)},
+            {"correction_gain": ParameterValue(LaunchConfiguration("balance_gain"), value_type=float)},
         ],
         output="screen",
     )
@@ -98,6 +102,7 @@ def generate_launch_description():
     return LaunchDescription([
         ik_enabled_arg,
         balance_enabled_arg,
+        balance_gain_arg,
         imu_filter_node,
         balance_node,
         ik_node,
