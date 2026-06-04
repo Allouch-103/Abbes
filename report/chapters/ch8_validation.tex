@@ -1,0 +1,150 @@
+%=====================================================================
+%  Chapter 8 — Simulation, Testing and Validation
+%=====================================================================
+\chapter{Simulation, Testing and Validation}
+\label{chap:validation}
+
+\section{Introduction}
+This chapter evaluates the complete system. Because the robot is driven by
+stiff position servos and a fall in hardware risks the 3D-printed
+structure, validation is carried out primarily on the Gazebo digital twin
+introduced in Chapter~\ref{chap:software}, where behaviour can be observed
+repeatably and safely. The evaluation proceeds bottom-up, mirroring the
+order in which the system was built: first standing stability, then active
+balance, then the walking gait, and finally the natural-language command
+layer.
+
+\section{Simulation Environment and Method}
+The tests run in Gazebo Harmonic with the DART physics engine simulating
+gravity, contacts and joint dynamics. The simulator can be launched with a
+graphical view for interactive testing --- where the robot can be reset and
+pushed to probe disturbance rejection --- or headless for faster, repeatable
+runs. The principal quantitative measure throughout is the \textbf{torso
+tilt}: the pitch and roll estimated by the complementary filter from the
+inertial sensor (Chapter~\ref{chap:kinematics}). A tilt that stays small
+indicates an upright, stable robot; a tilt that grows without bound
+indicates a fall. This single signal is used to judge standing, balancing
+and walking alike.
+
+\section{Standing Stability}
+The first test confirms the foundation: with no controller active, the bare
+robot is spawned in its geometric standing pose. It stands stably, with the
+torso tilt holding at roughly half a degree --- confirming that the
+kinematic model, the mass and inertia properties, and the foot contact are
+all sound, and that any later instability comes from the motion, not from a
+broken model. Running the full software chain with the gait and balance
+controllers disabled likewise leaves the robot standing, establishing that
+the end-to-end pipeline is correct before any active control is added.
+
+\section{Balance Validation}
+\label{sec:val-balance}
+The second test evaluates active balance on a more demanding pose: a deep
+knee-bend crouch, which --- unlike the rigid straight-leg stand --- is an
+inverted pendulum and is unstable without feedback. Two ingredients make it
+hold. First, the target pose is \emph{eased into} over about a second
+rather than commanded instantly, because the simulated position controller
+otherwise snaps the joints and the robot lurches before the balancer can
+react. Second, the LQR ankle controller of Chapter~\ref{chap:kinematics} is
+enabled. With both, the robot holds the crouch stably at around four
+degrees of tilt for twenty seconds and more --- against a fall to tens of
+degrees within two seconds when balance is off. The controller is
+effective at holding a settled stance and rejecting gentle pushes; its
+authority is bounded by the ankle correction limit, so it cannot catch a
+violent lurch, only maintain a stance that is already near equilibrium.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\textwidth]{fig8.1.png}
+  \caption{The robot standing in the Gazebo simulation, used as the baseline
+           for the balance and gait tests.}
+  \label{fig:val-stand}
+\end{figure}
+
+\section{Gait Validation}
+\label{sec:val-gait}
+The third test exercises the full walking pipeline of
+Chapter~\ref{chap:kinematics}. The pipeline behaves correctly in its parts:
+it produces a valid ZMP reference, a smooth centre-of-mass trajectory, and
+properly alternating foot motions in which a foot only lifts while the
+centre of mass is over the opposite, supporting foot.
+
+In terms of whole-body behaviour, the honest result is a partial success.
+On good runs the robot \textbf{marches in place} for several balanced steps
+--- on the order of twelve to sixteen seconds --- holding a torso tilt in the
+range of three to seven degrees, and the capture-point step adjustment
+demonstrably catches near-falls, recovering from tilt spikes that would
+otherwise end the run. However, the march is \emph{marginally} stable and
+varies from run to run on identical code: a slow lateral oscillation tends
+to build up and eventually tips the robot, and enabling true forward motion
+tips it sooner. This is not a tuning oversight but a method-level limit:
+stiff position servos without torque sensing, combined with only marginal
+lateral balance during single support, place robust dynamic walking beyond
+the reach of the present ankle-and-hip strategy. Closing the gap calls for
+full capture-point footstep control or a learned policy, identified as
+future work in Chapter~\ref{chap:conclusion}.
+
+\section{Command-Layer Validation}
+\label{sec:val-ai}
+The natural-language command layer of Chapter~\ref{chap:ai} was validated
+end-to-end through the live local model. Plain-English requests are
+correctly grounded into the right command and executed: waving, bowing,
+sitting and returning to a standing pose all fire and report back, and the
+robot's spoken-style confirmation matches the action performed. The
+supporting mechanisms were verified individually:
+\begin{itemize}[itemsep=2pt,topsep=4pt]
+  \item the \textbf{emergency stop} interrupts a motion already in progress
+        --- a walk in flight is cancelled and the robot snaps to a safe pose
+        --- confirming that the separate-context stop path is a genuine
+        interrupt;
+  \item the \textbf{safety validator} was unit-tested across its cases (a
+        level walk is allowed, an immediate second motion is rate-limited,
+        a walk on a tilted base is refused, and \texttt{stop} and
+        \texttt{get\_status} are never blocked);
+  \item the \textbf{feedback loop} was verified with a scripted scenario in
+        which a refused command leads the model to steady the robot and then
+        retry successfully, rather than give up.
+\end{itemize}
+A noteworthy bug was found and fixed during this validation: under
+continuous status polling, the stop/status path and the dispatcher
+initially shared one ROS\,2 context and corrupted each other's internal
+state. Giving the stop/status path its own context resolved it --- an
+example of the concurrency care that a real interactive robot interface
+requires. The main residual limitation is the small (3-billion-parameter)
+model itself, which occasionally mis-formats a tool call or omits an
+argument; this is a known limitation of small models rather than of the
+architecture.
+
+\section{Results Summary}
+Table~\ref{tab:results} summarises the validation outcomes.
+
+\begin{table}[ht]
+  \centering
+  \caption{Summary of validation results.}
+  \label{tab:results}
+  \small
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabularx}{\textwidth}{@{}lXl@{}}
+    \toprule
+    \textbf{Capability} & \textbf{Method} & \textbf{Result} \\
+    \midrule
+    Standing stability & Bare robot, no control & Stable ($\sim$0.5\textdegree{} tilt) \\
+    Static crouch      & Closed-form IK + LQR balance + ease-in & Held 20\,s+ ($\sim$4\textdegree) \\
+    March in place     & ZMP preview gait + balance + capture point & 12--16\,s, 3--7\textdegree{} (good runs) \\
+    Forward walking    & Gait with forward speed & A few steps, then tips --- not robust \\
+    NL commands        & Local LLM tool-use $\to$ action & Grounded and executed correctly \\
+    Emergency stop     & Service on isolated context & Interrupts in-flight motion \\
+    Safety validator   & Tilt gate + rate limit & Verified (unit + live) \\
+    Feedback loop      & Agentic recover-then-retry & Verified (scripted) \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\section{Conclusion}
+The validation confirms a system that is sound from the ground up: a correct
+physical model, an effective standing balance, a functional gait pipeline
+that marches in place, and a natural-language command layer that works
+end-to-end through a local model with safety gating. It also delineates,
+honestly, the project's frontier: robust dynamic forward walking on stiff
+hobby servos remains unsolved and is the natural target of future work. The
+next chapter draws the general conclusions of the project and lays out
+those perspectives.

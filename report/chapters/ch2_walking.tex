@@ -172,16 +172,16 @@ main families:
   \item \textbf{ZMP-based approach} --- requires comprehensive knowledge
         of the robot's parameters and uses the ZMP as a feedback signal
         to adjust joint angles and torques.
-  \item \textbf{Inverted-pendulum approach} --- operates with limited
-        knowledge of the robot model and uses a closed-loop feedback
-        based on the inverted-pendulum abstraction.
+  \item \textbf{Inverted-pendulum approach}~\cite{shahbazi2016} --- operates
+        with limited knowledge of the robot model and uses a closed-loop
+        feedback based on the inverted-pendulum abstraction.
 \end{itemize}
 The gait generator developed in this work follows the ZMP-based approach
 and is detailed in Chapter~\ref{chap:kinematics}.
 
 \section{Walking Primitive}
-A walking primitive is a fundamental building block that generates the
-motion of a robot's gait. It defines characteristics such as step
+A walking primitive~\cite{hauser2008} is a fundamental building block that
+generates the motion of a robot's gait. It defines characteristics such as step
 length, step height, and step frequency, taking into account the robot's
 physical constraints, its stability requirements, and the desired
 locomotion behaviour.

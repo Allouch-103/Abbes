@@ -58,12 +58,15 @@
 \newlabel{fig:support}{{2.3}{8}{Support polygon in the single- and double-support phases}{figure.caption.14}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.4.4}Stability Criteria}{8}{subsection.2.4.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {2.5}Types of Bipedal Walking}{8}{section.2.5}\protected@file@percent }
+\citation{shahbazi2016}
 \@writefile{toc}{\contentsline {section}{\numberline {2.6}Robot Gait Generation}{9}{section.2.6}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.6.1}Walking-Cycle Components}{9}{subsection.2.6.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.6.2}Walking-Cycle Phases}{9}{subsection.2.6.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.6.3}Gait Engine}{9}{subsection.2.6.3}\protected@file@percent }
+\citation{hauser2008}
 \@writefile{toc}{\contentsline {section}{\numberline {2.7}Walking Primitive}{10}{section.2.7}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {2.8}Conclusion}{10}{section.2.8}\protected@file@percent }
+\citation{sias1990}
 \@writefile{toc}{\contentsline {chapter}{\numberline {3}Hardware and Mechatronic Design}{11}{chapter.3}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
@@ -98,11 +101,11 @@
 \newlabel{tab:battery}{{3.4}{15}{Battery specifications}{table.caption.21}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {3.4}Electronic Architecture}{15}{section.3.4}\protected@file@percent }
 \newlabel{sec:hw-arch}{{3.4}{15}{Electronic Architecture}{section.3.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3.4}{\ignorespaces Electronic architecture of Abbes: the ESP32 micro-ROS node drives 18 servos through two PCA9685 boards and reads the MPU6050, communicating with the ROS\,2 host over WiFi. Dashed red lines indicate power distribution.}}{15}{figure.caption.23}\protected@file@percent }
-\newlabel{fig:hwarch}{{3.4}{15}{Electronic architecture of Abbes: the ESP32 micro-ROS node drives 18 servos through two PCA9685 boards and reads the MPU6050, communicating with the ROS\,2 host over WiFi. Dashed red lines indicate power distribution}{figure.caption.23}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.4}{\ignorespaces Electronic architecture of Abbes: the ESP32 micro-ROS node drives the 16 actuated servos through a single PCA9685 board and reads the MPU6050, communicating with the ROS\,2 host over WiFi. Dashed red lines indicate power distribution.}}{15}{figure.caption.23}\protected@file@percent }
+\newlabel{fig:hwarch}{{3.4}{15}{Electronic architecture of Abbes: the ESP32 micro-ROS node drives the 16 actuated servos through a single PCA9685 board and reads the MPU6050, communicating with the ROS\,2 host over WiFi. Dashed red lines indicate power distribution}{figure.caption.23}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.5}Conclusion}{15}{section.3.5}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {3.5}{\ignorespaces Regulator specifications.}}{16}{table.caption.22}\protected@file@percent }
 \newlabel{tab:regulator}{{3.5}{16}{Regulator specifications}{table.caption.22}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {3.5}Conclusion}{16}{section.3.5}\protected@file@percent }
 \@writefile{toc}{\contentsline {chapter}{\numberline {4}Embedded Firmware: the On-Board Controller}{17}{chapter.4}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
@@ -116,13 +119,146 @@
 \newlabel{fig:fwflow}{{4.1}{18}{Firmware data paths: the command path (top) drives the servos at 100~Hz, the sensing path (bottom) publishes the IMU at 50~Hz. Both periodic loops run on the microcontroller's clock}{figure.caption.24}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {4.4}Actuators and Sensors over I\textsuperscript  {2}C}{18}{section.4.4}\protected@file@percent }
 \newlabel{sec:fw-io}{{4.4}{18}{Actuators and Sensors over I\texorpdfstring {\textsuperscript {2}}{2}C}{section.4.4}{}}
-\@writefile{toc}{\contentsline {paragraph}{Actuators.}{18}{section*.25}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Sensor.}{19}{section*.26}\protected@file@percent }
+\newlabel{fig:onboard-esp}{{4.2a}{19}{ESP32 controller and PWM servo driver}{figure.caption.25}{}}
+\newlabel{sub@fig:onboard-esp}{{a}{19}{ESP32 controller and PWM servo driver}{figure.caption.25}{}}
+\newlabel{fig:onboard-pwr}{{4.2b}{19}{DC-DC power regulators}{figure.caption.25}{}}
+\newlabel{sub@fig:onboard-pwr}{{b}{19}{DC-DC power regulators}{figure.caption.25}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.2}{\ignorespaces On-board electronics of Abbes: (a) the ESP32 with the PCA9685 servo driver and the servo wiring harness, and (b) the DC-DC regulators supplying the actuators.}}{19}{figure.caption.25}\protected@file@percent }
+\newlabel{fig:onboard}{{4.2}{19}{On-board electronics of Abbes: (a) the ESP32 with the PCA9685 servo driver and the servo wiring harness, and (b) the DC-DC regulators supplying the actuators}{figure.caption.25}{}}
+\@writefile{toc}{\contentsline {paragraph}{Actuators.}{19}{section*.26}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Sensor.}{19}{section*.27}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {4.5}Joining ROS\,2 with micro-ROS}{19}{section.4.5}\protected@file@percent }
 \newlabel{sec:fw-microros}{{4.5}{19}{Joining ROS\,2 with micro-ROS}{section.4.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4.2}{\ignorespaces micro-ROS bridges the microcontroller to the ROS\,2 graph: a lightweight client on the ESP32 talks to an agent on the host, which connects it to the full DDS network.}}{19}{figure.caption.27}\protected@file@percent }
-\newlabel{fig:microros}{{4.2}{19}{micro-ROS bridges the microcontroller to the ROS\,2 graph: a lightweight client on the ESP32 talks to an agent on the host, which connects it to the full DDS network}{figure.caption.27}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4.3}{\ignorespaces Agent-connection state machine, providing automatic reconnection without rebooting the robot.}}{20}{figure.caption.28}\protected@file@percent }
-\newlabel{fig:fsm}{{4.3}{20}{Agent-connection state machine, providing automatic reconnection without rebooting the robot}{figure.caption.28}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.6}Conclusion}{20}{section.4.6}\protected@file@percent }
-\gdef \@abspage@last{27}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.3}{\ignorespaces micro-ROS bridges the microcontroller to the ROS\,2 graph: a lightweight client on the ESP32 talks to an agent on the host, which connects it to the full DDS network.}}{20}{figure.caption.28}\protected@file@percent }
+\newlabel{fig:microros}{{4.3}{20}{micro-ROS bridges the microcontroller to the ROS\,2 graph: a lightweight client on the ESP32 talks to an agent on the host, which connects it to the full DDS network}{figure.caption.28}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.4}{\ignorespaces Agent-connection state machine, providing automatic reconnection without rebooting the robot.}}{20}{figure.caption.29}\protected@file@percent }
+\newlabel{fig:fsm}{{4.4}{20}{Agent-connection state machine, providing automatic reconnection without rebooting the robot}{figure.caption.29}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.6}Conclusion}{21}{section.4.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {5}Software Architecture and ROS\,2 Integration}{22}{chapter.5}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:software}{{5}{22}{Software Architecture and ROS\,2 Integration}{chapter.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.1}Introduction}{22}{section.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.2}What ROS\,2 Is, and Why It Is Used Here}{22}{section.5.2}\protected@file@percent }
+\newlabel{sec:why-ros2}{{5.2}{22}{What ROS\,2 Is, and Why It Is Used Here}{section.5.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.3}Workspace and Package Architecture}{23}{section.5.3}\protected@file@percent }
+\newlabel{sec:packages}{{5.3}{23}{Workspace and Package Architecture}{section.5.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.4}The Robot Model}{23}{section.5.4}\protected@file@percent }
+\newlabel{sec:model}{{5.4}{23}{The Robot Model}{section.5.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.5}Motion Control with \texttt  {ros2\_control}}{24}{section.5.5}\protected@file@percent }
+\newlabel{sec:ros2control}{{5.5}{24}{Motion Control with \texttt {ros2\_control}}{section.5.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.1}{\ignorespaces Internals of the \texttt  {ros2\_control} controller manager: the resource manager owns the command and state interfaces; each controller claims the interfaces for its joints, and the whole loop runs at 100~Hz.}}{24}{figure.caption.30}\protected@file@percent }
+\newlabel{fig:ros2control}{{5.1}{24}{Internals of the \texttt {ros2\_control} controller manager: the resource manager owns the command and state interfaces; each controller claims the interfaces for its joints, and the whole loop runs at 100~Hz}{figure.caption.30}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.2}{\ignorespaces Controller lifecycle (unloaded $\rightarrow $ configured $\rightarrow $ active) and the steps a spawner performs to bring a controller online.}}{25}{figure.caption.31}\protected@file@percent }
+\newlabel{fig:ctrllifecycle}{{5.2}{25}{Controller lifecycle (unloaded $\rightarrow $ configured $\rightarrow $ active) and the steps a spawner performs to bring a controller online}{figure.caption.31}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.6}Simulation with Gazebo}{25}{section.5.6}\protected@file@percent }
+\newlabel{sec:gazebo}{{5.6}{25}{Simulation with Gazebo}{section.5.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.3}{\ignorespaces Integration of Gazebo and \texttt  {ros2\_control}: the \texttt  {gz\_ros2\_control} plugin connects the simulated joints to the same interfaces used on hardware, while \texttt  {ros\_gz\_bridge} relays sensor topics into ROS\,2.}}{26}{figure.caption.32}\protected@file@percent }
+\newlabel{fig:gzros2control}{{5.3}{26}{Integration of Gazebo and \texttt {ros2\_control}: the \texttt {gz\_ros2\_control} plugin connects the simulated joints to the same interfaces used on hardware, while \texttt {ros\_gz\_bridge} relays sensor topics into ROS\,2}{figure.caption.32}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.7}The Node and Topic Graph}{26}{section.5.7}\protected@file@percent }
+\newlabel{sec:graph}{{5.7}{26}{The Node and Topic Graph}{section.5.7}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.4}{\ignorespaces How the \texttt  {gz\_ros2\_control} plugin operates inside the Gazebo process: it binds the declared joints to simulation entities and exchanges state and commands on every step.}}{27}{figure.caption.33}\protected@file@percent }
+\newlabel{fig:gzplugin}{{5.4}{27}{How the \texttt {gz\_ros2\_control} plugin operates inside the Gazebo process: it binds the declared joints to simulation entities and exchanges state and commands on every step}{figure.caption.33}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.8}Cross-Cutting Conventions}{27}{section.5.8}\protected@file@percent }
+\newlabel{sec:conventions}{{5.8}{27}{Cross-Cutting Conventions}{section.5.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.5}{\ignorespaces The complete node and topic graph: the planning layer feeds the controller manager, which drives either the Gazebo simulation path or the real-robot (ESP32) path; both share the downstream sensor and state topics.}}{28}{figure.caption.34}\protected@file@percent }
+\newlabel{fig:nodegraph}{{5.5}{28}{The complete node and topic graph: the planning layer feeds the controller manager, which drives either the Gazebo simulation path or the real-robot (ESP32) path; both share the downstream sensor and state topics}{figure.caption.34}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.9}Conclusion}{28}{section.5.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {6}Kinematics and Gait Planning}{29}{chapter.6}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:kinematics}{{6}{29}{Kinematics and Gait Planning}{chapter.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.1}Introduction}{29}{section.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6.2}Leg Kinematics}{29}{section.6.2}\protected@file@percent }
+\newlabel{sec:fk}{{6.2}{29}{Leg Kinematics}{section.6.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.3}Inverse Kinematics}{29}{section.6.3}\protected@file@percent }
+\newlabel{sec:ik}{{6.3}{29}{Inverse Kinematics}{section.6.3}{}}
+\newlabel{fig:iksag}{{6.1a}{30}{Sagittal plane}{figure.caption.35}{}}
+\newlabel{sub@fig:iksag}{{a}{30}{Sagittal plane}{figure.caption.35}{}}
+\newlabel{fig:ikfront}{{6.1b}{30}{Frontal plane}{figure.caption.35}{}}
+\newlabel{sub@fig:ikfront}{{b}{30}{Frontal plane}{figure.caption.35}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6.1}{\ignorespaces Geometric inverse kinematics of the leg, decomposed into the sagittal plane (knee and hip/ankle pitch) and the frontal plane (hip and ankle roll).}}{30}{figure.caption.35}\protected@file@percent }
+\newlabel{fig:ik}{{6.1}{30}{Geometric inverse kinematics of the leg, decomposed into the sagittal plane (knee and hip/ankle pitch) and the frontal plane (hip and ankle roll)}{figure.caption.35}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.4}Inertial Estimation}{30}{section.6.4}\protected@file@percent }
+\newlabel{sec:imu-filter}{{6.4}{30}{Inertial Estimation}{section.6.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.5}Balance Control}{30}{section.6.5}\protected@file@percent }
+\newlabel{sec:balance}{{6.5}{30}{Balance Control}{section.6.5}{}}
+\citation{kajita2003}
+\citation{katayama1985}
+\citation{kajita2006}
+\citation{park2007}
+\@writefile{toc}{\contentsline {section}{\numberline {6.6}Gait Generation by ZMP Preview Control}{31}{section.6.6}\protected@file@percent }
+\newlabel{sec:gait}{{6.6}{31}{Gait Generation by ZMP Preview Control}{section.6.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6.2}{\ignorespaces Walking in the sagittal (a) and frontal (b) planes: the centre-of-mass trajectory and the ZMP evolve across the double-support (DS) and single-support (SS) phases.}}{31}{figure.caption.36}\protected@file@percent }
+\newlabel{fig:gaitcycle}{{6.2}{31}{Walking in the sagittal (a) and frontal (b) planes: the centre-of-mass trajectory and the ZMP evolve across the double-support (DS) and single-support (SS) phases}{figure.caption.36}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6.3}{\ignorespaces Swing-foot trajectory over the planned footstep sequence produced by the walking-pattern generator.}}{32}{figure.caption.37}\protected@file@percent }
+\newlabel{fig:wpg}{{6.3}{32}{Swing-foot trajectory over the planned footstep sequence produced by the walking-pattern generator}{figure.caption.37}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.7}The Complete Motion Pipeline}{32}{section.6.7}\protected@file@percent }
+\newlabel{sec:pipeline}{{6.7}{32}{The Complete Motion Pipeline}{section.6.7}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6.4}{\ignorespaces The complete motion pipeline: a feed-forward ZMP gait chain feeds the inverse kinematics; the balance controller and the capture-point adjustment close the loop with inertial feedback.}}{32}{figure.caption.38}\protected@file@percent }
+\newlabel{fig:motionpipe}{{6.4}{32}{The complete motion pipeline: a feed-forward ZMP gait chain feeds the inverse kinematics; the balance controller and the capture-point adjustment close the loop with inertial feedback}{figure.caption.38}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.8}Results and Limitations}{33}{section.6.8}\protected@file@percent }
+\newlabel{sec:gait-results}{{6.8}{33}{Results and Limitations}{section.6.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.9}Conclusion}{33}{section.6.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {7}The Natural-Language Command Layer}{34}{chapter.7}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:ai}{{7}{34}{The Natural-Language Command Layer}{chapter.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.1}Introduction}{34}{section.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.2}Design Principle: the LLM Never Moves a Motor}{34}{section.7.2}\protected@file@percent }
+\newlabel{sec:ai-principle}{{7.2}{34}{Design Principle: the LLM Never Moves a Motor}{section.7.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.1}{\ignorespaces The natural-language command layer: the model chooses a command, the safety validator vets it, and only the deterministic command server actuates the robot. Robot status feeds back to inform the next decision.}}{34}{figure.caption.39}\protected@file@percent }
+\newlabel{fig:aiflow}{{7.1}{34}{The natural-language command layer: the model chooses a command, the safety validator vets it, and only the deterministic command server actuates the robot. Robot status feeds back to inform the next decision}{figure.caption.39}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.3}The Command Vocabulary and its Server}{35}{section.7.3}\protected@file@percent }
+\newlabel{sec:ai-vocab}{{7.3}{35}{The Command Vocabulary and its Server}{section.7.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.4}The Local Language Model and Tool-Use}{35}{section.7.4}\protected@file@percent }
+\newlabel{sec:ai-llm}{{7.4}{35}{The Local Language Model and Tool-Use}{section.7.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.5}The Dispatcher and the Feedback Loop}{35}{section.7.5}\protected@file@percent }
+\newlabel{sec:ai-dispatcher}{{7.5}{35}{The Dispatcher and the Feedback Loop}{section.7.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.2}{\ignorespaces The dispatcher's bounded agentic loop: each tool result is fed back to the model, which can react and retry until it produces a final natural-language reply (subject to a turn limit).}}{36}{figure.caption.40}\protected@file@percent }
+\newlabel{fig:ailoop}{{7.2}{36}{The dispatcher's bounded agentic loop: each tool result is fed back to the model, which can react and retry until it produces a final natural-language reply (subject to a turn limit)}{figure.caption.40}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.6}The Safety Validator}{36}{section.7.6}\protected@file@percent }
+\newlabel{sec:ai-safety}{{7.6}{36}{The Safety Validator}{section.7.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.7}The Web Interface}{36}{section.7.7}\protected@file@percent }
+\newlabel{sec:ai-webui}{{7.7}{36}{The Web Interface}{section.7.7}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.3}{\ignorespaces The Abbes web control panel: a dependency-free browser interface that drives the natural-language command layer.}}{37}{figure.caption.41}\protected@file@percent }
+\newlabel{fig:webui}{{7.3}{37}{The Abbes web control panel: a dependency-free browser interface that drives the natural-language command layer}{figure.caption.41}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.8}End-to-End Behaviour}{37}{section.7.8}\protected@file@percent }
+\newlabel{sec:ai-e2e}{{7.8}{37}{End-to-End Behaviour}{section.7.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.9}Conclusion}{37}{section.7.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {8}Simulation, Testing and Validation}{39}{chapter.8}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:validation}{{8}{39}{Simulation, Testing and Validation}{chapter.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {8.1}Introduction}{39}{section.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8.2}Simulation Environment and Method}{39}{section.8.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8.3}Standing Stability}{39}{section.8.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8.4}Balance Validation}{39}{section.8.4}\protected@file@percent }
+\newlabel{sec:val-balance}{{8.4}{39}{Balance Validation}{section.8.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8.1}{\ignorespaces The robot standing in the Gazebo simulation, used as the baseline for the balance and gait tests.}}{40}{figure.caption.42}\protected@file@percent }
+\newlabel{fig:val-stand}{{8.1}{40}{The robot standing in the Gazebo simulation, used as the baseline for the balance and gait tests}{figure.caption.42}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {8.5}Gait Validation}{40}{section.8.5}\protected@file@percent }
+\newlabel{sec:val-gait}{{8.5}{40}{Gait Validation}{section.8.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {8.6}Command-Layer Validation}{41}{section.8.6}\protected@file@percent }
+\newlabel{sec:val-ai}{{8.6}{41}{Command-Layer Validation}{section.8.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {8.7}Results Summary}{41}{section.8.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8.8}Conclusion}{41}{section.8.8}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {8.1}{\ignorespaces Summary of validation results.}}{42}{table.caption.43}\protected@file@percent }
+\newlabel{tab:results}{{8.1}{42}{Summary of validation results}{table.caption.43}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {9}General Conclusion and Perspectives}{43}{chapter.9}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:conclusion}{{9}{43}{General Conclusion and Perspectives}{chapter.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {9.1}Summary of the Work}{43}{section.9.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9.2}Achievements and Limitations}{43}{section.9.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9.3}Perspectives}{44}{section.9.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9.4}Closing Remarks}{44}{section.9.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{Bibliography}{44}{section.9.4}\protected@file@percent }
+\bibcite{shahbazi2016}{1}
+\bibcite{hauser2008}{2}
+\bibcite{kajita2003}{3}
+\bibcite{sias1990}{4}
+\bibcite{kajita2006}{5}
+\bibcite{park2007}{6}
+\bibcite{katayama1985}{7}
+\gdef \@abspage@last{54}

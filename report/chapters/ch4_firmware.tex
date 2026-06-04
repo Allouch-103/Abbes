@@ -9,8 +9,8 @@ The firmware is the lowest software layer of the robot: it runs directly
 on the microcontroller introduced in Chapter~\ref{chap:hardware} and
 turns the electronics into an active component of the robot's software
 system. Its responsibilities are concrete: receive the eighteen target
-joint angles, drive the servos smoothly through the two PCA9685 boards,
-read the MPU6050 inertial sensor, and make all of this available to the
+joint angles, drive the actuated servos smoothly through the PCA9685
+board, read the MPU6050 inertial sensor, and make all of this available to the
 rest of the system. This chapter first justifies the choice of the ESP32,
 then explains how the firmware is organised, how it handles the actuators
 and sensors over the I\textsuperscript{2}C bus, and finally how it joins
@@ -85,7 +85,7 @@ position before any command is accepted.
     \node[mod, right=12mm of sub] (servo) {Servo loop\\100\,Hz};
     \node[mod, below=12mm of sub] (imudrv) {IMU driver\\(I\textsuperscript{2}C)};
     \node[mod, right=12mm of imudrv] (imutim) {IMU loop\\50\,Hz};
-    \node[hw, right=14mm of servo] (pca) {2$\times$PCA9685\\$\rightarrow$ 18 servos};
+    \node[hw, right=14mm of servo] (pca) {PCA9685\\$\rightarrow$ 16 servos};
     \node[hw, right=14mm of imutim] (imu) {MPU6050};
 
     \begin{scope}[on background layer]
@@ -110,19 +110,49 @@ position before any command is accepted.
   \label{fig:fwflow}
 \end{figure}
 
+The on-board electronics that implement this architecture are shown in
+Figure~\ref{fig:onboard}: the ESP32 controller with its servo-driver
+board and wiring harness, and the DC-DC regulators that power the
+actuators.
+
+\begin{figure}[ht]
+  \centering
+  \begin{subfigure}{0.52\textwidth}
+    \centering
+    \includegraphics[height=5.5cm]{bor1.jpeg}
+    \caption{ESP32 controller and PWM servo driver}
+    \label{fig:onboard-esp}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.40\textwidth}
+    \centering
+    \includegraphics[height=5.5cm]{bor2.jpeg}
+    \caption{DC-DC power regulators}
+    \label{fig:onboard-pwr}
+  \end{subfigure}
+  \caption{On-board electronics of Abbes: (a) the ESP32 with the PCA9685
+           servo driver and the servo wiring harness, and (b) the DC-DC
+           regulators supplying the actuators.}
+  \label{fig:onboard}
+\end{figure}
+
 \section{Actuators and Sensors over I\texorpdfstring{\textsuperscript{2}}{2}C}
 \label{sec:fw-io}
 The PWM driver boards and the inertial sensor all share a single
 \textbf{I\textsuperscript{2}C} bus, a two-wire serial bus on which each
-device has its own address. This is what allows three peripherals --- the
-two PCA9685 boards (at addresses 0x40 and 0x41) and the MPU6050 --- to be
-controlled through only two microcontroller pins.
+device has its own address. This is what allows the peripherals --- the
+PCA9685 PWM driver (at address 0x40) and the MPU6050 --- to be controlled
+through only two microcontroller pins.
 
 \paragraph{Actuators.}
 A joint angle cannot be sent to a servo directly; it must be expressed as
 the width of a PWM pulse. The firmware converts each angle in degrees to
 the corresponding pulse width for the MG996R servos and sends it to the
-appropriate PCA9685 channel. Two safeguards are applied in the process.
+appropriate PCA9685 channel. Of the eighteen joints in the command
+vector, sixteen are wired to the board's channels (the ten leg joints and
+the six arm joints); the two head joints are still accepted in the
+command but have no servo in the current build and are simply skipped.
+Two safeguards are applied in the process.
 First, every command is \emph{clamped} to the individual angular limits
 of the joint (Table~\ref{tab:joints}) before it reaches a servo, so an
 out-of-range request can never force a joint past its mechanical limit.

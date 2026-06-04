@@ -1,6 +1,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
 #include <std_msgs/msg/float64_multi_array.hpp>
+#include <array>
+#include <algorithm>
 #include <cmath>
 
 class JointBridge : public rclcpp::Node
@@ -8,6 +10,14 @@ class JointBridge : public rclcpp::Node
 public:
   JointBridge() : Node("joint_bridge")
   {
+    // SLEW-RATE LIMIT: the sim's forward_command_controller snaps joints to the
+    // commanded angle INSTANTLY (no velocity limit), so a stepping command yanks
+    // the legs at huge angular acceleration → big reaction torques that yaw/tip
+    // the torso. Real servos (MG996R) move at a finite speed (~0.15 s/60° ≈
+    // 7 rad/s no-load, slower loaded). Capping the per-cycle change here makes
+    // the sim joints ease like the real hardware → far gentler reaction torques.
+    // Tune live: ros2 param set /joint_bridge max_joint_speed <rad/s>.
+    max_speed_ = declare_parameter<double>("max_joint_speed", 5.0);   // rad/s
     // Controller command publishers must be RELIABLE: ros2_control's
     // forward_command_controller subscribes its ~/commands topic with the
     // default (reliable) QoS, so a best_effort publisher would NOT match and

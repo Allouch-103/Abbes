@@ -1,0 +1,233 @@
+%=====================================================================
+%  Chapter 7 — The AI / Natural-Language Command Layer
+%=====================================================================
+\chapter{The Natural-Language Command Layer}
+\label{chap:ai}
+
+\section{Introduction}
+The chapters so far built a robot that can be commanded through ROS\,2
+actions and services. This final implementation chapter adds the highest
+layer of the system: an interface that lets a person control the robot in
+ordinary language --- ``wave your right hand'', ``take a few steps back'',
+``stop!'' --- and have it act. The layer is built around a locally hosted
+Large Language Model (LLM) and is the principal artificial-intelligence
+contribution of the project. This chapter explains its guiding design
+principle, then walks up the stack: the command vocabulary and its
+server, the local LLM and tool-use, the dispatcher and its feedback loop,
+the safety validator, and finally the web interface.
+
+\section{Design Principle: the LLM Never Moves a Motor}
+\label{sec:ai-principle}
+The central design decision is a strict separation of concerns: the
+language model is allowed to \emph{understand} and to \emph{choose}, but
+never to \emph{actuate}. It does not generate joint angles or trajectories
+of any kind. Instead it is given a fixed menu of high-level commands and
+may only \emph{name} one of them and \emph{fill in its arguments}; a
+separate, deterministic component is the only thing that turns a name into
+a real robot motion. This keeps the unpredictable, generative part of the
+system firmly outside the control loop: whatever the model produces, the
+robot can only ever execute one of a small set of vetted, bounded motions.
+Figure~\ref{fig:aiflow} shows the resulting flow, from the user down to
+the robot.
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[
+      font=\footnotesize, >=Latex, node distance=8mm and 10mm,
+      b/.style={draw, rounded corners=2pt, align=center, thick,
+                minimum height=9mm, text width=23mm},
+    ]
+    \node[b, fill=blue!8] (user) {User\\(web UI / voice)};
+    \node[b, fill=orange!12, right=of user] (disp) {LLM dispatcher\\(Ollama tool-use)};
+    \node[b, fill=red!8, right=of disp] (saf) {Safety\\validator};
+    \node[b, fill=green!10, right=of saf] (srv) {Command server\\(actions / services)};
+    \node[b, fill=gray!12, right=of srv] (rob) {Robot / sim};
+
+    \draw[->] (user) -- node[above,font=\tiny]{text} (disp);
+    \draw[->] (disp) -- node[above,font=\tiny]{tool+args} (saf);
+    \draw[->] (saf) -- node[above,font=\tiny]{allowed} (srv);
+    \draw[->] (srv) -- (rob);
+    \draw[->] (rob.south) |- ($(disp.south)+(0,-7mm)$)
+              -| node[pos=0.25,below,font=\tiny]{status / tilt} (disp.south);
+  \end{tikzpicture}
+  \caption{The natural-language command layer: the model chooses a command,
+           the safety validator vets it, and only the deterministic command
+           server actuates the robot. Robot status feeds back to inform the
+           next decision.}
+  \label{fig:aiflow}
+\end{figure}
+
+\section{The Command Vocabulary and its Server}
+\label{sec:ai-vocab}
+The robot exposes a fixed vocabulary of seven high-level commands:
+\texttt{walk}, \texttt{stand\_still}, \texttt{sit\_down},
+\texttt{wave\_hand}, \texttt{bow}, \texttt{stop} and \texttt{get\_status}.
+These are hosted by a single \emph{command server} node as five ROS\,2
+\textbf{actions} for the goal-driven motions (walking, standing, sitting,
+waving, bowing) and two \textbf{services} for the instantaneous operations
+(the emergency stop and the status query), using the interfaces defined in
+\texttt{humanoid\_msgs} (Chapter~\ref{chap:software}). The server is the
+authoritative gatekeeper of motion: it validates each goal's arguments
+(for example, a walk distance between 0.1 and 3.0~m), enforces mutual
+exclusion so that only one motion runs at a time, and checks for
+cancellation every control cycle so that a stop takes effect within a
+single tick. Each motion is played as a trajectory that always starts from
+the robot's last commanded pose, so commands chain smoothly without
+snapping. Internally, the server turns each command into the joint
+trajectories of Chapter~\ref{chap:kinematics} and publishes them on the
+controller topics of Chapter~\ref{chap:software}.
+
+Crucially, this same vocabulary is described once more as a set of
+\emph{tool schemas} --- one entry per command, listing its name, a
+plain-language description, and its typed arguments --- which is exactly
+the menu handed to the language model. Because the schemas and the server
+share one source of truth, what the model is allowed to ask for can never
+drift from what the robot can actually do.
+
+\section{The Local Language Model and Tool-Use}
+\label{sec:ai-llm}
+The language understanding is performed by a Large Language Model run
+\emph{locally} through Ollama --- the \texttt{llama3.2:3b} model, chosen to
+fit within the 4\,GB of the machine's GPU. Running locally rather than
+through a cloud service means the system has no external dependency, no
+per-request cost, and keeps all interaction private and offline, which
+suits an embedded robotics project.
+
+The mechanism that connects the model to the robot is \textbf{tool-use}
+(also called function-calling). Rather than asking the model to produce
+free-form text and then trying to parse intentions out of it, the model is
+given the vocabulary's tool schemas and is instructed, whenever the user
+asks for something physical, to respond by \emph{calling} the single tool
+that best fits and supplying its arguments as structured data. A short
+system prompt fixes the model's behaviour: it adopts the identity of
+``Abbes'', it must call a tool for any physical request and only chat
+otherwise, it must never invent tools or arguments, and its reply to the
+user is always one short, friendly, plain-language sentence with none of
+the underlying machinery exposed. The model thus acts purely as a
+\emph{translator} from fuzzy human language to a precise, bounded command
+--- the role that language models are genuinely good at, and nothing more.
+
+\section{The Dispatcher and the Feedback Loop}
+\label{sec:ai-dispatcher}
+The \emph{dispatcher} is the deterministic component that mediates between
+the model and the robot. It mirrors the command server with the matching
+set of action and service clients, and exposes a single uniform entry
+point that takes a tool name and arguments, runs the corresponding command
+to completion, and returns a uniform result (success or failure, with a
+message).
+
+Rather than a single question-and-answer exchange, the dispatcher runs a
+bounded \emph{agentic loop} (Figure~\ref{fig:ailoop}). It sends the user's
+message to the model; if the model calls a tool, the dispatcher executes it
+on the robot and feeds the \emph{result} back into the conversation as a
+tool message; the model is then queried again, and the cycle repeats until
+the model stops calling tools and writes its final reply, or a fixed turn
+limit is reached. The value of feeding results back is that the model can
+\emph{react} to what actually happened: if a command is refused or fails,
+the model sees the real reason and can recover --- for instance steadying
+the robot and retrying --- rather than blindly narrating success. The
+system prompt explicitly instructs the model to use these results to
+recover before giving up.
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[
+      font=\footnotesize, >=Latex, node distance=10mm and 14mm,
+      b/.style={draw, rounded corners=2pt, align=center, thick,
+                minimum height=8mm, text width=24mm},
+      d/.style={draw, diamond, aspect=2, align=center, thick,
+                fill=yellow!15, inner sep=1pt, text width=16mm},
+    ]
+    \node[b, fill=blue!8] (user) {User message};
+    \node[b, fill=orange!12, right=of user] (llm) {LLM (Ollama)};
+    \node[d, right=of llm] (q) {tool call?};
+    \node[b, fill=green!10, below=12mm of q] (exec) {Validate \& execute on robot};
+    \node[b, fill=gray!12, right=of q] (reply) {Final reply to user};
+
+    \draw[->] (user) -- (llm);
+    \draw[->] (llm) -- (q);
+    \draw[->] (q) -- node[right,font=\tiny]{yes} (exec);
+    \draw[->] (q) -- node[above,font=\tiny]{no} (reply);
+    \draw[->] (exec) -| node[pos=0.25,below,font=\tiny]{result fed back (role: tool)} (llm.south);
+  \end{tikzpicture}
+  \caption{The dispatcher's bounded agentic loop: each tool result is fed
+           back to the model, which can react and retry until it produces a
+           final natural-language reply (subject to a turn limit).}
+  \label{fig:ailoop}
+\end{figure}
+
+\section{The Safety Validator}
+\label{sec:ai-safety}
+Between the model's choice and its execution sits a \textbf{safety
+validator} --- a thin policy gate consulted after a tool is chosen but
+before it is run. If the gate denies a command, that command never becomes
+a robot goal; instead the reason is fed back to the model so the robot can
+\emph{explain} its refusal rather than silently doing nothing. The
+validator deliberately does not duplicate the command server's per-goal
+argument checks; it adds two rules that depend on physical state and on
+history rather than on a single message:
+\begin{itemize}[itemsep=2pt,topsep=4pt]
+  \item a \textbf{tilt gate} that refuses to start \texttt{walk} when the
+        robot is already tilted beyond a safe limit, reading the live tilt
+        through the status query;
+  \item a \textbf{rate limit} that refuses a new motion if one was allowed
+        too recently, so a chatty model cannot fire a burst of rapid
+        motions.
+\end{itemize}
+Two invariants keep the gate safe by construction: \texttt{stop} and
+\texttt{get\_status} are never blocked --- the emergency brake must always
+fire and a read can never be unsafe --- and the gate fails \emph{open} when
+no inertial data is available, matching the command server's own
+non-blocking stance. Because it is pure policy with no robot dependencies,
+the validator can be unit-tested in isolation.
+
+\section{The Web Interface}
+\label{sec:ai-webui}
+The whole layer is made usable through a browser-based control panel
+(Figure~\ref{fig:webui}). It is served by a deliberately minimal,
+dependency-free web server built on the Python standard library --- no web
+framework was installed, and the root partition is tight --- which embeds
+the dispatcher in-process and exposes a small set of endpoints: one to
+serve the page, one to submit a command, one to poll the robot's status,
+and one for the emergency stop. The page is branded around the robot's
+identity, ``Abbes'', and presents an animated avatar, a live status
+dashboard with a tilt indicator, clickable cards for the seven commands,
+and a chat area for free-form requests.
+
+A subtle but important design point concerns concurrency. A motion command
+blocks while it runs, yet the status poll and the red \textbf{stop} button
+must keep working \emph{during} a motion. The stop and status path is
+therefore given its own independent ROS\,2 context, separate from the
+dispatcher's, so that the emergency stop is a genuine interrupt rather than
+something queued behind the running command.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth]{fig7.3.png}
+  \caption{The Abbes web control panel: a dependency-free browser interface
+           that drives the natural-language command layer.}
+  \label{fig:webui}
+\end{figure}
+
+\section{End-to-End Behaviour}
+\label{sec:ai-e2e}
+Putting the pieces together, a single request flows as follows. The user
+types a sentence; the dispatcher sends it to the local model with the tool
+menu; the model replies by calling one tool with its arguments; the safety
+validator vets that choice against the robot's tilt and the recent command
+history; if allowed, the command server plays the corresponding motion to
+completion; the result is fed back to the model, which produces a short
+spoken-style confirmation. The same path handles refusals and recovery,
+and the emergency stop can interrupt any motion in progress.
+
+\section{Conclusion}
+This chapter presented the natural-language command layer, the project's
+main artificial-intelligence contribution. Its design keeps the language
+model strictly outside the control loop: the model only translates human
+language into one of seven vetted commands, a safety validator vets that
+choice, and a deterministic command server is the only component that
+actuates the robot. A local LLM, an agentic feedback loop, a safety gate
+and a dependency-free web interface together let a person operate the robot
+conversationally while preserving the safety and determinism that a robot
+demands. The next chapter evaluates the complete system --- motion, balance
+and this command layer --- through simulation and testing.

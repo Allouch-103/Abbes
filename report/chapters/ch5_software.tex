@@ -1,0 +1,284 @@
+%=====================================================================
+%  Chapter 5 — Software Architecture and ROS 2 Integration
+%=====================================================================
+\chapter{Software Architecture and ROS\,2 Integration}
+\label{chap:software}
+
+\section{Introduction}
+The previous chapters described the physical robot and the firmware that
+animates it. This chapter presents the software that orchestrates the
+whole system on the host computer. Because this project is carried out
+within a software-engineering curriculum, this is the central chapter of
+the report: it explains what ROS\,2 is and why it was adopted, how the
+code is organised into packages, how the robot is modelled and
+controlled through \texttt{ros2\_control}, how it is simulated in Gazebo,
+and how all the pieces connect into a single, coherent system that drives
+both the simulation and the real robot.
+
+\section{What ROS\,2 Is, and Why It Is Used Here}
+\label{sec:why-ros2}
+Despite its name, ROS\,2 (Robot Operating System~2) is not an operating
+system but a \emph{middleware} and a set of conventions for building robot
+software as a distributed system. Rather than one large program, an
+application is structured as a graph of small, independent processes
+called \textbf{nodes}, each responsible for a single concern. Nodes never
+call each other directly; they communicate through named channels using
+three complementary patterns:
+
+\begin{itemize}[itemsep=2pt,topsep=4pt]
+  \item \textbf{Topics} --- anonymous publish/subscribe streams, used for
+        continuous data such as the inertial measurements or the joint
+        states;
+  \item \textbf{Services} --- synchronous request/response calls, used for
+        short queries such as asking the robot for its status;
+  \item \textbf{Actions} --- long-running, cancellable goals that provide
+        progress feedback, used for goal-driven motions such as walking or
+        bowing.
+\end{itemize}
+
+Underneath, ROS\,2 relies on the DDS standard for decentralised discovery
+and for configurable quality-of-service, so nodes find one another
+automatically and can tune reliability per channel. The source code is
+organised into \textbf{packages} gathered in a \textbf{workspace} and
+built with the \texttt{colcon} tool.
+
+This model is precisely what makes ROS\,2 the right foundation for Abbes.
+First, it imposes a clean \emph{modular} architecture: inverse
+kinematics, balance, gait generation, inertial filtering and the
+high-level command interface each live in their own node and can be
+developed, tested and replaced in isolation. Second, the standardised
+message types and the rich tooling (live topic inspection, graph
+visualisation, recording and replay, the RViz 3-D viewer) make the system
+observable, which is invaluable when debugging a robot. Third, and most
+importantly for this project, the \emph{same} interfaces drive both the
+Gazebo simulation and the physical robot: an algorithm validated against
+the digital twin can be deployed on hardware without rewriting it. Fourth,
+\texttt{ros2\_control} provides a standard hardware-abstraction layer
+(Section~\ref{sec:ros2control}), and micro-ROS (Chapter~\ref{chap:firmware})
+extends the very same graph down to the microcontroller. A monolithic
+control program would offer none of this: it would be hard to test in
+parts, opaque at runtime, and impossible to retarget from simulation to
+hardware without major rewrites.
+
+\section{Workspace and Package Architecture}
+\label{sec:packages}
+The software is organised as a ROS\,2 workspace whose responsibilities are
+split across five packages, each with a clear role:
+
+\begin{itemize}[itemsep=3pt,topsep=4pt]
+  \item \texttt{my\_robot\_description} --- the \emph{model} layer. A purely
+        static package describing the robot's physical reality (kinematic
+        chain, joint axes and limits, link masses, collision geometry,
+        visual meshes) in URDF/Xacro. Every other package depends on it.
+  \item \texttt{my\_robot\_bringup} --- the \emph{launch} layer. It contains
+        no algorithm; its role is orchestration: load the model, start the
+        Gazebo simulation, configure the controllers, and bridge the
+        simulator to ROS\,2.
+  \item \texttt{humanoid\_robot} --- the \emph{algorithm} layer. The nodes
+        that actually compute: inertial filtering, balance control, inverse
+        kinematics, and the walking-pattern generator
+        (Chapter~\ref{chap:kinematics}).
+  \item \texttt{humanoid\_msgs} --- the \emph{interface} layer. The action
+        and service definitions (\texttt{Walk}, \texttt{StandStill},
+        \texttt{SitDown}, \texttt{WaveHand}, \texttt{Bow}, \texttt{Stop},
+        \texttt{GetStatus}) shared across the system, so that interfaces are
+        never re-defined ad hoc.
+  \item \texttt{humanoid\_command\_api} --- the \emph{high-level} layer that
+        exposes the robot's command vocabulary and hosts the
+        natural-language interface (Chapter~\ref{chap:ai}).
+\end{itemize}
+
+This separation mirrors the standard ROS\,2 practice of decoupling the
+description, the bring-up, the algorithms and the interfaces, so that a
+change in one (for example, a new gait algorithm) does not ripple through
+the others.
+
+\section{The Robot Model}
+\label{sec:model}
+The \texttt{my\_robot\_description} package is the single source of truth
+for the robot's geometry. The model is written in Xacro --- a macro
+language that expands to URDF --- and was exported from the Onshape CAD
+assembly, so that the simulated kinematics match the manufactured parts.
+It declares the kinematic chain of revolute joints (the eighteen actuated
+degrees of freedom plus fixed joints for the structural links), each with
+its axis, parent and child links, angular limits, and the inertial and
+collision properties needed for a faithful physics simulation. A
+companion file defines the visual materials, and an RViz configuration
+provides a consistent debugging view. Because every other package depends
+on this model, a single joint-name change here must propagate everywhere
+--- a constraint revisited in Section~\ref{sec:conventions}.
+
+Crucially, the model also embeds a \texttt{ros2\_control} block declaring,
+for each joint, a position \emph{command interface} and position and
+velocity \emph{state interfaces}. This block is what connects the abstract
+robot description to the control framework described next.
+
+\section{Motion Control with \texttt{ros2\_control}}
+\label{sec:ros2control}
+Joint motion is handled by \texttt{ros2\_control}, the standard ROS\,2
+control framework, rather than by ad-hoc code. Its central component is
+the \textbf{controller manager}, a single node that hosts all the
+controllers and owns a \textbf{resource manager}. The resource manager
+holds, for every joint, a \emph{command interface} (a value to be written,
+here a target position) and \emph{state interfaces} (values that can be
+read, here position and velocity). Controllers do not touch the hardware
+directly; they \emph{claim} the interfaces they need from the resource
+manager, which guarantees that no two controllers fight over the same
+joint (Figure~\ref{fig:ros2control}).
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.92\textwidth]{arch_ros2control.pdf}
+  \caption{Internals of the \texttt{ros2\_control} controller manager: the
+           resource manager owns the command and state interfaces; each
+           controller claims the interfaces for its joints, and the whole
+           loop runs at 100~Hz.}
+  \label{fig:ros2control}
+\end{figure}
+
+For Abbes, the joints are grouped into three controllers, configured in
+\texttt{controllers.yaml} and all of the \emph{forward command} type
+(they forward a commanded position to the position interface):
+\begin{itemize}[itemsep=2pt,topsep=4pt]
+  \item \texttt{leg\_controller} --- the ten leg joints;
+  \item \texttt{arm\_controller} --- the six arm joints;
+  \item \texttt{head\_controller} --- the two head joints.
+\end{itemize}
+A fourth controller, the \texttt{joint\_state\_broadcaster}, is read-only:
+it reads every joint's state interfaces and publishes them on
+\texttt{/joint\_states}. The whole loop runs at 100~Hz: on each cycle the
+hardware interface refreshes the state interfaces, the broadcaster
+publishes the joint states, each controller reads its command topic and
+writes the command interfaces, and the hardware interface applies them.
+
+Controllers are not all active at start-up; they follow a lifecycle
+(Figure~\ref{fig:ctrllifecycle}). A \emph{spawner} loads each controller
+from its configuration, asks the resource manager to grant the interfaces
+it requires, and then activates it, at which point the controller begins
+listening on its command topic and participates in the update loop.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.92\textwidth]{arch_ctrl_lifecycle.pdf}
+  \caption{Controller lifecycle (unloaded $\rightarrow$ configured
+           $\rightarrow$ active) and the steps a spawner performs to bring
+           a controller online.}
+  \label{fig:ctrllifecycle}
+\end{figure}
+
+\section{Simulation with Gazebo}
+\label{sec:gazebo}
+Before any motion is attempted on the physical robot, it is validated on a
+\emph{digital twin} in Gazebo Harmonic, whose DART physics engine
+simulates gravity, contacts and joint dynamics. The link between Gazebo
+and \texttt{ros2\_control} is made by the \texttt{gz\_ros2\_control}
+plugin: the URDF declares the plugin and a \texttt{GazeboSimSystem}
+hardware interface, so that the simulated joints expose exactly the same
+command and state interfaces as a real robot would
+(Figure~\ref{fig:gzros2control}). As a result, the controllers described
+above are completely unaware of whether they are driving the simulator or
+hardware --- which is the foundation of the sim-to-real strategy.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.6\textwidth]{arch_gz_ros2control.pdf}
+  \caption{Integration of Gazebo and \texttt{ros2\_control}: the
+           \texttt{gz\_ros2\_control} plugin connects the simulated joints
+           to the same interfaces used on hardware, while
+           \texttt{ros\_gz\_bridge} relays sensor topics into ROS\,2.}
+  \label{fig:gzros2control}
+\end{figure}
+
+Internally, Gazebo represents the world as an entity-component system, and
+the \texttt{gz\_ros2\_control} plugin runs as part of the simulation loop:
+at start-up it parses the \texttt{ros2\_control} block of the URDF and
+binds each declared joint to its simulated entity; on every simulation
+step it reads the joint states into the state interfaces, lets the
+controllers run, and writes the resulting commands back to the simulated
+joints (Figure~\ref{fig:gzplugin}). The inertial sensor defined on the
+torso is exported to ROS\,2 by the \texttt{ros\_gz\_bridge} as the
+\texttt{/imu} topic, mirroring the topic the firmware publishes on the
+real robot.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.92\textwidth]{arch_gz_plugin.pdf}
+  \caption{How the \texttt{gz\_ros2\_control} plugin operates inside the
+           Gazebo process: it binds the declared joints to simulation
+           entities and exchanges state and commands on every step.}
+  \label{fig:gzplugin}
+\end{figure}
+
+The \texttt{my\_robot\_bringup} package ties this together in a single
+launch sequence: it publishes the robot description (expanding the Xacro),
+starts Gazebo with an empty world, spawns the robot from its description,
+starts the \texttt{ros\_gz\_bridge} for the clock and IMU, and finally
+spawns the four controllers in order.
+
+\section{The Node and Topic Graph}
+\label{sec:graph}
+Putting the pieces together yields the system graph of
+Figure~\ref{fig:nodegraph}. At the top, the algorithm nodes of the
+planning layer (inverse kinematics, balance, and the gait generator of
+Chapter~\ref{chap:kinematics}) publish target joint positions, in radians,
+onto the three controller command topics. The controller manager applies
+them through the controllers described above. From there, the graph splits
+into two paths that share the same upstream:
+
+\begin{itemize}[itemsep=2pt,topsep=4pt]
+  \item the \textbf{simulation path}, where the \texttt{gz\_ros2\_control}
+        plugin drives the joints inside Gazebo's DART physics and the
+        simulated IMU is bridged back to \texttt{/imu};
+  \item the \textbf{real-robot path}, where the commands are forwarded to
+        the ESP32 over micro-ROS and the MPU6050 publishes \texttt{/imu}.
+\end{itemize}
+
+Both paths converge on the same downstream topics --- \texttt{/imu},
+\texttt{/joint\_states} and the transform tree \texttt{/tf} --- which the
+algorithm nodes consume, closing the loop. Because the real robot listens
+on a single command topic in servo degrees while the controllers publish
+three topics in radians, a dedicated bridge node converts and re-groups
+the commands for the firmware; this sim-to-real bridge is what allows the
+poses validated in simulation to be replayed on the physical robot.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth]{arch_node_graph.pdf}
+  \caption{The complete node and topic graph: the planning layer feeds the
+           controller manager, which drives either the Gazebo simulation
+           path or the real-robot (ESP32) path; both share the downstream
+           sensor and state topics.}
+  \label{fig:nodegraph}
+\end{figure}
+
+\section{Cross-Cutting Conventions}
+\label{sec:conventions}
+A consistent system depends on a few conventions enforced across all
+packages:
+\begin{itemize}[itemsep=2pt,topsep=4pt]
+  \item \textbf{Units.} The entire ROS\,2 side works in \emph{radians},
+        following the URDF zero convention; the conversion to servo degrees
+        happens only at the firmware/bridge boundary
+        (Chapter~\ref{chap:firmware}), never inside the ROS\,2 nodes.
+  \item \textbf{Joint ordering.} The order of the joints must match
+        \texttt{controllers.yaml} exactly; a single mismatch would silently
+        send a command to the wrong joint.
+  \item \textbf{Interfaces.} All message, service and action types live in
+        \texttt{humanoid\_msgs}, never defined ad hoc in an implementation
+        package.
+  \item \textbf{Actions vs. topics.} Goal-driven motions use action servers
+        (cancellable, with feedback); streaming data such as the IMU and
+        joint states use topics.
+\end{itemize}
+
+\section{Conclusion}
+This chapter presented the software architecture of Abbes: a modular
+ROS\,2 system split into description, bring-up, algorithm, interface and
+command packages; a robot model that feeds \texttt{ros2\_control}; a Gazebo
+digital twin that exposes the very same interfaces as the hardware; and a
+node graph whose simulation and real-robot paths share a common upstream
+and a common set of sensor topics. This architecture is what makes the
+project tractable as software --- observable, modular, and portable from
+simulation to hardware. The next chapter looks inside the algorithm layer,
+at the kinematics and gait-planning that compute the joint targets flowing
+through this graph.

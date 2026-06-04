@@ -1,0 +1,87 @@
+%=====================================================================
+%  Chapter 9 — General Conclusion and Perspectives
+%=====================================================================
+\chapter{General Conclusion and Perspectives}
+\label{chap:conclusion}
+
+\section{Summary of the Work}
+This project set out to design and build, from scratch, a child-sized
+18-DOF humanoid robot, \textbf{Abbes}, and --- with a software-engineering
+emphasis --- to develop the complete software that makes it stand, balance,
+move and respond to commands. The work spanned the entire stack. The
+\emph{mechanical} design derived a human-like, eighteen-degree-of-freedom
+morphology from anthropometric data and realised it in 3D-printed parts.
+The \emph{electronics} were organised around an ESP32 microcontroller, a
+PCA9685 PWM driver and an MPU6050 inertial sensor. The \emph{firmware}
+turned that microcontroller into a real-time, self-reconnecting micro-ROS
+node, making the on-robot controller a first-class participant in the
+ROS\,2 graph. On top of it, a modular \emph{ROS\,2 software architecture}
+separated the robot model, the simulation bring-up, the algorithms and the
+interfaces into independent packages, and used \texttt{ros2\_control} and a
+Gazebo digital twin so that the same code drives simulation and hardware.
+The \emph{algorithm} layer contributed a deterministic closed-form leg
+inverse kinematics, a complementary inertial filter, an LQR balance
+controller and a ZMP preview-control gait pipeline. Finally, the
+\emph{artificial-intelligence} layer --- the project's principal
+contribution --- added a natural-language command interface built on a
+locally hosted language model, in which the model only ever selects from a
+fixed, safety-checked vocabulary and a deterministic server performs the
+actual motion.
+
+\section{Achievements and Limitations}
+The system works as an integrated whole. The robot stands stably, holds a
+demanding crouch under active balance, and marches in place through the ZMP
+gait pipeline in simulation. The command layer operates end-to-end through
+a local model: spoken-style requests are correctly grounded into robot
+actions, an emergency stop interrupts any motion, and a safety validator
+gates unsafe or too-frequent commands. From a software-engineering
+standpoint, the most valuable outcomes are the architecture itself --- a
+modular, observable, sim-to-real ROS\,2 system --- and the demonstration
+that a small, local language model can safely drive a real robot when it is
+constrained to a vetted command vocabulary.
+
+The project also has clear, honestly acknowledged limitations. Robust
+dynamic forward walking was not achieved: on the stiff, position-controlled
+hobby servos, lateral balance during single support is only marginally
+stable, which is a method-level limitation rather than a tuning one. The
+current prototype is a single-board build that actuates sixteen of the
+eighteen joints, leaving the head unactuated, and it is powered from an
+off-board source. The language understanding relies on a three-billion-
+parameter model that occasionally mis-formats a command, a known limit of
+models at that scale.
+
+\section{Perspectives}
+Several directions follow naturally from this work:
+
+\begin{itemize}[itemsep=3pt,topsep=4pt]
+  \item \textbf{Robust walking.} The clearest next step is to close the
+        walking gap with a method suited to the hardware: full
+        capture-point footstep control, or a reinforcement-learning policy
+        trained in simulation and transferred to the robot, which is the
+        most promising route for stiff-servo dynamic walking.
+  \item \textbf{Voice input.} Adding speech-to-text (for example with a
+        Whisper model) in front of the command layer would let the robot be
+        controlled entirely hands-free, extending the natural-language
+        interface to spoken commands.
+  \item \textbf{Graphical path planning.} A graphical interface for picking
+        a target or a path on a map would complement the conversational
+        interface with direct spatial commands.
+  \item \textbf{Hardware completion.} A battery-powered version, the
+        re-actuation of the head joints, calibration of the sim-to-real
+        bridge on the physical servos, and a move to torque-capable
+        actuators would together carry the validated simulation behaviour
+        onto robust hardware.
+  \item \textbf{Stronger language model.} Swapping in a small model with
+        better function-calling would reduce the occasional command
+        mis-formatting without leaving the local, no-cloud setting.
+\end{itemize}
+
+\section{Closing Remarks}
+Beyond the robot itself, the lasting result of this project is a coherent
+software platform: a humanoid whose every layer, from the microcontroller
+firmware to the language interface, communicates through one consistent
+middleware, and whose behaviour can be developed and validated in
+simulation before reaching hardware. That platform is what makes the
+remaining challenge --- robust locomotion --- an incremental next step rather
+than a new beginning, and it embodies the software-engineering approach
+that this project set out to apply to robotics.

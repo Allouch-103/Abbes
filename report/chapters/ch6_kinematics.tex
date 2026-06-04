@@ -1,0 +1,251 @@
+%=====================================================================
+%  Chapter 6 — Kinematics and Gait Planning
+%=====================================================================
+\chapter{Kinematics and Gait Planning}
+\label{chap:kinematics}
+
+\section{Introduction}
+The software architecture of the previous chapter provides the channels
+through which joint targets reach the robot. This chapter looks inside the
+algorithm layer that \emph{computes} those targets. It presents, in turn,
+the kinematic model of the legs, the inverse kinematics that turns desired
+foot positions into joint angles, the inertial estimation and balance
+control that keep the robot upright, and finally the Zero-Moment-Point
+preview-control pipeline that generates a walking motion. The chapter ends
+with an honest assessment of how far the resulting walk goes.
+
+\section{Leg Kinematics}
+\label{sec:fk}
+Each leg is a chain of five revolute joints: two at the hip (roll and
+pitch), one at the knee (pitch), and two at the ankle (pitch and roll).
+\emph{Forward kinematics} --- composing these joint rotations along the
+thigh and shank links --- gives the position of the foot relative to the
+hip. For locomotion, however, the useful question is the inverse one:
+given where the foot \emph{should} be, what joint angles place it there?
+Because the leg has a simple, decoupled structure, this problem admits a
+closed-form solution that separates cleanly into the sagittal plane
+(forward/backward motion, Figure~\ref{fig:iksag}) and the frontal plane
+(lateral motion, Figure~\ref{fig:ikfront}).
+
+\begin{figure}[ht]
+  \centering
+  \begin{subfigure}{0.52\textwidth}
+    \centering
+    \includegraphics[height=6.2cm]{fig_ik_sagittal.png}
+    \caption{Sagittal plane}
+    \label{fig:iksag}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.38\textwidth}
+    \centering
+    \includegraphics[height=6.2cm]{fig_ik_frontal.png}
+    \caption{Frontal plane}
+    \label{fig:ikfront}
+  \end{subfigure}
+  \caption{Geometric inverse kinematics of the leg, decomposed into the
+           sagittal plane (knee and hip/ankle pitch) and the frontal plane
+           (hip and ankle roll).}
+  \label{fig:ik}
+\end{figure}
+
+\section{Inverse Kinematics}
+\label{sec:ik}
+The robot's inverse kinematics is implemented as a \emph{closed-form},
+two-link geometric solver. An earlier version used an iterative
+damped-least-squares method, but it proved fragile: depending on its
+starting guess it could converge to either a slightly-bent or a
+near-straight leg, so the same foot target produced different poses
+between runs. The closed-form solver removes this ambiguity --- given the
+hip and foot positions it always returns the same human-like,
+knee-forward solution --- which is essential for a repeatable gait.
+
+The solver works as follows. In the frontal plane, the hip-roll angle is
+the angle between the vertical and the line from hip to foot
+($\arctan$ of the lateral over the vertical offset), and the ankle roll is
+set to its opposite so that the sole stays flat on the ground. In the
+sagittal plane, the straight-line distance from hip to foot together with
+the known thigh and shank lengths fixes the knee angle by the
+\emph{law of cosines}; the hip-pitch angle is the direction to the foot
+minus the offset of the thigh from that line; and the ankle pitch is
+chosen so that the hip, knee and ankle pitches sum to zero, again keeping
+the foot flat. Two safeguards protect the solution: the hip-to-foot
+distance is clamped just below full leg extension, and a minimum knee bend
+is enforced, both of which keep the leg away from the singular,
+fully-stretched configuration where the joint angles would be
+ill-defined. A small forward offset is finally applied to the hip target,
+because in a knee-bend the true body centre of mass sits slightly ahead of
+the hip; shifting the target back keeps the centre of mass above the feet.
+
+\section{Inertial Estimation}
+\label{sec:imu-filter}
+Balancing requires a clean estimate of how far the robot is tilted from
+vertical, but neither inertial signal gives this directly: the
+accelerometer measures the gravity direction but is corrupted by motion
+noise, while the gyroscope measures rotation rate cleanly but drifts when
+integrated over time. A \textbf{complementary filter} fuses the two by
+trusting the integrated gyroscope over the short term and gently
+correcting it toward the accelerometer estimate over the long term. With
+its coefficient set to $0.98$, the filter follows fast motions smoothly
+yet remains free of long-term drift. It consumes the raw inertial topic
+(from the simulated sensor or, on the real robot, from the ESP32) and
+publishes the filtered pitch and roll used by the balance controller.
+
+\section{Balance Control}
+\label{sec:balance}
+Standing balance is maintained by an inner feedback loop that adjusts the
+ankle joints in reaction to the measured tilt. Rather than three
+independent PID gains per axis, the controller uses a \textbf{Linear-
+Quadratic Regulator (LQR)}. The motivation is physical: the ankle couples
+the pitch and roll axes, so tuning them independently is suboptimal. The
+LQR instead treats the full state --- pitch, roll, and their rates --- and
+computes a single optimal gain matrix offline by solving the algebraic
+Riccati equation, trading off a penalty on tilt error against a penalty on
+ankle effort. At runtime the correction is a single matrix multiplication.
+Following the same linear-inverted-pendulum model used for gait
+(Section~\ref{sec:gait}), the controller takes the nominal joint angles
+produced by the kinematics, adds the computed ankle correction, and
+republishes the corrected command, leaving the rest of the system
+unchanged.
+
+\section{Gait Generation by ZMP Preview Control}
+\label{sec:gait}
+Walking is generated using the \textbf{Zero-Moment-Point preview-control}
+method of Kajita (2003)~\cite{kajita2003}, built on the Linear Inverted
+Pendulum Model (LIPM). The LIPM abstracts the whole robot as a point mass at constant
+height: under this model the ZMP --- the point introduced in
+Chapter~\ref{chap:walking} --- depends on the centre-of-mass position and
+its acceleration. The walking problem then becomes: find a centre-of-mass
+trajectory whose resulting ZMP stays inside the support foot at all times.
+Figure~\ref{fig:gaitcycle} shows the relationship between the foot
+placement, the centre-of-mass path and the ZMP across the
+single- and double-support phases.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.9\textwidth]{fig_gait_cycle.png}
+  \caption{Walking in the sagittal (a) and frontal (b) planes: the
+           centre-of-mass trajectory and the ZMP evolve across the
+           double-support (DS) and single-support (SS) phases.}
+  \label{fig:gaitcycle}
+\end{figure}
+
+The key difficulty is that the ZMP at the present instant depends on the
+\emph{future} motion of the centre of mass. The preview controller solves
+this by looking ahead~\cite{katayama1985}: it is an optimal regulator,
+derived from the same Riccati machinery as the balance controller,
+augmented with a
+\emph{preview} term that anticipates the reference ZMP over a horizon of
+about one and a half seconds. This lets the centre of mass start shifting
+toward the next footstep \emph{before} the foot is placed, exactly as a
+human leans into a step. The method has since been extended with auxiliary
+ZMP control and more general preview formulations~\cite{kajita2006,park2007}.
+
+The generation is organised as a three-stage pipeline:
+\begin{enumerate}[itemsep=2pt,topsep=4pt]
+  \item a \textbf{footstep planner} lays out a timed sequence of left/right
+        foot placements along the desired path, with shorter first steps to
+        ramp up from standing;
+  \item a \textbf{ZMP reference} stage converts those footsteps into a
+        target ZMP over time --- under the stance foot during single
+        support, interpolating between feet during double support;
+  \item the \textbf{preview controller} turns this ZMP reference into a
+        smooth centre-of-mass trajectory.
+\end{enumerate}
+In parallel, the swing foot follows a lifted trajectory between its
+successive placements (Figure~\ref{fig:wpg}). The centre-of-mass and foot
+trajectories are then handed to the inverse kinematics of
+Section~\ref{sec:ik}, which produces the joint angles, and the balance
+controller adds its ankle correction on top. To react to disturbances, the
+pipeline also closes a \emph{capture-point} loop: from the measured tilt
+and tilt rate it estimates where the robot would have to step to come to
+rest, and steers the swing foot's landing toward that point.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.7\textwidth]{fig_gait_wpg.png}
+  \caption{Swing-foot trajectory over the planned footstep sequence
+           produced by the walking-pattern generator.}
+  \label{fig:wpg}
+\end{figure}
+
+\section{The Complete Motion Pipeline}
+\label{sec:pipeline}
+Figure~\ref{fig:motionpipe} assembles these components into the full
+motion pipeline. The feed-forward gait chain (footstep planner $\to$ ZMP
+reference $\to$ preview controller) produces the centre-of-mass and foot
+trajectories; the inverse kinematics converts them to nominal joint
+angles; and the balance controller adds an ankle correction driven by the
+inertial feedback. The same inertial feedback feeds the capture-point
+adjustment, closing the loop back onto the foot placement.
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[
+      font=\footnotesize, >=Latex, node distance=6mm and 9mm,
+      ff/.style={draw, rounded corners=2pt, align=center, thick,
+                 fill=blue!7, minimum height=8mm, text width=20mm},
+      ik/.style={draw, rounded corners=2pt, align=center, thick,
+                 fill=orange!12, minimum height=8mm, text width=20mm},
+      fb/.style={draw, rounded corners=2pt, align=center, thick,
+                 fill=green!10, minimum height=8mm, text width=20mm},
+      dst/.style={draw, rounded corners=2pt, align=center, thick,
+                  fill=gray!12, minimum height=8mm, text width=18mm},
+    ]
+    \node[ff] (fp) {Footstep planner};
+    \node[ff, right=of fp] (zr) {ZMP reference};
+    \node[ff, right=of zr] (pc) {Preview controller (LIPM)};
+    \node[ik, right=of pc] (ik) {Inverse kinematics};
+    \node[ik, right=of ik] (bal) {Balance (LQR)};
+    \node[dst, right=of bal] (rob) {Robot / sim};
+
+    \node[fb, below=10mm of bal] (imu) {IMU $\to$ filter $\to$ tilt};
+
+    \draw[->] (fp) -- (zr);
+    \draw[->] (zr) -- (pc);
+    \draw[->] (pc) -- node[above,font=\tiny]{CoM} (ik);
+    \draw[->] (ik) -- node[above,font=\tiny]{$\theta$} (bal);
+    \draw[->] (bal) -- (rob);
+    % foot trajectory branch
+    \draw[->] (fp.south) |- ($(pc.south)+(0,-6mm)$) -| node[pos=0.25,below,font=\tiny]{foot traj.} (ik.south);
+    % feedback
+    \draw[->] (rob.south) |- (imu.east);
+    \draw[->] (imu) -- node[right,font=\tiny]{$\Delta\theta$ ankle} (bal);
+    \draw[->] (imu.west) -| node[pos=0.25,below,font=\tiny]{capture point} (fp.south);
+  \end{tikzpicture}
+  \caption{The complete motion pipeline: a feed-forward ZMP gait chain
+           feeds the inverse kinematics; the balance controller and the
+           capture-point adjustment close the loop with inertial feedback.}
+  \label{fig:motionpipe}
+\end{figure}
+
+\section{Results and Limitations}
+\label{sec:gait-results}
+The kinematics and standing balance work well: the closed-form inverse
+kinematics is deterministic and produces correct, repeatable leg poses,
+and with the balance controller active the robot holds a deep crouch
+stably for extended periods in simulation. The gait pipeline produces
+correct ZMP references, centre-of-mass trajectories and alternating foot
+motions, and on good runs the robot \emph{marches in place} for several
+balanced steps.
+
+Robust forward walking, however, remains the open frontier of the project.
+The fundamental limitation is that the robot is driven by stiff
+position-controlled hobby servos with no torque sensing, and the lateral
+balance during single support is only marginally stable: a small
+side-to-side oscillation tends to grow over several steps. This is a
+known, method-level limitation rather than a tuning issue --- closing it
+robustly calls for full capture-point step-adjustment feedback or a
+learned controller (reinforcement learning), which is identified as
+post-project work in Chapter~\ref{chap:conclusion}. The detailed
+experimental results are presented in Chapter~\ref{chap:validation}.
+
+\section{Conclusion}
+This chapter presented the algorithms that compute the robot's joint
+targets: a closed-form leg inverse kinematics, a complementary filter for
+inertial estimation, an LQR balance controller, and a Kajita-style ZMP
+preview-control gait pipeline closed with capture-point feedback. Together
+they let the robot stand, balance and step in simulation, with robust
+forward walking remaining the principal open challenge. The next chapter
+turns to the highest layer of the system: the artificial-intelligence
+command interface that lets a user drive these motions in natural
+language.

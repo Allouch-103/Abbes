@@ -11,8 +11,27 @@
 \contentsline {figure}{\numberline {3.1}{\ignorespaces Anthropometric model: segment lengths as a proportion of total height $H$ (Winter's model).}}{12}{figure.caption.15}%
 \contentsline {figure}{\numberline {3.2}{\ignorespaces Robot morphology: joint arrangement and reference frame (P: pitch, R: roll, Y: yaw).}}{13}{figure.caption.16}%
 \contentsline {figure}{\numberline {3.3}{\ignorespaces Mechanical design of Abbes: (a) CAD model and (b) the 3D-printed, assembled robot.}}{13}{figure.caption.18}%
-\contentsline {figure}{\numberline {3.4}{\ignorespaces Electronic architecture of Abbes: the ESP32 micro-ROS node drives 18 servos through two PCA9685 boards and reads the MPU6050, communicating with the ROS\,2 host over WiFi. Dashed red lines indicate power distribution.}}{15}{figure.caption.23}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Electronic architecture of Abbes: the ESP32 micro-ROS node drives the 16 actuated servos through a single PCA9685 board and reads the MPU6050, communicating with the ROS\,2 host over WiFi. Dashed red lines indicate power distribution.}}{15}{figure.caption.23}%
 \addvspace {10\p@ }
 \contentsline {figure}{\numberline {4.1}{\ignorespaces Firmware data paths: the command path (top) drives the servos at 100~Hz, the sensing path (bottom) publishes the IMU at 50~Hz. Both periodic loops run on the microcontroller's clock.}}{18}{figure.caption.24}%
-\contentsline {figure}{\numberline {4.2}{\ignorespaces micro-ROS bridges the microcontroller to the ROS\,2 graph: a lightweight client on the ESP32 talks to an agent on the host, which connects it to the full DDS network.}}{19}{figure.caption.27}%
-\contentsline {figure}{\numberline {4.3}{\ignorespaces Agent-connection state machine, providing automatic reconnection without rebooting the robot.}}{20}{figure.caption.28}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces On-board electronics of Abbes: (a) the ESP32 with the PCA9685 servo driver and the servo wiring harness, and (b) the DC-DC regulators supplying the actuators.}}{19}{figure.caption.25}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces micro-ROS bridges the microcontroller to the ROS\,2 graph: a lightweight client on the ESP32 talks to an agent on the host, which connects it to the full DDS network.}}{20}{figure.caption.28}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Agent-connection state machine, providing automatic reconnection without rebooting the robot.}}{20}{figure.caption.29}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {5.1}{\ignorespaces Internals of the \texttt {ros2\_control} controller manager: the resource manager owns the command and state interfaces; each controller claims the interfaces for its joints, and the whole loop runs at 100~Hz.}}{24}{figure.caption.30}%
+\contentsline {figure}{\numberline {5.2}{\ignorespaces Controller lifecycle (unloaded $\rightarrow $ configured $\rightarrow $ active) and the steps a spawner performs to bring a controller online.}}{25}{figure.caption.31}%
+\contentsline {figure}{\numberline {5.3}{\ignorespaces Integration of Gazebo and \texttt {ros2\_control}: the \texttt {gz\_ros2\_control} plugin connects the simulated joints to the same interfaces used on hardware, while \texttt {ros\_gz\_bridge} relays sensor topics into ROS\,2.}}{26}{figure.caption.32}%
+\contentsline {figure}{\numberline {5.4}{\ignorespaces How the \texttt {gz\_ros2\_control} plugin operates inside the Gazebo process: it binds the declared joints to simulation entities and exchanges state and commands on every step.}}{27}{figure.caption.33}%
+\contentsline {figure}{\numberline {5.5}{\ignorespaces The complete node and topic graph: the planning layer feeds the controller manager, which drives either the Gazebo simulation path or the real-robot (ESP32) path; both share the downstream sensor and state topics.}}{28}{figure.caption.34}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {6.1}{\ignorespaces Geometric inverse kinematics of the leg, decomposed into the sagittal plane (knee and hip/ankle pitch) and the frontal plane (hip and ankle roll).}}{30}{figure.caption.35}%
+\contentsline {figure}{\numberline {6.2}{\ignorespaces Walking in the sagittal (a) and frontal (b) planes: the centre-of-mass trajectory and the ZMP evolve across the double-support (DS) and single-support (SS) phases.}}{31}{figure.caption.36}%
+\contentsline {figure}{\numberline {6.3}{\ignorespaces Swing-foot trajectory over the planned footstep sequence produced by the walking-pattern generator.}}{32}{figure.caption.37}%
+\contentsline {figure}{\numberline {6.4}{\ignorespaces The complete motion pipeline: a feed-forward ZMP gait chain feeds the inverse kinematics; the balance controller and the capture-point adjustment close the loop with inertial feedback.}}{32}{figure.caption.38}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {7.1}{\ignorespaces The natural-language command layer: the model chooses a command, the safety validator vets it, and only the deterministic command server actuates the robot. Robot status feeds back to inform the next decision.}}{34}{figure.caption.39}%
+\contentsline {figure}{\numberline {7.2}{\ignorespaces The dispatcher's bounded agentic loop: each tool result is fed back to the model, which can react and retry until it produces a final natural-language reply (subject to a turn limit).}}{36}{figure.caption.40}%
+\contentsline {figure}{\numberline {7.3}{\ignorespaces The Abbes web control panel: a dependency-free browser interface that drives the natural-language command layer.}}{37}{figure.caption.41}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {8.1}{\ignorespaces The robot standing in the Gazebo simulation, used as the baseline for the balance and gait tests.}}{40}{figure.caption.42}%
+\addvspace {10\p@ }

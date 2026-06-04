@@ -38,13 +38,58 @@
 \contentsline {subsection}{\numberline {3.3.3}Power Supply}{14}{subsection.3.3.3}%
 \contentsline {subsection}{\numberline {3.3.4}DC/DC Regulator}{14}{subsection.3.3.4}%
 \contentsline {section}{\numberline {3.4}Electronic Architecture}{15}{section.3.4}%
-\contentsline {section}{\numberline {3.5}Conclusion}{16}{section.3.5}%
+\contentsline {section}{\numberline {3.5}Conclusion}{15}{section.3.5}%
 \contentsline {chapter}{\numberline {4}Embedded Firmware: the On-Board Controller}{17}{chapter.4}%
 \contentsline {section}{\numberline {4.1}Introduction}{17}{section.4.1}%
 \contentsline {section}{\numberline {4.2}Choice of the ESP32}{17}{section.4.2}%
 \contentsline {section}{\numberline {4.3}Firmware Architecture}{18}{section.4.3}%
 \contentsline {section}{\numberline {4.4}Actuators and Sensors over I\textsuperscript {2}C}{18}{section.4.4}%
-\contentsline {paragraph}{Actuators.}{18}{section*.25}%
-\contentsline {paragraph}{Sensor.}{19}{section*.26}%
+\contentsline {paragraph}{Actuators.}{19}{section*.26}%
+\contentsline {paragraph}{Sensor.}{19}{section*.27}%
 \contentsline {section}{\numberline {4.5}Joining ROS\,2 with micro-ROS}{19}{section.4.5}%
-\contentsline {section}{\numberline {4.6}Conclusion}{20}{section.4.6}%
+\contentsline {section}{\numberline {4.6}Conclusion}{21}{section.4.6}%
+\contentsline {chapter}{\numberline {5}Software Architecture and ROS\,2 Integration}{22}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Introduction}{22}{section.5.1}%
+\contentsline {section}{\numberline {5.2}What ROS\,2 Is, and Why It Is Used Here}{22}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Workspace and Package Architecture}{23}{section.5.3}%
+\contentsline {section}{\numberline {5.4}The Robot Model}{23}{section.5.4}%
+\contentsline {section}{\numberline {5.5}Motion Control with \texttt {ros2\_control}}{24}{section.5.5}%
+\contentsline {section}{\numberline {5.6}Simulation with Gazebo}{25}{section.5.6}%
+\contentsline {section}{\numberline {5.7}The Node and Topic Graph}{26}{section.5.7}%
+\contentsline {section}{\numberline {5.8}Cross-Cutting Conventions}{27}{section.5.8}%
+\contentsline {section}{\numberline {5.9}Conclusion}{28}{section.5.9}%
+\contentsline {chapter}{\numberline {6}Kinematics and Gait Planning}{29}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Introduction}{29}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Leg Kinematics}{29}{section.6.2}%
+\contentsline {section}{\numberline {6.3}Inverse Kinematics}{29}{section.6.3}%
+\contentsline {section}{\numberline {6.4}Inertial Estimation}{30}{section.6.4}%
+\contentsline {section}{\numberline {6.5}Balance Control}{30}{section.6.5}%
+\contentsline {section}{\numberline {6.6}Gait Generation by ZMP Preview Control}{31}{section.6.6}%
+\contentsline {section}{\numberline {6.7}The Complete Motion Pipeline}{32}{section.6.7}%
+\contentsline {section}{\numberline {6.8}Results and Limitations}{33}{section.6.8}%
+\contentsline {section}{\numberline {6.9}Conclusion}{33}{section.6.9}%
+\contentsline {chapter}{\numberline {7}The Natural-Language Command Layer}{34}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Introduction}{34}{section.7.1}%
+\contentsline {section}{\numberline {7.2}Design Principle: the LLM Never Moves a Motor}{34}{section.7.2}%
+\contentsline {section}{\numberline {7.3}The Command Vocabulary and its Server}{35}{section.7.3}%
+\contentsline {section}{\numberline {7.4}The Local Language Model and Tool-Use}{35}{section.7.4}%
+\contentsline {section}{\numberline {7.5}The Dispatcher and the Feedback Loop}{35}{section.7.5}%
+\contentsline {section}{\numberline {7.6}The Safety Validator}{36}{section.7.6}%
+\contentsline {section}{\numberline {7.7}The Web Interface}{36}{section.7.7}%
+\contentsline {section}{\numberline {7.8}End-to-End Behaviour}{37}{section.7.8}%
+\contentsline {section}{\numberline {7.9}Conclusion}{37}{section.7.9}%
+\contentsline {chapter}{\numberline {8}Simulation, Testing and Validation}{39}{chapter.8}%
+\contentsline {section}{\numberline {8.1}Introduction}{39}{section.8.1}%
+\contentsline {section}{\numberline {8.2}Simulation Environment and Method}{39}{section.8.2}%
+\contentsline {section}{\numberline {8.3}Standing Stability}{39}{section.8.3}%
+\contentsline {section}{\numberline {8.4}Balance Validation}{39}{section.8.4}%
+\contentsline {section}{\numberline {8.5}Gait Validation}{40}{section.8.5}%
+\contentsline {section}{\numberline {8.6}Command-Layer Validation}{41}{section.8.6}%
+\contentsline {section}{\numberline {8.7}Results Summary}{41}{section.8.7}%
+\contentsline {section}{\numberline {8.8}Conclusion}{41}{section.8.8}%
+\contentsline {chapter}{\numberline {9}General Conclusion and Perspectives}{43}{chapter.9}%
+\contentsline {section}{\numberline {9.1}Summary of the Work}{43}{section.9.1}%
+\contentsline {section}{\numberline {9.2}Achievements and Limitations}{43}{section.9.2}%
+\contentsline {section}{\numberline {9.3}Perspectives}{44}{section.9.3}%
+\contentsline {section}{\numberline {9.4}Closing Remarks}{44}{section.9.4}%
+\contentsline {chapter}{Bibliography}{44}{section.9.4}%

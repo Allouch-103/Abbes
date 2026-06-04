@@ -47,7 +47,7 @@ yet kept minimal to simplify the model. For a leg, two DOF (at the hip
 and ankle) enable pendulum-like motion in the sagittal plane, and two
 more provide lateral motion in the frontal plane; a fifth DOF at the knee
 is required to clear the foot during the swing phase. This leads to five
-DOF per leg. Each arm uses three DOF, and the head two, as detailed in
+DOF per leg~\cite{sias1990}. Each arm uses three DOF, and the head two, as detailed in
 the next section. Figure~\ref{fig:morphology} shows the resulting joint
 arrangement.
 
@@ -246,11 +246,14 @@ a \textbf{power section}.
 The control section is built around an \textbf{ESP32 microcontroller},
 which runs the real-time control loop directly on the robot and joins the
 ROS\,2 graph as a \emph{micro-ROS} node over WiFi/UDP. The ESP32 drives
-the eighteen servos through \textbf{two PCA9685} 16-channel PWM driver
-boards on the I\textsuperscript{2}C bus (at addresses 0x40 and 0x41): the
-first board carries the right-side and head joints, the second the
-left-side joints. The same I\textsuperscript{2}C bus connects the
-\textbf{MPU6050} IMU. On the host (laptop) side, a micro-ROS \emph{agent}
+the servos through a \textbf{PCA9685} 16-channel PWM driver board on the
+I\textsuperscript{2}C bus (at address 0x40). In the current build,
+sixteen of the eighteen joints are actuated --- the ten leg joints and
+the six arm joints --- which exactly fills the sixteen channels of one
+board; the two head joints (\texttt{head\_yaw} and \texttt{camera\_pitch})
+are part of the kinematic model but are not actuated in this version. The
+same I\textsuperscript{2}C bus connects the \textbf{MPU6050} IMU. On the
+host (laptop) side, a micro-ROS \emph{agent}
 bridges the ESP32 into ROS\,2, so that the inertial data published by the
 node and the joint commands it receives are available as ordinary ROS\,2
 topics. This architecture replaces the more common pairing of a
@@ -275,27 +278,22 @@ architecture.
     ]
     \node[host] (host) {Host PC\\\scriptsize ROS\,2 + micro-ROS agent};
     \node[mcu, right=22mm of host] (esp) {ESP32\\\scriptsize micro-ROS node};
-    \node[drv, right=20mm of esp, yshift=12mm] (pca0) {PCA9685 \#0\\\scriptsize 0x40};
-    \node[drv, right=20mm of esp, yshift=-12mm] (pca1) {PCA9685 \#1\\\scriptsize 0x41};
-    \node[sen, below=10mm of esp] (imu) {MPU6050\\\scriptsize IMU};
-    \node[box, right=14mm of pca0, fill=gray!10] (s0) {10 servos\\\scriptsize joints 1--10};
-    \node[box, right=14mm of pca1, fill=gray!10] (s1) {8 servos\\\scriptsize joints 11--18};
-    \node[pwr, below=10mm of imu, xshift=20mm] (pwr) {Battery $\rightarrow$ DC/DC regulator};
+    \node[drv, right=20mm of esp] (pca0) {PCA9685\\\scriptsize 0x40};
+    \node[sen, below=12mm of esp] (imu) {MPU6050\\\scriptsize IMU};
+    \node[box, right=16mm of pca0, fill=gray!10] (s0) {16 servos\\\scriptsize legs + arms};
+    \node[pwr, below=12mm of pca0] (pwr) {Battery $\rightarrow$ DC/DC regulator};
 
     \draw[<->] (host) -- node[above,font=\scriptsize]{WiFi/UDP} (esp);
-    \draw[->] (esp) -- node[above,sloped,font=\scriptsize]{I\textsuperscript{2}C} (pca0);
-    \draw[->] (esp) -- node[below,sloped,font=\scriptsize]{I\textsuperscript{2}C} (pca1);
+    \draw[->] (esp) -- node[above,font=\scriptsize]{I\textsuperscript{2}C} (pca0);
     \draw[<->] (esp) -- node[right,font=\scriptsize]{I\textsuperscript{2}C} (imu);
     \draw[->] (pca0) -- (s0);
-    \draw[->] (pca1) -- (s1);
     \draw[-, dashed, red!60] (pwr) -- (esp);
     \draw[-, dashed, red!60] (pwr) -| (s0);
-    \draw[-, dashed, red!60] (pwr) -| (s1);
   \end{tikzpicture}
   \caption{Electronic architecture of Abbes: the ESP32 micro-ROS node
-           drives 18 servos through two PCA9685 boards and reads the
-           MPU6050, communicating with the ROS\,2 host over WiFi. Dashed
-           red lines indicate power distribution.}
+           drives the 16 actuated servos through a single PCA9685 board
+           and reads the MPU6050, communicating with the ROS\,2 host over
+           WiFi. Dashed red lines indicate power distribution.}
   \label{fig:hwarch}
 \end{figure}
 
@@ -306,6 +304,6 @@ structure was derived from anthropometric data to obtain a human-like,
 (Table~\ref{tab:joints}). The components were selected to balance
 performance, cost, and efficiency: MG996R servos, an MPU6050 IMU, and a
 battery/regulator pair for the powered version. The electronic
-architecture is built around an ESP32 that drives the servos through two
-PCA9685 boards and joins ROS\,2 as a micro-ROS node. The next chapter
+architecture is built around an ESP32 that drives the actuated servos
+through a PCA9685 board and joins ROS\,2 as a micro-ROS node. The next chapter
 details the embedded firmware that runs on this ESP32.
