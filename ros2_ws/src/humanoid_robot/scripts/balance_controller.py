@@ -95,12 +95,12 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy
 
 # ── Hardware constants (tune to your robot) ──────────────────────────────────
 N_JOINTS           = 18      # total joints published on /joint_commands
-ANKLE_PITCH_IDX    = 3       # index in the 18-float array — left ankle pitch
-ANKLE_ROLL_IDX     = 4       # index in the 18-float array — left ankle roll
-ANKLE_PITCH_IDX_R  = 8      # right ankle pitch
-ANKLE_ROLL_IDX_R   = 9      # right ankle roll
+ANKLE_PITCH_IDX_R  = 3       # right ankle pitch (J::R_ANKLE_PITCH)
+ANKLE_ROLL_IDX_R   = 4       # right ankle roll  (J::R_ANKLE_ROLL)
+ANKLE_PITCH_IDX_L  = 8       # left  ankle pitch (J::L_ANKLE_PITCH)
+ANKLE_ROLL_IDX_L   = 9       # left  ankle roll  (J::L_ANKLE_ROLL)
 
-Z_C                = 0.2698  # CoM height above ankle (m) — single source: robot_params.yaml com_height_m
+Z_C                = 0.22    # CoM height (m) — must match pipeline Z_C
 I_PITCH            = 0.08    # approx moment of inertia about ankle pitch axis (kg·m²)
 I_ROLL             = 0.06    # approx moment of inertia about ankle roll  axis (kg·m²)
 G                  = 9.81
@@ -285,10 +285,10 @@ class BalanceController(Node):
         # IMU loop adjusts only the ankle joints.
         cmds = self._nominal.copy()
         if enabled:
-            cmds[ANKLE_PITCH_IDX]   += np.rad2deg(delta_pitch_rad)
-            cmds[ANKLE_ROLL_IDX]    += np.rad2deg(delta_roll_rad)
             cmds[ANKLE_PITCH_IDX_R] += np.rad2deg(delta_pitch_rad)
+            cmds[ANKLE_PITCH_IDX_L] += np.rad2deg(delta_pitch_rad)
             cmds[ANKLE_ROLL_IDX_R]  += np.rad2deg(delta_roll_rad)
+            cmds[ANKLE_ROLL_IDX_L]  -= np.rad2deg(delta_roll_rad)
 
         # ── Publish joint commands ────────────────────────────────────────
         out = Float32MultiArray()

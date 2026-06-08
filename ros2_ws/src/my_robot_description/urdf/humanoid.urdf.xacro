@@ -754,4 +754,17 @@
     </sensor>
   </gazebo>
 
+
+  <gazebo reference="r_foot">
+    <collision><surface>
+      <friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction>
+      <contact><ode><kp>1e6</kp><kd>100</kd><min_depth>0.001</min_depth></ode></contact>
+    </surface></collision>
+  </gazebo>
+  <gazebo reference="l_foot">
+    <collision><surface>
+      <friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction>
+      <contact><ode><kp>1e6</kp><kd>100</kd><min_depth>0.001</min_depth></ode></contact>
+    </surface></collision>
+  </gazebo>
 </robot>

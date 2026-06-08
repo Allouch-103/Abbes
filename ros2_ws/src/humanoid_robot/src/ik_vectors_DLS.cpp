@@ -80,13 +80,14 @@ public:
         // sits ~1.5cm forward of the hip in a knee-bend (bent knees + torso), so
         // the robot tips forward. Shift the hip target back by this offset to put
         // the real CoM over the feet. Calibrated in sim; verify on hardware.
-        declare_parameter("com_x_offset", 0.005);   // measured: foot_x tracks this; +0.005 puts the feet under the CoM
+        //declare_parameter("com_x_offset",0.005);   // measured: foot_x tracks this; +0.005 puts the feet under the CoM
         declare_parameter("enabled",     true);
         declare_parameter("alpha",       0.01);
         declare_parameter("alpha_max",   0.15);
         declare_parameter("w_thresh",    0.005);
         declare_parameter("max_iter",    6);
         declare_parameter("tol",         0.001);
+        declare_parameter("com_x_offset", -0.015);  // backward bias: knee-bent CoM ~1.5 cm fwd of hip
 
         load_params();
 
@@ -130,8 +131,7 @@ public:
     }
 
 private:
-    double L1_, L2_, hip_width_, com_height_;
-
+    double L1_, L2_, hip_width_, com_height_, com_x_offset_;
     WamplerLeg leg_r_, leg_l_;
 
     double com_x_{0}, com_y_{0}, com_z_{0};
@@ -153,6 +153,7 @@ private:
         L2_         = get_parameter("L2").as_double();
         hip_width_  = get_parameter("hip_width").as_double();
         com_height_ = get_parameter("com_height").as_double();
+        com_x_offset_ = get_parameter("com_x_offset").as_double();  
         for (auto* leg : {&leg_r_, &leg_l_}) {
             leg->L1        = L1_;
             leg->L2        = L2_;
@@ -210,8 +211,7 @@ private:
 
         // Shift the hip target back by com_x_offset so the true CoM sits over
         // the feet (the hip is not the CoM in a knee-bend).
-        const double hip_x = com_x_ + get_parameter("com_x_offset").as_double();
-
+        const double hip_x = com_x_ + com_x_offset_;
         Vec3 hip_r = {hip_x, com_y_ + hip_width_/2.0, com_z_};
         leg_r_.q = solve_leg_closed_form(hip_r, fr_, L1_, L2_);
         apply_right(angles);
