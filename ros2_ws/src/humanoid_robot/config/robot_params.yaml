@@ -7,7 +7,7 @@
     shank_length_m:   0.1230  # 0.246 × H
     foot_height_m:    0.0500  # ankle joint to ground
     hip_width_m:      0.0800  # lateral distance between hip joints
-    com_height_m:     0.2698  # CoM height during walking (z_c for LIPM)
+    com_height_m:     0.22  # CoM height during walking (z_c for LIPM)
                                # SINGLE SOURCE OF TRUTH for CoM height — must match
                                # pipeline.py Z_C, balance_controller.py Z_C, and
                                # ik_vectors_DLS com_height default.

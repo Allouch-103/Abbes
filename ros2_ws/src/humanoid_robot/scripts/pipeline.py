@@ -18,12 +18,12 @@ Z_C      = 0.22
 N_PREV   = 300
 N_JOINTS = 18
 
-APEX_H   = 0.0   # swing foot clearance (m)
+APEX_H   = 0.04   # swing foot clearance (m)
 HIP_Y    = 0.04   # half hip width = foot y offset (m)
 
 
 class ZmpTrajectoryNode(Node):
-    def __init__(self, v_forward=0.015, n_steps=4):
+    def __init__(self, v_forward=0.03, n_steps=4):
         super().__init__('zmp_trajectory_node')
         self._v_forward    = v_forward
         self._n_steps      = n_steps
@@ -48,8 +48,10 @@ class ZmpTrajectoryNode(Node):
 
     def _alert_cb(self, msg):
         if msg.data:
-            self.get_logger().warn('Balance alert received — ignoring during active stepping')
-            # Replanning resets step_idx=0 mid-fall causing chaotic restarts.
+            self.get_logger().warn('Balance alert — replanning conservatively')
+            #self._com_traj, self._foot_traj, self._footsteps = self._plan(conservative=True)
+            #self._n_samples = len(self._com_traj)
+            #self._step_idx  = 0
 
     def _plan(self, conservative=False):
         speed     = self._v_forward * (0.6 if conservative else 1.0)
@@ -60,22 +62,15 @@ class ZmpTrajectoryNode(Node):
             v_forward=speed, n_steps=self._n_steps,
             dt_single=dt_single, dt_double=dt_double)
         zmp_ref = build_zmp_reference(footsteps, dt=DT)
-
-        # Prepend hold so CoM shifts from y=0 to first stance foot before swing lifts.
-        # Without this the preview controller starts at y=+0.04 but robot is at y=0.
-        T_hold  = 1.0
-        n_hold  = int(T_hold / DT)
-        zmp_ref = np.vstack([np.zeros((n_hold, 2)), zmp_ref])
-
         G_I, G_x, G_p, A, B, C = compute_preview_gains(DT, Z_C, N_preview=N_PREV)
         com_traj = run_preview_controller(zmp_ref, G_I, G_x, G_p, A, B, C, DT)
 
         N = len(com_traj)
-        foot_traj = self._build_foot_trajectories(footsteps, N, n_hold)
+        foot_traj = self._build_foot_trajectories(footsteps, N)
 
         return com_traj, foot_traj, footsteps
 
-    def _build_foot_trajectories(self, footsteps, N, n_hold=0):
+    def _build_foot_trajectories(self, footsteps, N):
         """
         Build per-timestep (x,y,z) for both feet.
         Returns foot_traj of shape (N, 2, 3):
@@ -105,8 +100,8 @@ class ZmpTrajectoryNode(Node):
             stance_idx = 0 if fs.pos[1] > 0 else 1   # +y=0, -y=1
             swing_idx  = 1 - stance_idx
 
-            k_start = int(fs.t_start / DT) + n_hold
-            k_end   = min(int(fs.t_lift / DT) + n_hold, N)
+            k_start = int(fs.t_start / DT)
+            k_end   = min(int(fs.t_lift / DT), N)
             if k_start >= N:
                 break
 

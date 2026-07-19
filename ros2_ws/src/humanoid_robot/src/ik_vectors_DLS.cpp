@@ -87,7 +87,7 @@ public:
         declare_parameter("w_thresh",    0.005);
         declare_parameter("max_iter",    6);
         declare_parameter("tol",         0.001);
-        declare_parameter("com_x_offset", -0.015);  // backward bias: knee-bent CoM ~1.5 cm fwd of hip
+        declare_parameter("com_x_offset", 0.02);  // backward bias: knee-bent CoM ~1.5 cm fwd of hip
 
         load_params();
 

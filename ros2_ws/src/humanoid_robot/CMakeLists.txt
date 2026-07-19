@@ -57,6 +57,7 @@ install(DIRECTORY include/
 install(PROGRAMS
   scripts/balance_controller.py
   scripts/pipeline.py
+  scripts/pipeline_one_leg.py  
   scripts/preview_controller.py
   scripts/footstep_planner.py
   scripts/zmp_reference.py

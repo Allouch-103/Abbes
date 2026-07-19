@@ -95,18 +95,36 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy
 
 # ── Hardware constants (tune to your robot) ──────────────────────────────────
 N_JOINTS           = 18      # total joints published on /joint_commands
-ANKLE_PITCH_IDX_R  = 3       # right ankle pitch (J::R_ANKLE_PITCH)
-ANKLE_ROLL_IDX_R   = 4       # right ankle roll  (J::R_ANKLE_ROLL)
-ANKLE_PITCH_IDX_L  = 8       # left  ankle pitch (J::L_ANKLE_PITCH)
-ANKLE_ROLL_IDX_L   = 9       # left  ankle roll  (J::L_ANKLE_ROLL)
+ANKLE_PITCH_IDX_R = 3    # was mislabeled _L
+ANKLE_ROLL_IDX_R  = 4    # was mislabeled _L
+ANKLE_PITCH_IDX_L = 8    # was mislabeled _R
+ANKLE_ROLL_IDX_L  = 9    # was mislabeled _R
+R_SHOULDER_PITCH   = 10
+L_SHOULDER_PITCH   = 13
+R_SHOULDER_ROLL = 11
+L_SHOULDER_ROLL = 14
+ARM_ROLL_BALANCE_GAIN = 2.5   # deg shoulder-roll per deg tilt-roll
+R_HIP_ROLL = 0
+L_HIP_ROLL = 5
+HIP_ROLL_GAIN   = 0    # deg hip-roll per deg tilt-roll
+HIP_ROLL_DGAIN  = 0   # damping on roll rate (smooths the response)
+MAX_HIP_ROLL_DEG = 8.0
 
-Z_C                = 0.22    # CoM height (m) — must match pipeline Z_C
+# Arm counterswing gains (degrees of shoulder pitch per degree of tilt)
+ARM_PITCH_GAIN = 0.8   # oppose pitch tilt
+ARM_ROLL_GAIN  = 0.6   # differential roll correction
+ARM_ROLL_DGAIN = 0.30    # new constant at top
+MAX_ARM_DEG    = 25.0
+
+Z_C                = 0.22  # CoM height above ankle (m) — single source: robot_params.yaml com_height_m
 I_PITCH            = 0.08    # approx moment of inertia about ankle pitch axis (kg·m²)
 I_ROLL             = 0.06    # approx moment of inertia about ankle roll  axis (kg·m²)
 G                  = 9.81
 
 # Safety limits
-MAX_ANKLE_CORRECTION_DEG = 8.0
+MAX_ANKLE_PITCH_DEG = 4.0     # pitch is easy — keep it gentle (no oscillation)
+MAX_ANKLE_ROLL_DEG  = 10.0    # roll on one leg is hard — needs more throw
+TILT_DEADBAND_DEG        = 2.0    # NEW: ignore small tilts, don't fight the steady lean
 REPLANNING_THRESHOLD_DEG = 8.0    # tilt above this triggers ZMP re-plan
 REPLANNING_HOLD_CYCLES   = 10     # must hold for N cycles to avoid false triggers
 
@@ -163,7 +181,7 @@ class BalanceController(Node):
         # LIVE tuning knob: overall scale on the ankle correction. Start near 0
         # and raise it with `ros2 param set /balance_controller correction_gain X`
         # until the robot just holds, then back off before it oscillates.
-        self.declare_parameter('correction_gain', 0.0)
+        self.declare_parameter('correction_gain', 1.0)
         self.add_on_set_parameters_callback(self._on_param_change)
 
         # ── Compute initial LQR gains ─────────────────────────────────────
@@ -251,12 +269,10 @@ class BalanceController(Node):
         enabled = self._is_enabled()
 
         # ── Build state vector ────────────────────────────────────────────
-        x = np.array([
-            np.deg2rad(self._tilt_pitch),   # pitch (rad)
-            np.deg2rad(self._tilt_roll),    # roll  (rad)
-            self._rate_pitch,               # pitch rate (rad/s)
-            self._rate_roll,                # roll  rate (rad/s)
-        ])
+      # Deadband: if nearly upright, make NO correction (kills the limit cycle)
+        p = 0.0 if abs(self._tilt_pitch) < TILT_DEADBAND_DEG else self._tilt_pitch
+        r = self._tilt_roll
+        x = np.array([np.deg2rad(p), np.deg2rad(r), self._rate_pitch, self._rate_roll])
 
         # ── LQR control law: u = −K·x (torque → ankle angle via mapping) ──
         # u is a 2-vector of ankle corrective torques (N·m).
@@ -266,29 +282,43 @@ class BalanceController(Node):
         # K_STIFFNESS scales torque->angle. Higher = gentler ankle response.
         # Was 5.0 which railed to the ±limit on a few degrees of tilt; 30 gives
         # a tame ~0.4° ankle per 1° tilt.
-        K_STIFFNESS = 30.0
+        K_STIFFNESS = 80.0
         # SIGN: a forward lean (pitch>0) must INCREASE ankle_pitch to rotate the
         # body back. u=-K·x decreases it (positive feedback -> tipped). Negate so
         # the ankle correction opposes the tilt (true negative feedback).
         gain = float(self.get_parameter('correction_gain').value)   # live knob
         u = -self._K @ x                         # (2,): LQR torque signal
-        delta_pitch_rad = -gain * u[0] / K_STIFFNESS    # ankle pitch correction (rad)
-        delta_roll_rad  = -gain * u[1] / K_STIFFNESS    # ankle roll  correction (rad)
+        delta_pitch_rad = gain * u[0] / K_STIFFNESS    # ankle pitch correction (rad)
+        delta_roll_rad  = gain * u[1] / K_STIFFNESS    # ankle roll  correction (rad)
 
-        # ── Clamp corrections ─────────────────────────────────────────────
-        max_rad = np.deg2rad(MAX_ANKLE_CORRECTION_DEG)
-        delta_pitch_rad = np.clip(delta_pitch_rad, -max_rad, max_rad)
-        delta_roll_rad  = np.clip(delta_roll_rad,  -max_rad, max_rad)
+       # ── Clamp corrections (per-axis: roll needs more throw on one leg) ─
+        max_pitch = np.deg2rad(MAX_ANKLE_PITCH_DEG)
+        max_roll  = np.deg2rad(MAX_ANKLE_ROLL_DEG)
+        delta_pitch_rad = np.clip(delta_pitch_rad, -max_pitch, max_pitch)
+        delta_roll_rad  = np.clip(delta_roll_rad,  -max_roll,  max_roll)
 
         # ── Apply corrections on top of nominal trajectory ────────────────
         # This is the key integration point: ZMP planner sets baseline,
         # IMU loop adjusts only the ankle joints.
         cmds = self._nominal.copy()
         if enabled:
-            cmds[ANKLE_PITCH_IDX_R] += np.rad2deg(delta_pitch_rad)
-            cmds[ANKLE_PITCH_IDX_L] += np.rad2deg(delta_pitch_rad)
-            cmds[ANKLE_ROLL_IDX_R]  += np.rad2deg(delta_roll_rad)
-            cmds[ANKLE_ROLL_IDX_L]  -= np.rad2deg(delta_roll_rad)
+            cmds[ANKLE_PITCH_IDX_R] -= np.rad2deg(delta_pitch_rad)
+            cmds[ANKLE_PITCH_IDX_L] -= np.rad2deg(delta_pitch_rad)
+            cmds[ANKLE_ROLL_IDX_R]  -= np.rad2deg(delta_roll_rad)
+            cmds[ANKLE_ROLL_IDX_L]  += np.rad2deg(delta_roll_rad)   # antisymmetric
+# Arm counterswing: forward lean → arms back; roll right → R arm forward
+            arm_pitch = float(np.clip(-ARM_PITCH_GAIN * self._tilt_pitch, -MAX_ARM_DEG, MAX_ARM_DEG))
+            arm_roll  = float(np.clip( ARM_ROLL_GAIN  * self._tilt_roll,  -MAX_ARM_DEG, MAX_ARM_DEG))
+            cmds[R_SHOULDER_PITCH] = float(np.clip(cmds[R_SHOULDER_PITCH] + arm_pitch + arm_roll, -90, 90))
+            cmds[L_SHOULDER_PITCH] = float(np.clip(cmds[L_SHOULDER_PITCH] + arm_pitch - arm_roll, -90, 90))
+            arm_r = float(np.clip(ARM_ROLL_BALANCE_GAIN * self._tilt_roll + ARM_ROLL_DGAIN * np.rad2deg(self._rate_roll), -40, 40))
+            cmds[R_SHOULDER_ROLL] = float(np.clip(cmds[R_SHOULDER_ROLL] + arm_r, -90, 90))
+            cmds[L_SHOULDER_ROLL] = float(np.clip(cmds[L_SHOULDER_ROLL] + arm_r, -90, 90))
+           # hip_roll_deg = float(np.clip(
+           # HIP_ROLL_GAIN * r + HIP_ROLL_DGAIN * np.rad2deg(self._rate_roll),
+           # -MAX_HIP_ROLL_DEG, MAX_HIP_ROLL_DEG))
+          #  cmds[R_HIP_ROLL] -= hip_roll_deg
+           # cmds[L_HIP_ROLL] += hip_roll_deg    # antisymmetric, same as the ankle roll
 
         # ── Publish joint commands ────────────────────────────────────────
         out = Float32MultiArray()
@@ -310,7 +340,8 @@ class BalanceController(Node):
 
         if alert_active:
             self.get_logger().warn(
-                f'Balance alert: tilt={tilt_mag:.1f}° — signalling ZMP re-plan')
+                    f'tilt pitch={self._tilt_pitch:+.1f} roll={self._tilt_roll:+.1f}',
+    throttle_duration_sec=0.5)
 
 
 def main(args=None):
