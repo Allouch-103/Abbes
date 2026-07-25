@@ -88,8 +88,9 @@
        ============================================================ -->
 
   <!-- Inertia macro for a solid box (kg, meters) -->
-  <xacro:macro name="box_inertia" params="m x y z">
+  <xacro:macro name="box_inertia" params="m x y z ox:=0 oy:=0 oz:=0">
     <inertial>
+      <origin xyz="${ox} ${oy} ${oz}" rpy="0 0 0"/>
       <mass value="${m}"/>
       <inertia
         ixx="${m*(y*y+z*z)/12}" ixy="0" ixz="0"
@@ -158,7 +159,8 @@
     <!-- Thigh link — box representing L1 = 122.5mm -->
     <link name="${prefix}_thigh">
       <xacro:box_inertia m="${thigh_mass}"
-        x="${link_thickness}" y="${link_thickness}" z="${thigh_len}"/>
+        x="${link_thickness}" y="${link_thickness}" z="${thigh_len}"
+        oz="${-thigh_len/2}"/>
       <visual>
         <!-- Offset so top of box is at joint origin (thigh hangs downward) -->
         <origin xyz="0 0 ${-thigh_len/2}" rpy="0 0 0"/>
@@ -185,7 +187,8 @@
     <!-- Shank link — box representing L2 = 123.0mm -->
     <link name="${prefix}_shank">
       <xacro:box_inertia m="${shank_mass}"
-        x="${link_thickness}" y="${link_thickness}" z="${shank_len}"/>
+        x="${link_thickness}" y="${link_thickness}" z="${shank_len}"
+        oz="${-shank_len/2}"/>
       <visual>
         <origin xyz="0 0 ${-shank_len/2}" rpy="0 0 0"/>
         <geometry><box size="${link_thickness} ${link_thickness} ${shank_len}"/></geometry>
@@ -248,7 +251,8 @@
     <!-- Foot link — flat box representing the foot plate -->
     <link name="${prefix}_foot">
       <xacro:box_inertia m="${foot_mass}"
-        x="${foot_len}" y="${foot_width}" z="${foot_height}"/>
+        x="${foot_len}" y="${foot_width}" z="${foot_height}"
+        oz="${-foot_height/2}"/>
       <visual>
         <!--
           FIX 1: X=0 → foot centered under the ankle joint (no forward bias).
@@ -312,7 +316,8 @@
 
     <link name="${prefix}_upper_arm">
       <xacro:box_inertia m="${upper_arm_m}"
-        x="${link_thickness}" y="${link_thickness}" z="${upper_arm_len}"/>
+        x="${link_thickness}" y="${link_thickness}" z="${upper_arm_len}"
+        oz="${-upper_arm_len/2}"/>
       <visual>
         <origin xyz="0 0 ${-upper_arm_len/2}" rpy="0 0 0"/>
         <geometry><box size="${link_thickness} ${link_thickness} ${upper_arm_len}"/></geometry>
@@ -336,7 +341,8 @@
 
     <link name="${prefix}_forearm">
       <xacro:box_inertia m="${forearm_m}"
-        x="${link_thickness}" y="${link_thickness}" z="${forearm_len}"/>
+        x="${link_thickness}" y="${link_thickness}" z="${forearm_len}"
+        oz="${-forearm_len/2}"/>
       <visual>
         <origin xyz="0 0 ${-forearm_len/2}" rpy="0 0 0"/>
         <geometry><box size="${link_thickness} ${link_thickness} ${forearm_len}"/></geometry>
@@ -507,6 +513,7 @@
     -->
     <joint name="r_hip_roll">
       <command_interface name="position"/>
+      <command_interface name="effort"/>
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -517,6 +524,7 @@
 
     <joint name="r_hip_pitch">
       <command_interface name="position"/>
+      <command_interface name="effort"/>
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -527,6 +535,7 @@
 
     <joint name="r_knee_pitch">
       <command_interface name="position"/>
+      <command_interface name="effort"/>
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -537,6 +546,7 @@
 
     <joint name="r_ankle_pitch">
       <command_interface name="position"/>
+      <command_interface name="effort"/>
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -547,6 +557,7 @@
 
     <joint name="r_ankle_roll">
       <command_interface name="position"/>
+      <command_interface name="effort"/>
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -558,6 +569,7 @@
     <!-- ── LEFT LEG ──────────────────────────────────────── -->
     <joint name="l_hip_roll">
       <command_interface name="position"/>
+      <command_interface name="effort"/>
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -568,6 +580,7 @@
 
     <joint name="l_hip_pitch">
       <command_interface name="position"/>
+      <command_interface name="effort"/>
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -578,6 +591,7 @@
 
     <joint name="l_knee_pitch">
       <command_interface name="position"/>
+      <command_interface name="effort"/>
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -588,6 +602,7 @@
 
     <joint name="l_ankle_pitch">
       <command_interface name="position"/>
+      <command_interface name="effort"/>
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -598,6 +613,7 @@
 
     <joint name="l_ankle_roll">
       <command_interface name="position"/>
+      <command_interface name="effort"/>
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -609,6 +625,7 @@
     <!-- ── RIGHT ARM ─────────────────────────────────────── -->
     <joint name="r_shoulder_pitch">
       <command_interface name="position"/>
+      <command_interface name="effort"/>
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -619,6 +636,7 @@
 
     <joint name="r_shoulder_roll">
       <command_interface name="position"/>
+      <command_interface name="effort"/>
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -629,6 +647,7 @@
 
     <joint name="r_elbow_roll">
       <command_interface name="position"/>
+      <command_interface name="effort"/>
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -640,6 +659,7 @@
     <!-- ── LEFT ARM ──────────────────────────────────────── -->
     <joint name="l_shoulder_pitch">
       <command_interface name="position"/>
+      <command_interface name="effort"/>
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -650,6 +670,7 @@
 
     <joint name="l_shoulder_roll">
       <command_interface name="position"/>
+      <command_interface name="effort"/>
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -660,6 +681,7 @@
 
     <joint name="l_elbow_roll">
       <command_interface name="position"/>
+      <command_interface name="effort"/>
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -671,6 +693,7 @@
     <!-- ── HEAD ──────────────────────────────────────────── -->
     <joint name="head_yaw">
       <command_interface name="position"/>
+      <command_interface name="effort"/>
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -681,6 +704,7 @@
 
     <joint name="camera_pitch">
       <command_interface name="position"/>
+      <command_interface name="effort"/>
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -732,6 +756,8 @@
   </gazebo>
   -->
   
+  <!-- GROUND-TRUTH odometry of base_link (validation only, not a real sensor). -->
+
   <!-- IMU sensor on base_link — matches real MPU6050 location -->
   <gazebo reference="base_link">
     <sensor name="imu_sensor" type="imu">

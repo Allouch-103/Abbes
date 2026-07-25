@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <model name="sim_ball">
+    <pose>1 0 0.2 0 0 0</pose>
+    <link name="link">
+      <inertial>
+        <mass>0.2</mass>
+        <inertia>
+          <ixx>0.0032</ixx><iyy>0.0032</iyy><izz>0.0032</izz>
+          <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+        </inertia>
+      </inertial>
+      <collision name="collision">
+        <geometry><sphere><radius>0.2</radius></sphere></geometry>
+      </collision>
+      <visual name="visual">
+        <geometry><sphere><radius>0.2</radius></sphere></geometry>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 1</diffuse>
+        </material>
+      </visual>
+    </link>
+
+    <!-- Lets us move the ball by publishing geometry_msgs/Twist -->
+    <plugin filename="libignition-gazebo-velocity-control-system.so"
+            name="ignition::gazebo::systems::VelocityControl">
+      <topic>/model/sim_ball/cmd_vel</topic>
+    </plugin>
+
+    <!-- Publishes ball position/velocity as an Odometry message -->
+    <plugin filename="libignition-gazebo-odometry-publisher-system.so"
+            name="ignition::gazebo::systems::OdometryPublisher">
+      <odom_topic>/model/sim_ball/odometry</odom_topic>
+      <odom_frame>sim_ball/odom</odom_frame>
+      <robot_base_frame>sim_ball</robot_base_frame>
+      <odom_publish_frequency>20</odom_publish_frequency>
+    </plugin>
+  </model>
+</sdf>

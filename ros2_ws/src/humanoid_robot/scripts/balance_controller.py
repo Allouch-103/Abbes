@@ -106,9 +106,9 @@ L_SHOULDER_ROLL = 14
 ARM_ROLL_BALANCE_GAIN = 2.5   # deg shoulder-roll per deg tilt-roll
 R_HIP_ROLL = 0
 L_HIP_ROLL = 5
-HIP_ROLL_GAIN   = 0    # deg hip-roll per deg tilt-roll
-HIP_ROLL_DGAIN  = 0   # damping on roll rate (smooths the response)
-MAX_HIP_ROLL_DEG = 8.0
+HIP_ROLL_GAIN   = 0.5    # deg hip-roll per deg tilt-roll
+HIP_ROLL_DGAIN  = 0.10   # damping on roll rate (smooths the response)
+MAX_HIP_ROLL_DEG = 10.0
 
 # Arm counterswing gains (degrees of shoulder pitch per degree of tilt)
 ARM_PITCH_GAIN = 0.8   # oppose pitch tilt
@@ -213,7 +213,8 @@ class BalanceController(Node):
         self.create_subscription(
             Float32MultiArray, '/joint_commands',
             self._nominal_cb, be)
-
+        self._single_support = False
+        self.create_subscription(Bool, '/single_support',lambda m: setattr(self, '_single_support', m.data), be)
         # ── Publishers ────────────────────────────────────────────────────
         # Subscribe to /joint_commands (NOMINAL, from ik_vectors_DLS) and
         # publish to /joint_commands_corrected (nominal + ankle Δθ). Publishing
@@ -314,11 +315,12 @@ class BalanceController(Node):
             arm_r = float(np.clip(ARM_ROLL_BALANCE_GAIN * self._tilt_roll + ARM_ROLL_DGAIN * np.rad2deg(self._rate_roll), -40, 40))
             cmds[R_SHOULDER_ROLL] = float(np.clip(cmds[R_SHOULDER_ROLL] + arm_r, -90, 90))
             cmds[L_SHOULDER_ROLL] = float(np.clip(cmds[L_SHOULDER_ROLL] + arm_r, -90, 90))
-           # hip_roll_deg = float(np.clip(
-           # HIP_ROLL_GAIN * r + HIP_ROLL_DGAIN * np.rad2deg(self._rate_roll),
-           # -MAX_HIP_ROLL_DEG, MAX_HIP_ROLL_DEG))
-          #  cmds[R_HIP_ROLL] -= hip_roll_deg
-           # cmds[L_HIP_ROLL] += hip_roll_deg    # antisymmetric, same as the ankle roll
+            hip_roll_deg = float(np.clip(
+            HIP_ROLL_GAIN * r + HIP_ROLL_DGAIN * np.rad2deg(self._rate_roll),
+            -MAX_HIP_ROLL_DEG, MAX_HIP_ROLL_DEG))
+            if self._single_support:            # hip ONLY when the foot is up
+                cmds[R_HIP_ROLL] += hip_roll_deg
+                cmds[L_HIP_ROLL] -= hip_roll_deg
 
         # ── Publish joint commands ────────────────────────────────────────
         out = Float32MultiArray()

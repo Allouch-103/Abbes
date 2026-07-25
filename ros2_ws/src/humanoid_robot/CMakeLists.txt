@@ -65,6 +65,7 @@ install(PROGRAMS
   scripts/ik_solver.py
   scripts/ik_pose_test.py
   scripts/com_calc.py
+  scripts/pipeline_march.py
   DESTINATION lib/${PROJECT_NAME}
 )
 ament_package()

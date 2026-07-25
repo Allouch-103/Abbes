@@ -104,10 +104,10 @@ def generate_launch_description():
             '/world/default/model/humanoid_robot/link/base_link/sensor/imu_sensor/imu'
             '@sensor_msgs/msg/Imu[gz.msgs.IMU',
         ],
-        remappings=[(
-            '/world/default/model/humanoid_robot/link/base_link/sensor/imu_sensor/imu',
-            '/imu'
-        )],
+        remappings=[
+            ('/world/default/model/humanoid_robot/link/base_link/sensor/imu_sensor/imu',
+             '/imu'),
+        ],
         parameters=[{'use_sim_time': True}],
         output='screen'
     )
